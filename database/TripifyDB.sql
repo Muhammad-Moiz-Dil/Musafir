@@ -52,7 +52,7 @@ CREATE TABLE Destinations (
 CREATE TABLE Hotels (
     hotel_id INT PRIMARY KEY IDENTITY(1,1),
     destination_id INT NOT NULL,
-    manager_id INT, -- references Users (HotelManager)
+    manager_id INT,
     hotel_name VARCHAR(255) NOT NULL,
     address TEXT,
     contact_number VARCHAR(20),
@@ -61,9 +61,11 @@ CREATE TABLE Hotels (
     price_per_night DECIMAL(10,2) NOT NULL,
     total_rooms INT NOT NULL,
     available_rooms INT NOT NULL,
-    amenities TEXT, -- JSON or comma-separated
+    amenities TEXT,
     image_url VARCHAR(500),
     description TEXT,
+    average_rating DECIMAL(3,2) DEFAULT 0.00,
+    total_reviews INT DEFAULT 0,
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
     is_active BIT DEFAULT 1,
@@ -73,6 +75,7 @@ CREATE TABLE Hotels (
 
 -- ============================================
 -- 4. BOOKINGS TABLE
+-- [SCHEMA-003 FIX] Added payment_status, payment_method, payment_reference
 -- ============================================
 CREATE TABLE Bookings (
     booking_id INT PRIMARY KEY IDENTITY(1,1),
@@ -83,6 +86,9 @@ CREATE TABLE Bookings (
     number_of_guests INT NOT NULL,
     total_cost DECIMAL(10,2) NOT NULL,
     booking_status VARCHAR(20) CHECK (booking_status IN ('Pending', 'Confirmed', 'Cancelled', 'Completed')) DEFAULT 'Pending',
+    payment_status VARCHAR(20) CHECK (payment_status IN ('Unpaid', 'Paid', 'Refunded')) DEFAULT 'Unpaid',
+    payment_method VARCHAR(50),  -- e.g. 'CreditCard', 'EasyPaisa', 'JazzCash', 'Cash'
+    payment_reference VARCHAR(100),
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
@@ -99,11 +105,11 @@ CREATE TABLE Favorites (
     added_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE,
-    UNIQUE(user_id, destination_id) -- Prevent duplicate favorites
+    UNIQUE(user_id, destination_id)
 );
 
 -- ============================================
--- 6. REVIEWS TABLE
+-- 6. DESTINATION REVIEWS TABLE
 -- ============================================
 CREATE TABLE Reviews (
     review_id INT PRIMARY KEY IDENTITY(1,1),
@@ -119,21 +125,41 @@ CREATE TABLE Reviews (
 );
 
 -- ============================================
--- 7. TRAVEL GUIDELINES TABLE
+-- 7. HOTEL REVIEWS TABLE
+-- [SCHEMA-002 FIX] Separate table for hotel-specific reviews
+-- ============================================
+CREATE TABLE HotelReviews (
+    hotel_review_id INT PRIMARY KEY IDENTITY(1,1),
+    user_id INT NOT NULL,
+    hotel_id INT NOT NULL,
+    booking_id INT,              -- optionally tied to a completed booking
+    rating INT CHECK (rating BETWEEN 1 AND 5) NOT NULL,
+    comment TEXT,
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+    is_flagged BIT DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id),
+    FOREIGN KEY (booking_id) REFERENCES Bookings(booking_id) ON DELETE SET NULL,
+    UNIQUE(user_id, hotel_id)    -- one review per hotel per user
+);
+
+-- ============================================
+-- 8. TRAVEL GUIDELINES TABLE
 -- ============================================
 CREATE TABLE TravelGuidelines (
     guideline_id INT PRIMARY KEY IDENTITY(1,1),
     destination_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    category VARCHAR(50), -- e.g., 'Visa', 'Culture', 'Safety', 'Health'
+    category VARCHAR(50),   -- 'Visa', 'Culture', 'Safety', 'Health', 'Season'
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE
 );
 
 -- ============================================
--- 8. EMERGENCY INFO TABLE
+-- 9. EMERGENCY INFO TABLE
 -- ============================================
 CREATE TABLE EmergencyInfo (
     emergency_id INT PRIMARY KEY IDENTITY(1,1),
@@ -150,7 +176,8 @@ CREATE TABLE EmergencyInfo (
 );
 
 -- ============================================
--- 9. SOUVENIRS TABLE
+-- 10. SOUVENIRS TABLE
+-- [SCHEMA-005 FIX] Added is_active flag
 -- ============================================
 CREATE TABLE Souvenirs (
     souvenir_id INT PRIMARY KEY IDENTITY(1,1),
@@ -160,47 +187,88 @@ CREATE TABLE Souvenirs (
     price DECIMAL(10,2),
     image_url VARCHAR(500),
     vendor_name VARCHAR(255),
+    is_active BIT DEFAULT 1,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE
 );
 
 -- ============================================
--- 10. SEASONAL DATA TABLE
+-- 11. SEASONAL DATA TABLE
 -- ============================================
 CREATE TABLE SeasonalData (
     seasonal_id INT PRIMARY KEY IDENTITY(1,1),
     destination_id INT NOT NULL,
     month INT CHECK (month BETWEEN 1 AND 12) NOT NULL,
-    avg_temperature DECIMAL(5,2), -- in Celsius
-    avg_rainfall DECIMAL(5,2), -- in mm
+    avg_temperature DECIMAL(5,2),
+    avg_rainfall DECIMAL(5,2),
     peak_season BIT DEFAULT 0,
     avg_hotel_cost DECIMAL(10,2),
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE,
-    UNIQUE(destination_id, month) -- One record per month per destination
+    UNIQUE(destination_id, month)
 );
 
 -- ============================================
--- 11. NOTIFICATIONS TABLE
+-- 12. TRIPS TABLE
+-- [SCHEMA-001 FIX] Persists user-planned trips
+-- ============================================
+CREATE TABLE Trips (
+    trip_id INT PRIMARY KEY IDENTITY(1,1),
+    user_id INT NOT NULL,
+    trip_name VARCHAR(255) NOT NULL,
+    start_date DATE,
+    end_date DATE,
+    number_of_travelers INT DEFAULT 1,
+    estimated_budget DECIMAL(10,2),
+    actual_cost DECIMAL(10,2),
+    trip_status VARCHAR(20) CHECK (trip_status IN ('Planning', 'Confirmed', 'Ongoing', 'Completed', 'Cancelled')) DEFAULT 'Planning',
+    notes TEXT,
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
+
+-- ============================================
+-- 13. TRIP DESTINATIONS TABLE
+-- [SCHEMA-001 FIX] Many-to-many: Trips <-> Destinations
+-- ============================================
+CREATE TABLE TripDestinations (
+    trip_destination_id INT PRIMARY KEY IDENTITY(1,1),
+    trip_id INT NOT NULL,
+    destination_id INT NOT NULL,
+    visit_order INT NOT NULL,       -- sequence order within the trip
+    planned_days INT DEFAULT 1,
+    hotel_id INT,                   -- optional hotel choice for this stop
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (trip_id) REFERENCES Trips(trip_id) ON DELETE CASCADE,
+    FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id),
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE SET NULL,
+    UNIQUE(trip_id, destination_id)
+);
+
+-- ============================================
+-- 14. NOTIFICATIONS TABLE
 -- ============================================
 CREATE TABLE Notifications (
     notification_id INT PRIMARY KEY IDENTITY(1,1),
     user_id INT NOT NULL,
-    type VARCHAR(50), -- 'Weather', 'Booking', 'System', 'Alert'
+    type VARCHAR(50),   -- 'Weather', 'Booking', 'System', 'Alert', 'Trip'
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
+    reference_id INT,               -- optional FK to the relevant entity (booking_id, trip_id, etc.)
+    reference_type VARCHAR(50),     -- 'Booking', 'Trip', 'Review', etc.
     is_read BIT DEFAULT 0,
     created_at DATETIME DEFAULT GETDATE(),
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
 
 -- ============================================
--- 12. ACTIVITY LOGS TABLE
+-- 15. ACTIVITY LOGS TABLE
 -- ============================================
 CREATE TABLE ActivityLogs (
     log_id INT PRIMARY KEY IDENTITY(1,1),
     user_id INT,
-    action VARCHAR(255) NOT NULL, -- e.g., 'LOGIN', 'SEARCH', 'BOOKING_CREATED'
+    action VARCHAR(255) NOT NULL,   -- 'LOGIN', 'SEARCH', 'BOOKING_CREATED', etc.
     ip_address VARCHAR(45),
     user_agent TEXT,
     created_at DATETIME DEFAULT GETDATE(),
@@ -208,22 +276,25 @@ CREATE TABLE ActivityLogs (
 );
 
 -- ============================================
--- 13. FLAGGED CONTENT TABLE
+-- 16. FLAGGED CONTENT TABLE
+-- [SCHEMA-004 FIX] renamed flagged_by -> reported_by; any user can report
 -- ============================================
 CREATE TABLE FlaggedContent (
     flag_id INT PRIMARY KEY IDENTITY(1,1),
-    content_type VARCHAR(50) NOT NULL, -- 'Review', 'Comment'
-    content_id INT NOT NULL, -- ID of the flagged item
-    flagged_by INT NOT NULL, -- Admin who flagged it
+    content_type VARCHAR(50) NOT NULL,  -- 'Review', 'HotelReview'
+    content_id INT NOT NULL,
+    reported_by INT NOT NULL,           -- any user (Tourist or Admin) can report
     reason TEXT,
     status VARCHAR(20) CHECK (status IN ('Pending', 'Reviewed', 'Resolved')) DEFAULT 'Pending',
+    reviewed_by INT,                    -- Admin who reviewed the flag
     created_at DATETIME DEFAULT GETDATE(),
     resolved_at DATETIME,
-    FOREIGN KEY (flagged_by) REFERENCES Users(user_id) ON DELETE NO ACTION
+    FOREIGN KEY (reported_by) REFERENCES Users(user_id) ON DELETE NO ACTION,
+    FOREIGN KEY (reviewed_by) REFERENCES Users(user_id) ON DELETE NO ACTION
 );
 
 -- ============================================
--- 14. SYSTEM SETTINGS TABLE
+-- 17. SYSTEM SETTINGS TABLE
 -- ============================================
 CREATE TABLE SystemSettings (
     setting_id INT PRIMARY KEY IDENTITY(1,1),
@@ -232,6 +303,7 @@ CREATE TABLE SystemSettings (
     description TEXT,
     updated_at DATETIME DEFAULT GETDATE()
 );
+
 
 -- ============================================
 -- INDEXES FOR PERFORMANCE
@@ -253,6 +325,7 @@ CREATE INDEX idx_hotels_manager ON Hotels(manager_id);
 CREATE INDEX idx_bookings_user ON Bookings(user_id);
 CREATE INDEX idx_bookings_hotel ON Bookings(hotel_id);
 CREATE INDEX idx_bookings_dates ON Bookings(check_in_date, check_out_date);
+CREATE INDEX idx_bookings_payment ON Bookings(payment_status);
 
 -- Favorites
 CREATE INDEX idx_favorites_user ON Favorites(user_id);
@@ -260,6 +333,17 @@ CREATE INDEX idx_favorites_user ON Favorites(user_id);
 -- Reviews
 CREATE INDEX idx_reviews_destination ON Reviews(destination_id);
 CREATE INDEX idx_reviews_user ON Reviews(user_id);
+
+-- HotelReviews
+CREATE INDEX idx_hotelreviews_hotel ON HotelReviews(hotel_id);
+CREATE INDEX idx_hotelreviews_user ON HotelReviews(user_id);
+
+-- Trips
+CREATE INDEX idx_trips_user ON Trips(user_id);
+CREATE INDEX idx_trips_status ON Trips(trip_status);
+
+-- TripDestinations
+CREATE INDEX idx_tripdestinations_trip ON TripDestinations(trip_id);
 
 -- Notifications
 CREATE INDEX idx_notifications_user ON Notifications(user_id);
@@ -269,65 +353,71 @@ CREATE INDEX idx_notifications_read ON Notifications(is_read);
 CREATE INDEX idx_activitylogs_user ON ActivityLogs(user_id);
 CREATE INDEX idx_activitylogs_action ON ActivityLogs(action);
 
+-- FlaggedContent
+CREATE INDEX idx_flaggedcontent_status ON FlaggedContent(status);
+CREATE INDEX idx_flaggedcontent_reporter ON FlaggedContent(reported_by);
+
 GO
 PRINT 'Database schema created successfully!';
 
-SELECT TABLE_NAME 
-FROM INFORMATION_SCHEMA.TABLES 
+SELECT TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
 WHERE TABLE_TYPE = 'BASE TABLE'
 ORDER BY TABLE_NAME;
 
 
--------------------------------------   SAMPLE DATA BEING INSERTED -------------------------------------
--------------------------------------------------------------------------------------------------------
--- Insert Admin User (Password: Admin@123)
+-- ============================================
+-- SAMPLE DATA
+-- ============================================
+
+-- Admin User (Password: Admin@123)
 INSERT INTO Users (email, password_hash, user_type, full_name, phone_number, cnic)
 VALUES ('admin@tripify.com', '$2a$10$xvBN8Zn9YZ5nZ5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z5Z', 'Admin', 'System Admin', '03001234567', '12345-1234567-1');
 
--- Insert Sample Destinations
+-- Sample Destinations
 INSERT INTO Destinations (name, country, city, description, latitude, longitude, image_url)
-VALUES 
+VALUES
 ('Hunza Valley', 'Pakistan', 'Gilgit-Baltistan', 'Beautiful mountain valley with stunning views', 36.3167, 74.6500, 'hunza.jpg'),
 ('Murree', 'Pakistan', 'Punjab', 'Popular hill station near Islamabad', 33.9062, 73.3903, 'murree.jpg'),
 ('Swat Valley', 'Pakistan', 'Khyber Pakhtunkhwa', 'Switzerland of Pakistan', 35.2227, 72.4258, 'swat.jpg'),
 ('Skardu', 'Pakistan', 'Gilgit-Baltistan', 'Gateway to K2 and mighty peaks', 35.2977, 75.6333, 'skardu.jpg'),
 ('Naran Kaghan', 'Pakistan', 'Khyber Pakhtunkhwa', 'Scenic valley with lakes and mountains', 34.9042, 73.6519, 'naran.jpg');
 
--- Insert Sample Hotels
+-- Sample Hotels
 INSERT INTO Hotels (destination_id, hotel_name, address, contact_number, star_rating, price_per_night, total_rooms, available_rooms, amenities)
-VALUES 
+VALUES
 (1, 'Hunza Serena Inn', 'Karimabad, Hunza', '03451234567', 4, 15000, 50, 45, 'WiFi, Restaurant, Parking'),
 (2, 'Pearl Continental Bhurban', 'Bhurban Road, Murree', '03451234568', 5, 25000, 100, 90, 'WiFi, Pool, Spa, Restaurant'),
 (3, 'Swat Serena Hotel', 'Saidu Sharif, Swat', '03451234569', 4, 18000, 60, 55, 'WiFi, Restaurant, Garden'),
 (4, 'Skardu Inn', 'Main Bazaar, Skardu', '03451234570', 3, 8000, 30, 28, 'WiFi, Restaurant'),
 (5, 'Naran Pines Hotel', 'Naran Valley', '03451234571', 3, 10000, 40, 35, 'WiFi, Restaurant, Parking');
 
--- Insert Sample Travel Guidelines
+-- Sample Travel Guidelines
 INSERT INTO TravelGuidelines (destination_id, title, content, category)
-VALUES 
+VALUES
 (1, 'Best Time to Visit', 'Visit Hunza between April to October for best weather', 'Season'),
 (1, 'Cultural Etiquette', 'Respect local customs and dress modestly', 'Culture'),
 (2, 'Winter Precautions', 'Roads may be closed due to snow in winter', 'Safety'),
 (3, 'Security Clearance', 'Check latest security situation before travel', 'Safety');
 
--- Insert Emergency Info
+-- Emergency Info
 INSERT INTO EmergencyInfo (destination_id, police_number, ambulance_number, tourist_helpline, nearest_hospital)
-VALUES 
+VALUES
 (1, '15', '1122', '051-111-888-444', 'District Hospital Gilgit'),
 (2, '15', '1122', '051-111-888-444', 'CMH Murree'),
 (3, '15', '1122', '0946-9230401', 'Saidu Teaching Hospital');
 
--- Insert Sample Souvenirs
+-- Sample Souvenirs
 INSERT INTO Souvenirs (destination_id, name, description, price, vendor_name)
-VALUES 
+VALUES
 (1, 'Hunza Cap', 'Traditional woolen cap', 500, 'Karimabad Handicrafts'),
 (1, 'Apricot Jam', 'Local organic apricot jam', 300, 'Hunza Organic'),
 (2, 'Shawls', 'Handmade woolen shawls', 2000, 'Murree Crafts'),
 (3, 'Emerald Stone', 'Natural emerald from Swat', 5000, 'Swat Gems');
 
--- Insert Seasonal Data for Hunza
+-- Seasonal Data for Hunza
 INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost)
-VALUES 
+VALUES
 (1, 4, 15.5, 30.2, 1, 18000),
 (1, 5, 20.3, 25.5, 1, 20000),
 (1, 6, 25.1, 15.3, 1, 22000),
@@ -336,26 +426,18 @@ VALUES
 (1, 9, 22.4, 18.7, 1, 20000),
 (1, 10, 16.2, 25.3, 0, 15000);
 
--- Insert System Settings
+-- System Settings
 INSERT INTO SystemSettings (setting_key, setting_value, description)
-VALUES 
+VALUES
 ('BASE_TRAVEL_COST_PER_DAY', '5000', 'Base cost per person per day for trip calculation'),
 ('WEATHER_API_KEY', 'your_api_key_here', 'OpenWeatherMap API Key'),
 ('GOOGLE_MAPS_API_KEY', 'your_api_key_here', 'Google Maps API Key');
 
 GO
-
 PRINT 'Sample data inserted successfully!';
 
-
--- Check users
+-- Quick verification
 SELECT * FROM Users;
-
--- Check destinations
 SELECT * FROM Destinations;
-
--- Check hotels
 SELECT * FROM Hotels;
-
--- Check souvenirs
 SELECT * FROM Souvenirs;

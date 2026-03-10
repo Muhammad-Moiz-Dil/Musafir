@@ -13,7 +13,7 @@ TRIPIFY/
 │   │           └── utility/
 │   │
 │   ├── src/
-│   │   └── pom.xml
+│      └── pom.xml
 │   
 │   
 │

@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tripify — Discover Pakistan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --navy:        #0d1b2a;
+            --navy-mid:    #1b4965;
+            --teal:        #1e6b8c;
+            --accent:      #f5a623;
+            --accent-dark: #d4891a;
+            --white:       #ffffff;
+            --font-sans:   'Inter', system-ui, sans-serif;
+            --font-display:'Playfair Display', Georgia, serif;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-sans);
+            background: var(--navy);
+            color: var(--white);
+            overflow-x: hidden;
+        }
+        a { text-decoration: none; }
+
+        /* ══════════════════════════════════
+           NAVBAR
+        ══════════════════════════════════ */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 1000;
+            padding: 22px 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.35s ease;
+        }
+        .navbar.scrolled {
+            background: rgba(13,27,42,0.94);
+            backdrop-filter: blur(14px);
+            padding: 14px 64px;
+            box-shadow: 0 2px 24px rgba(0,0,0,0.35);
+        }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+        .nav-logo-icon {
+            width: 42px; height: 42px;
+            background: var(--accent);
+            border-radius: 11px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 21px;
+            box-shadow: 0 4px 14px rgba(245,166,35,0.45);
+            flex-shrink: 0;
+        }
+        .nav-logo-text {
+            font-family: var(--font-display);
+            font-size: 25px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 38px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.75);
+            font-size: 15px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--white); }
+        .nav-actions { display: flex; align-items: center; gap: 12px; }
+
+        .btn-outline {
+            padding: 9px 24px;
+            border: 1.5px solid rgba(255,255,255,0.28);
+            border-radius: 9px;
+            color: var(--white);
+            background: transparent;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-outline:hover {
+            border-color: rgba(255,255,255,0.65);
+            background: rgba(255,255,255,0.07);
+        }
+        .btn-accent {
+            padding: 9px 24px;
+            border: none;
+            border-radius: 9px;
+            background: var(--accent);
+            color: var(--navy);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.22s;
+            box-shadow: 0 4px 14px rgba(245,166,35,0.38);
+        }
+        .btn-accent:hover {
+            background: var(--accent-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(245,166,35,0.48);
+        }
+
+        /* ══════════════════════════════════
+           HERO
+        ══════════════════════════════════ */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: linear-gradient(160deg, #0d1b2a 0%, #1b4965 60%, #1e6b8c 100%);
+        }
+        #hero-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .hero-mountains {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            width: 100%;
+            pointer-events: none;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            padding: 100px 24px 160px;
+            max-width: 860px;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245,166,35,0.14);
+            border: 1px solid rgba(245,166,35,0.35);
+            color: var(--accent);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 18px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            letter-spacing: 0.4px;
+            animation: fadeDown 0.8s ease both;
+        }
+        .hero-title {
+            font-family: var(--font-display);
+            font-size: clamp(42px, 6.5vw, 76px);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -1.5px;
+            color: var(--white);
+            margin-bottom: 26px;
+            animation: fadeUp 0.9s 0.15s ease both;
+        }
+        .hero-title .accent-word {
+            color: var(--accent);
+            font-style: italic;
+        }
+        .hero-title .line-wrap {
+            display: block;
+            overflow: hidden;
+        }
+        .hero-subtitle {
+            font-size: clamp(16px, 2vw, 19px);
+            color: rgba(255,255,255,0.68);
+            max-width: 600px;
+            margin: 0 auto 48px;
+            line-height: 1.72;
+            animation: fadeUp 0.9s 0.3s ease both;
+        }
+        .hero-cta {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            animation: fadeUp 0.9s 0.45s ease both;
+        }
+        .btn-hero-primary {
+            padding: 16px 38px;
+            background: var(--accent);
+            color: var(--navy);
+            font-size: 16px;
+            font-weight: 700;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.25s;
+            box-shadow: 0 6px 22px rgba(245,166,35,0.42);
+        }
+        .btn-hero-primary:hover {
+            background: var(--accent-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(245,166,35,0.52);
+        }
+        .btn-hero-ghost {
+            padding: 16px 38px;
+            background: rgba(255,255,255,0.08);
+            color: var(--white);
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid rgba(255,255,255,0.28);
+            border-radius: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            transition: all 0.25s;
+        }
+        .btn-hero-ghost:hover {
+            border-color: rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.13);
+            transform: translateY(-2px);
+        }
+        .hero-scroll-hint {
+            position: absolute;
+            bottom: 38px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            z-index: 2;
+            animation: fadeIn 1.2s 1.2s ease both;
+            opacity: 0;
+        }
+        .scroll-mouse {
+            width: 26px; height: 40px;
+            border: 2px solid rgba(255,255,255,0.22);
+            border-radius: 13px;
+            position: relative;
+        }
+        .scroll-mouse::after {
+            content: '';
+            position: absolute;
+            top: 7px; left: 50%;
+            transform: translateX(-50%);
+            width: 4px; height: 8px;
+            background: var(--accent);
+            border-radius: 2px;
+            animation: scrollBob 2s ease infinite;
+        }
+        @keyframes scrollBob {
+            0%,100% { top: 7px; opacity: 1; }
+            50% { top: 20px; opacity: 0.3; }
+        }
+        .scroll-label {
+            font-size: 11px;
+            color: rgba(255,255,255,0.35);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* ══════════════════════════════════
+           STATS STRIP
+        ══════════════════════════════════ */
+        .stats-strip {
+            background: rgba(245,166,35,0.07);
+            border-top: 1px solid rgba(245,166,35,0.14);
+            border-bottom: 1px solid rgba(245,166,35,0.14);
+            padding: 32px 60px;
+            display: flex;
+            justify-content: center;
+            gap: 80px;
+            flex-wrap: wrap;
+        }
+        .stat { text-align: center; }
+        .stat-num {
+            font-family: var(--font-display);
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .stat-lbl {
+            font-size: 13px;
+            color: rgba(255,255,255,0.50);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        /* ══════════════════════════════════
+           SHARED SECTION STYLES
+        ══════════════════════════════════ */
+        .section { padding: 110px 64px; }
+        .section-tag {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 16px;
+        }
+        .section-title {
+            font-family: var(--font-display);
+            font-size: clamp(30px, 4vw, 48px);
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1.18;
+            margin-bottom: 16px;
+        }
+        .section-title span { color: var(--accent); }
+        .section-sub {
+            font-size: 17px;
+            color: rgba(255,255,255,0.56);
+            line-height: 1.72;
+        }
+
+        /* ══════════════════════════════════
+           FEATURES
+        ══════════════════════════════════ */
+        .features-section {
+            background: linear-gradient(180deg, #0d1b2a 0%, #0f2235 100%);
+        }
+        .features-head { text-align: center; margin-bottom: 64px; }
+        .features-head .section-sub { max-width: 540px; margin: 0 auto; }
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
+            gap: 22px;
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+        .f-card {
+            background: rgba(255,255,255,0.038);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 22px;
+            padding: 36px 30px;
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.6s ease, transform 0.6s ease,
+                        background 0.25s, border-color 0.25s;
+        }
+        .f-card.visible { opacity: 1; transform: translateY(0); }
+        .f-card:hover {
+            background: rgba(255,255,255,0.065);
+            border-color: rgba(245,166,35,0.22);
+            transform: translateY(-5px) !important;
+        }
+        .f-icon {
+            width: 58px; height: 58px;
+            background: rgba(245,166,35,0.11);
+            border: 1px solid rgba(245,166,35,0.22);
+            border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 27px;
+            margin-bottom: 22px;
+        }
+        .f-title { font-size: 18px; font-weight: 600; color: var(--white); margin-bottom: 10px; }
+        .f-desc  { font-size: 14.5px; color: rgba(255,255,255,0.50); line-height: 1.72; }
+
+        /* ══════════════════════════════════
+           DESTINATIONS
+        ══════════════════════════════════ */
+        .dest-section { background: #0a1520; }
+        .dest-head { margin-bottom: 52px; }
+        .dest-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 18px;
+            max-width: 1180px;
+            margin: 0 auto;
+        }
+        .d-card {
+            border-radius: 18px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 3/4;
+            cursor: pointer;
+            opacity: 0;
+            transform: scale(0.94) translateY(16px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .d-card.visible { opacity: 1; transform: scale(1) translateY(0); }
+        .d-card:hover .d-bg { transform: scale(1.07); }
+        .d-card:hover { transform: scale(1) translateY(-6px) !important; }
+        .d-bg {
+            position: absolute; inset: 0;
+            transition: transform 0.5s ease;
+        }
+        .d-hunza  .d-bg { background: linear-gradient(170deg,#1a2a6c 0%,#b21f1f 55%,#fdbb2d 100%); }
+        .d-murree .d-bg { background: linear-gradient(170deg,#134e5e 0%,#71b280 100%); }
+        .d-swat   .d-bg { background: linear-gradient(170deg,#355c7d 0%,#6c5b7b 55%,#c06c84 100%); }
+        .d-skardu .d-bg { background: linear-gradient(170deg,#0f2027 0%,#203a43 55%,#2c5364 100%); }
+        .d-naran  .d-bg { background: linear-gradient(170deg,#003344 0%,#0a9396 55%,#94d2bd 100%); }
+        .d-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 55%);
+        }
+        .d-mountains {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            opacity: 0.13;
+        }
+        .d-info {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 18px 16px;
+        }
+        .d-name {
+            font-family: var(--font-display);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 3px;
+        }
+        .d-region { font-size: 11.5px; color: rgba(255,255,255,0.60); font-weight: 500; }
+        .d-badge {
+            position: absolute;
+            top: 12px; right: 12px;
+            background: rgba(245,166,35,0.9);
+            color: #1a1a1a;
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 20px;
+        }
+
+        /* ══════════════════════════════════
+           HOW IT WORKS
+        ══════════════════════════════════ */
+        .hiw-section {
+            background: linear-gradient(180deg,#0a1520 0%,#0d1b2a 100%);
+            text-align: center;
+        }
+        .hiw-head { margin-bottom: 70px; }
+        .steps-row {
+            display: flex;
+            justify-content: center;
+            max-width: 860px;
+            margin: 0 auto;
+            position: relative;
+            gap: 0;
+        }
+        .steps-row::before {
+            content: '';
+            position: absolute;
+            top: 36px; left: 18%; right: 18%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(245,166,35,0.25), transparent);
+        }
+        .step-item {
+            flex: 1;
+            padding: 0 22px;
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .step-item.visible { opacity: 1; transform: translateY(0); }
+        .step-num {
+            width: 72px; height: 72px;
+            background: linear-gradient(135deg,#1b4965,#1e6b8c);
+            border: 2px solid rgba(245,166,35,0.28);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display);
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 0 auto 22px;
+            position: relative;
+            z-index: 1;
+        }
+        .step-title { font-size: 17px; font-weight: 600; color: var(--white); margin-bottom: 9px; }
+        .step-desc  { font-size: 14px; color: rgba(255,255,255,0.48); line-height: 1.65; }
+
+        /* ══════════════════════════════════
+           CTA SECTION
+        ══════════════════════════════════ */
+        .cta-section {
+            padding: 90px 64px;
+            background: linear-gradient(135deg,#1b4965 0%,#1e6b8c 50%,#0d1b2a 100%);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            top: -90px; right: -90px;
+            width: 340px; height: 340px;
+            background: rgba(245,166,35,0.07);
+            border-radius: 50%;
+        }
+        .cta-section::after {
+            content: '';
+            position: absolute;
+            bottom: -70px; left: -70px;
+            width: 260px; height: 260px;
+            background: rgba(245,166,35,0.06);
+            border-radius: 50%;
+        }
+        .cta-title {
+            font-family: var(--font-display);
+            font-size: clamp(28px,4vw,46px);
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 16px;
+            position: relative; z-index: 1;
+        }
+        .cta-sub {
+            font-size: 17px;
+            color: rgba(255,255,255,0.65);
+            margin-bottom: 42px;
+            position: relative; z-index: 1;
+        }
+        .cta-btns {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative; z-index: 1;
+        }
+
+        /* ══════════════════════════════════
+           FOOTER
+        ══════════════════════════════════ */
+        footer {
+            background: #070d13;
+            padding: 36px 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            flex-wrap: wrap;
+            gap: 14px;
+        }
+        .footer-brand { display: flex; align-items: center; gap: 10px; }
+        .footer-brand span {
+            font-family: var(--font-display);
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        footer p { font-size: 13px; color: rgba(255,255,255,0.30); }
+
+        /* ══════════════════════════════════
+           REGISTER MODAL
+        ══════════════════════════════════ */
+        .modal-bg {
+            position: fixed; inset: 0;
+            background: rgba(7,13,19,0.88);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-bg.open { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: linear-gradient(160deg, #0f2235 0%, #1b4965 100%);
+            border: 1px solid rgba(255,255,255,0.10);
+            border-radius: 28px;
+            padding: 50px 46px;
+            max-width: 540px;
+            width: 100%;
+            position: relative;
+            transform: translateY(30px) scale(0.97);
+            transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+        }
+        .modal-bg.open .modal-box {
+            transform: translateY(0) scale(1);
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 16px; right: 16px;
+            width: 36px; height: 36px;
+            background: rgba(255,255,255,0.07);
+            border: none; border-radius: 9px;
+            color: rgba(255,255,255,0.55);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 19px;
+            transition: all 0.2s;
+        }
+        .modal-close-btn:hover {
+            background: rgba(255,255,255,0.14);
+            color: var(--white);
+        }
+        .modal-heading {
+            font-family: var(--font-display);
+            font-size: 30px;
+            font-weight: 700;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .modal-subtext {
+            font-size: 15px;
+            color: rgba(255,255,255,0.52);
+            text-align: center;
+            margin-bottom: 38px;
+        }
+        .role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .role-option {
+            background: rgba(255,255,255,0.045);
+            border: 2px solid rgba(255,255,255,0.09);
+            border-radius: 18px;
+            padding: 30px 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: block;
+            text-decoration: none;
+        }
+        .role-option:hover {
+            background: rgba(245,166,35,0.10);
+            border-color: rgba(245,166,35,0.42);
+            transform: translateY(-4px);
+        }
+        .role-emoji { font-size: 38px; margin-bottom: 13px; display: block; }
+        .role-name  { font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 6px; }
+        .role-hint  { font-size: 12.5px; color: rgba(255,255,255,0.44); line-height: 1.5; }
+        .modal-admin-note {
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255,255,255,0.38);
+        }
+        .modal-admin-note a {
+            color: var(--accent);
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .modal-admin-note a:hover { text-decoration: underline; }
+
+        /* ══════════════════════════════════
+           KEYFRAMES & REVEAL
+        ══════════════════════════════════ */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(28px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.65s ease, transform 0.65s ease;
+        }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+
+        /* ══════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════ */
+        @media (max-width: 1100px) {
+            .dest-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 768px) {
+            .navbar, .navbar.scrolled { padding: 14px 20px; }
+            .nav-links { display: none; }
+            .section { padding: 72px 22px; }
+            .cta-section { padding: 68px 22px; }
+            .stats-strip { gap: 36px; padding: 26px 22px; }
+            .dest-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps-row { flex-direction: column; gap: 36px; align-items: center; }
+            .steps-row::before { display: none; }
+            .role-grid { grid-template-columns: 1fr; }
+            .modal-box { padding: 36px 22px; }
+            footer { padding: 28px 22px; justify-content: center; text-align: center; }
+        }
+        @media (max-width: 480px) {
+            .dest-grid { grid-template-columns: 1fr 1fr; }
+            .hero-title { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     NAVBAR
+══════════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+    <div class="nav-logo">
+        <div class="nav-logo-icon">✈</div>
+        <span class="nav-logo-text">Tripify</span>
+    </div>
+    <ul class="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#destinations">Destinations</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+    </ul>
+    <div class="nav-actions">
+        <a href="src/html/pages/auth/login.html" class="btn-outline">Log In</a>
+        <button class="btn-accent" onclick="openModal()">Register</button>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     HERO
+══════════════════════════════════════ -->
+<section class="hero" id="home">
+    <canvas id="hero-canvas"></canvas>
+
+    <!-- Layered mountain silhouette -->
+    <svg class="hero-mountains" viewBox="0 0 1440 230" fill="none"
+         preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon
+            points="0,230 150,68 260,115 400,32 540,102 680,18 820,88 960,38 1100,80 1240,34 1360,72 1440,48 1440,230"
+            fill="rgba(13,27,42,0.5)"/>
+        <polygon
+            points="0,230 100,108 220,148 360,62 490,118 630,44 770,108 900,55 1050,95 1190,52 1310,85 1410,60 1440,72 1440,230"
+            fill="rgba(13,27,42,0.75)"/>
+        <polygon
+            points="0,230 80,148 200,170 340,118 460,155 600,108 720,142 840,108 980,138 1120,112 1260,132 1390,115 1440,120 1440,230"
+            fill="#0d1b2a"/>
+    </svg>
+
+    <div class="hero-content">
+        <div class="hero-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+            Pakistan's Smart Travel Platform
+        </div>
+
+        <h1 class="hero-title">
+            <span class="line-wrap">Discover</span>
+            <span class="line-wrap"><span class="accent-word">Pakistan's</span></span>
+            <span class="line-wrap">Hidden Wonders</span>
+        </h1>
+
+        <p class="hero-subtitle">
+            From the sky-high peaks of Hunza to the emerald valleys of Swat —
+            plan unforgettable journeys across Pakistan's most breathtaking destinations.
+        </p>
+
+        <div class="hero-cta">
+            <button class="btn-hero-primary" onclick="openModal()">
+                Start Exploring Free
+            </button>
+            <a href="src/html/pages/auth/login.html" class="btn-hero-ghost">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                    <polyline points="10 17 15 12 10 7"/>
+                    <line x1="15" y1="12" x2="3" y2="12"/>
+                </svg>
+                Log In
+            </a>
+        </div>
+    </div>
+
+    <div class="hero-scroll-hint">
+        <div class="scroll-mouse"></div>
+        <span class="scroll-label">Scroll to explore</span>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     STATS STRIP
+══════════════════════════════════════ -->
+<div class="stats-strip">
+    <div class="stat"><div class="stat-num" data-target="5">0</div><div class="stat-lbl">Destinations</div></div>
+    <div class="stat"><div class="stat-num" data-target="12">0</div><div class="stat-lbl">Partner Hotels</div></div>
+    <div class="stat"><div class="stat-num" data-target="500">0</div><div class="stat-lbl">Travelers Served</div></div>
+    <div class="stat"><div class="stat-num" data-target="200">0</div><div class="stat-lbl">Reviews</div></div>
+</div>
+
+<!-- ══════════════════════════════════════
+     FEATURES
+══════════════════════════════════════ -->
+<section class="section features-section" id="features">
+    <div class="features-head reveal">
+        <span class="section-tag">Why Tripify</span>
+        <h2 class="section-title">Everything You Need to<br><span>Travel Smart</span></h2>
+        <p class="section-sub">From trip planning to hotel booking and local discovery — built specifically for Pakistan's wanderers.</p>
+    </div>
+    <div class="features-grid">
+        <div class="f-card" style="transition-delay:0.00s">
+            <div class="f-icon">🗺️</div>
+            <h3 class="f-title">Smart Trip Planning</h3>
+            <p class="f-desc">Build multi-destination itineraries with ease. Set budgets, pick stops, and organize your entire journey in one place.</p>
+        </div>
+        <div class="f-card" style="transition-delay:0.10s">
+            <div class="f-icon">🏨</div>
+            <h3 class="f-title">Hotel Bookings</h3>
+            <p class="f-desc">Browse and book verified hotels at every destination. Real reviews from real travelers before you commit.</p>
+        </div>
+        <div class="f-card" style="transition-delay:0.20s">
+            <div class="f-icon">🧭</div>
+            <h3 class="f-title">Destination Guides</h3>
+            <p class="f-desc">Deep-dive destination guides covering weather, culture, visa tips, seasonal data, and souvenirs.</p>
+        </div>
+        <div class="f-card" style="transition-delay:0.30s">
+            <div class="f-icon">🛡️</div>
+            <h3 class="f-title">Travel Safety</h3>
+            <p class="f-desc">Up-to-date emergency contacts, travel guidelines, and safety advisories for every region of Pakistan.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     DESTINATIONS
+══════════════════════════════════════ -->
+<section class="section dest-section" id="destinations">
+    <div class="dest-head reveal">
+        <span class="section-tag">Top Destinations</span>
+        <h2 class="section-title">Explore <span>Pakistan's</span> Finest</h2>
+        <p class="section-sub">Five iconic destinations, each with its own story, culture, and scenery that will take your breath away.</p>
+    </div>
+    <div class="dest-grid">
+
+        <!-- Hunza -->
+        <div class="d-card d-hunza" style="transition-delay:0.00s">
+            <div class="d-bg"></div>
+            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
+                <polygon points="0,300 40,120 70,160 110,58 140,130 170,82 200,110 200,300" fill="white"/>
+                <polygon points="102,58 110,18 118,58" fill="white" opacity="0.8"/>
+            </svg>
+            <div class="d-overlay"></div>
+            <span class="d-badge">⭐ Most Popular</span>
+            <div class="d-info">
+                <div class="d-name">Hunza Valley</div>
+                <div class="d-region">Gilgit-Baltistan</div>
+            </div>
+        </div>
+
+        <!-- Murree -->
+        <div class="d-card d-murree" style="transition-delay:0.08s">
+            <div class="d-bg"></div>
+            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
+                <polygon points="0,300 50,150 90,190 130,100 160,145 200,115 200,300" fill="white"/>
+            </svg>
+            <div class="d-overlay"></div>
+            <div class="d-info">
+                <div class="d-name">Murree</div>
+                <div class="d-region">Punjab</div>
+            </div>
+        </div>
+
+        <!-- Swat -->
+        <div class="d-card d-swat" style="transition-delay:0.16s">
+            <div class="d-bg"></div>
+            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
+                <polygon points="0,300 45,138 88,168 128,88 158,128 195,98 200,105 200,300" fill="white"/>
+            </svg>
+            <div class="d-overlay"></div>
+            <span class="d-badge">🌿 Scenic</span>
+            <div class="d-info">
+                <div class="d-name">Swat Valley</div>
+                <div class="d-region">Khyber Pakhtunkhwa</div>
+            </div>
+        </div>
+
+        <!-- Skardu -->
+        <div class="d-card d-skardu" style="transition-delay:0.24s">
+            <div class="d-bg"></div>
+            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
+                <polygon points="0,300 30,130 68,158 108,48 148,108 178,68 200,88 200,300" fill="white"/>
+                <polygon points="100,48 110,8 120,48" fill="white" opacity="0.9"/>
+            </svg>
+            <div class="d-overlay"></div>
+            <span class="d-badge">🏔️ K2 Gateway</span>
+            <div class="d-info">
+                <div class="d-name">Skardu</div>
+                <div class="d-region">Gilgit-Baltistan</div>
+            </div>
+        </div>
+
+        <!-- Naran -->
+        <div class="d-card d-naran" style="transition-delay:0.32s">
+            <div class="d-bg"></div>
+            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
+                <polygon points="0,300 48,158 88,188 128,108 158,148 198,118 200,122 200,300" fill="white"/>
+            </svg>
+            <div class="d-overlay"></div>
+            <div class="d-info">
+                <div class="d-name">Naran Kaghan</div>
+                <div class="d-region">Khyber Pakhtunkhwa</div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     HOW IT WORKS
+══════════════════════════════════════ -->
+<section class="section hiw-section" id="how-it-works">
+    <div class="hiw-head reveal">
+        <span class="section-tag">Get Started</span>
+        <h2 class="section-title">Up &amp; Running in <span>3 Steps</span></h2>
+    </div>
+    <div class="steps-row">
+        <div class="step-item" style="transition-delay:0.00s">
+            <div class="step-num">1</div>
+            <h3 class="step-title">Create Your Account</h3>
+            <p class="step-desc">Sign up as a Tourist or Hotel Manager in under two minutes — completely free.</p>
+        </div>
+        <div class="step-item" style="transition-delay:0.15s">
+            <div class="step-num">2</div>
+            <h3 class="step-title">Explore &amp; Plan</h3>
+            <p class="step-desc">Browse destinations, compare hotels, and build your personalized trip itinerary.</p>
+        </div>
+        <div class="step-item" style="transition-delay:0.30s">
+            <div class="step-num">3</div>
+            <h3 class="step-title">Book &amp; Travel</h3>
+            <p class="step-desc">Confirm your bookings, pack your bags, and discover the real Pakistan!</p>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     CTA SECTION
+══════════════════════════════════════ -->
+<section class="cta-section">
+    <h2 class="cta-title">Ready to Explore Pakistan?</h2>
+    <p class="cta-sub">Join Tripify today — it's free and takes less than a minute.</p>
+    <div class="cta-btns">
+        <button class="btn-hero-primary" onclick="openModal()">Create Free Account</button>
+        <a href="src/html/pages/auth/login.html" class="btn-hero-ghost">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                <polyline points="10 17 15 12 10 7"/>
+                <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            Already have an account?
+        </a>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     FOOTER
+══════════════════════════════════════ -->
+<footer>
+    <div class="footer-brand">
+        <div class="nav-logo-icon" style="width:32px;height:32px;font-size:16px;">✈</div>
+        <span>Tripify</span>
+    </div>
+    <p>&copy; 2025 Tripify — Built for Pakistan's wanderers.</p>
+</footer>
+
+<!-- ══════════════════════════════════════
+     REGISTER MODAL
+══════════════════════════════════════ -->
+<div class="modal-bg" id="modalBg" onclick="handleBgClick(event)">
+    <div class="modal-box">
+        <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">✕</button>
+
+        <h2 class="modal-heading">Join Tripify As…</h2>
+        <p class="modal-subtext">Pick your account type to get started</p>
+
+        <div class="role-grid">
+            <a href="src/html/pages/auth/register.html" class="role-option">
+                <span class="role-emoji">🧳</span>
+                <div class="role-name">Tourist</div>
+                <div class="role-hint">Plan trips, book hotels &amp; explore Pakistan's destinations</div>
+            </a>
+            <a href="src/html/pages/auth/hm-register.html" class="role-option">
+                <span class="role-emoji">🏨</span>
+                <div class="role-name">Hotel Manager</div>
+                <div class="role-hint">List and manage your hotel property on Tripify</div>
+            </a>
+        </div>
+
+        <p class="modal-admin-note">
+            Already have an account?
+            <a href="src/html/pages/auth/login.html">Log in here</a>
+            &nbsp;·&nbsp;
+            Admin? <a href="src/html/pages/auth/admin-login.html">Admin Panel →</a>
+        </p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════ -->
+<script>
+(function () {
+    'use strict';
+
+    /* ── Navbar scroll effect ─────────────── */
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+        navbar.classList.toggle('scrolled', window.scrollY > 50);
+    }, { passive: true });
+
+    /* ── Particle canvas ──────────────────── */
+    const canvas = document.getElementById('hero-canvas');
+    const ctx    = canvas.getContext('2d');
+
+    function resizeCanvas() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas, { passive: true });
+
+    function mkParticle() {
+        return {
+            x:     Math.random() * canvas.width,
+            y:     Math.random() * canvas.height,
+            r:     Math.random() * 1.4 + 0.3,
+            vx:    (Math.random() - 0.5) * 0.28,
+            vy:    -Math.random() * 0.38 - 0.08,
+            alpha: Math.random() * 0.45 + 0.08,
+            life:  1,
+            decay: Math.random() * 0.0028 + 0.0009,
+        };
+    }
+
+    const particles = [];
+    for (let i = 0; i < 140; i++) particles.push(mkParticle());
+
+    function drawParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < particles.length; i++) {
+            const p = particles[i];
+            p.x  += p.vx;
+            p.y  += p.vy;
+            p.life -= p.decay;
+            if (p.life <= 0 || p.y < -10) {
+                particles[i]   = mkParticle();
+                particles[i].y = canvas.height + 4;
+            }
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(255,255,255,${(p.alpha * p.life).toFixed(3)})`;
+            ctx.fill();
+        }
+        requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    /* ── Intersection observer — scroll reveal ─ */
+    const revealObs = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.10 });
+
+    document.querySelectorAll(
+        '.reveal, .f-card, .d-card, .step-item'
+    ).forEach(el => revealObs.observe(el));
+
+    /* ── Counter animation ─────────────────── */
+    const counterObs = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            const el     = e.target;
+            const target = parseInt(el.dataset.target, 10);
+            const suffix = target >= 100 ? '+' : '';
+            const dur    = 1800;
+            const inc    = target / (dur / 16);
+            let cur      = 0;
+            const timer  = setInterval(() => {
+                cur = Math.min(cur + inc, target);
+                el.textContent = Math.floor(cur) + suffix;
+                if (cur >= target) clearInterval(timer);
+            }, 16);
+            counterObs.unobserve(el);
+        });
+    }, { threshold: 0.5 });
+
+    document.querySelectorAll('[data-target]').forEach(el => counterObs.observe(el));
+
+    /* ── Modal ─────────────────────────────── */
+    const bg = document.getElementById('modalBg');
+
+    window.openModal = function () {
+        bg.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeModal = function () {
+        bg.classList.remove('open');
+        document.body.style.overflow = '';
+    };
+
+    window.handleBgClick = function (e) {
+        if (e.target === bg) window.closeModal();
+    };
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') window.closeModal();
+    });
+
+})();
+</script>
+
+</body>
+</html>

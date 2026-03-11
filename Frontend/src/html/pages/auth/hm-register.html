@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hotel Manager Registration — Tripify</title>
+    <link rel="stylesheet" href="../../../css/pages/auth.css" />
+    <style>
+        .auth-panel {
+            background: linear-gradient(160deg, #1a0838 0%, #2d1b69 50%, #4a30b0 100%);
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #2d1b69 0%, #4a30b0 100%);
+            box-shadow: 0 4px 14px rgba(45,27,105,0.40);
+        }
+        .btn-submit:hover {
+            box-shadow: 0 6px 20px rgba(45,27,105,0.50);
+        }
+        .auth-card__subtitle a,
+        .auth-card__subtitle a:hover { color: #2d1b69; }
+        .form-input:focus { border-color: #2d1b69; box-shadow: 0 0 0 3px rgba(45,27,105,0.15); }
+        .type-option input:checked + .type-option__label {
+            border-color: #2d1b69;
+            background: #f3f0ff;
+            box-shadow: 0 0 0 3px rgba(45,27,105,0.10);
+        }
+        .type-option input:checked + .type-option__label .type-option__title { color: #2d1b69; }
+    </style>
+</head>
+<body>
+
+<div class="auth-page">
+
+    <!-- ════════════════════════════════════════
+         LEFT PANEL  — Branding
+         ════════════════════════════════════════ -->
+    <aside class="auth-panel" aria-hidden="true">
+
+        <div class="auth-panel__logo">
+            <div class="auth-panel__logo-icon">✈</div>
+            <span class="auth-panel__logo-text">Tripify</span>
+        </div>
+
+        <div class="auth-panel__body">
+            <div>
+                <h1 class="auth-panel__heading">
+                    Grow Your<br>
+                    <span>Hotel</span><br>
+                    Business
+                </h1>
+                <p class="auth-panel__tagline">
+                    List your property on Tripify and reach thousands of tourists exploring Pakistan's finest destinations.
+                </p>
+            </div>
+
+            <!-- Hotel SVG illustration -->
+            <div class="auth-panel__illustration">
+                <svg viewBox="0 0 420 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="buildingGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+                            <stop offset="100%" stop-color="rgba(255,255,255,0.06)"/>
+                        </linearGradient>
+                    </defs>
+                    <!-- Ground -->
+                    <rect x="0" y="175" width="420" height="25" fill="rgba(255,255,255,0.06)"/>
+                    <!-- Main building -->
+                    <rect x="120" y="60" width="180" height="115" fill="url(#buildingGrad)" rx="2"/>
+                    <!-- Roof -->
+                    <polygon points="110,60 210,20 310,60" fill="rgba(255,255,255,0.12)"/>
+                    <!-- Windows row 1 -->
+                    <rect x="140" y="80" width="25" height="20" fill="rgba(245,166,35,0.5)" rx="2"/>
+                    <rect x="178" y="80" width="25" height="20" fill="rgba(245,166,35,0.5)" rx="2"/>
+                    <rect x="216" y="80" width="25" height="20" fill="rgba(255,255,255,0.3)" rx="2"/>
+                    <rect x="254" y="80" width="25" height="20" fill="rgba(245,166,35,0.5)" rx="2"/>
+                    <!-- Windows row 2 -->
+                    <rect x="140" y="112" width="25" height="20" fill="rgba(255,255,255,0.3)" rx="2"/>
+                    <rect x="178" y="112" width="25" height="20" fill="rgba(245,166,35,0.5)" rx="2"/>
+                    <rect x="216" y="112" width="25" height="20" fill="rgba(245,166,35,0.5)" rx="2"/>
+                    <rect x="254" y="112" width="25" height="20" fill="rgba(255,255,255,0.3)" rx="2"/>
+                    <!-- Door -->
+                    <rect x="193" y="145" width="34" height="30" fill="rgba(255,255,255,0.15)" rx="2"/>
+                    <!-- Side buildings -->
+                    <rect x="50" y="100" width="65" height="75" fill="rgba(255,255,255,0.07)" rx="2"/>
+                    <rect x="305" y="110" width="65" height="65" fill="rgba(255,255,255,0.07)" rx="2"/>
+                    <!-- Stars -->
+                    <circle cx="40" cy="30" r="1.5" fill="rgba(255,255,255,0.6)"/>
+                    <circle cx="100" cy="20" r="1" fill="rgba(255,255,255,0.5)"/>
+                    <circle cx="370" cy="28" r="1.5" fill="rgba(255,255,255,0.6)"/>
+                    <circle cx="380" cy="45" r="1" fill="rgba(255,255,255,0.45)"/>
+                    <!-- Moon -->
+                    <circle cx="370" cy="38" r="14" fill="rgba(245,166,35,0.25)"/>
+                    <circle cx="376" cy="34" r="11" fill="rgba(15,74,40,0.55)"/>
+                </svg>
+            </div>
+
+            <ul class="auth-panel__features">
+                <li class="auth-panel__feature">
+                    <span class="auth-panel__feature-dot"></span>
+                    List and manage your hotel rooms
+                </li>
+                <li class="auth-panel__feature">
+                    <span class="auth-panel__feature-dot"></span>
+                    Receive bookings from tourists across Pakistan
+                </li>
+                <li class="auth-panel__feature">
+                    <span class="auth-panel__feature-dot"></span>
+                    Track reviews and manage availability
+                </li>
+            </ul>
+        </div>
+
+        <p class="auth-panel__footer">&copy; 2025 Tripify. All rights reserved.</p>
+    </aside>
+
+    <!-- ════════════════════════════════════════
+         RIGHT PANEL — Registration Form
+         ════════════════════════════════════════ -->
+    <main class="auth-form-area">
+        <div class="auth-card">
+
+            <!-- Header -->
+            <div class="auth-card__header">
+                <h2 class="auth-card__title">Join as Hotel Manager</h2>
+                <p class="auth-card__subtitle">
+                    Already have an account?
+                    <a href="login.html">Log in</a>
+                    &nbsp;|&nbsp; Are you a
+                    <a href="register.html">Tourist?</a>
+                </p>
+            </div>
+
+            <!-- Alert banner -->
+            <div class="alert alert--error" id="alertBanner" role="alert">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.75 4a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0V5zm-.75 6a.875.875 0 110-1.75A.875.875 0 018 11z"/>
+                </svg>
+                <span id="alertMessage"></span>
+            </div>
+
+            <!-- Form -->
+            <form id="registerForm" novalidate>
+
+                <div class="form-grid">
+
+                    <!-- Full Name -->
+                    <div class="form-group form-group--full">
+                        <label class="form-label" for="fullName">
+                            Full Name <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
+                                </svg>
+                            </span>
+                            <input type="text" id="fullName" name="fullName" class="form-input"
+                                placeholder="Muhammad Ali Khan" autocomplete="name" required />
+                        </div>
+                        <span class="form-error" id="fullNameError"></span>
+                    </div>
+
+                    <!-- Email -->
+                    <div class="form-group form-group--full">
+                        <label class="form-label" for="email">
+                            Email Address <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                    <path d="M2 7l10 7 10-7"/>
+                                </svg>
+                            </span>
+                            <input type="email" id="email" name="email" class="form-input"
+                                placeholder="you@example.com" autocomplete="email" required />
+                        </div>
+                        <span class="form-error" id="emailError"></span>
+                    </div>
+
+                    <!-- Password -->
+                    <div class="form-group">
+                        <label class="form-label" for="password">
+                            Password <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper has-toggle">
+                            <span class="input-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                                </svg>
+                            </span>
+                            <input type="password" id="password" name="password" class="form-input"
+                                placeholder="Min. 8 characters" autocomplete="new-password" required />
+                            <button type="button" class="password-toggle" id="togglePassword" aria-label="Show password">
+                                <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="password-strength" id="passwordStrength" style="display:none">
+                            <div class="strength-bar">
+                                <div class="strength-bar__fill" id="strengthFill"></div>
+                            </div>
+                            <span class="strength-label" id="strengthLabel"></span>
+                        </div>
+                        <span class="form-error" id="passwordError"></span>
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="form-group">
+                        <label class="form-label" for="confirmPassword">
+                            Confirm Password <span class="required">*</span>
+                        </label>
+                        <div class="input-wrapper has-toggle">
+                            <span class="input-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M9 12l2 2 4-4"/>
+                                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                                </svg>
+                            </span>
+                            <input type="password" id="confirmPassword" name="confirmPassword" class="form-input"
+                                placeholder="Repeat your password" autocomplete="new-password" required />
+                            <button type="button" class="password-toggle" id="toggleConfirm" aria-label="Show password">
+                                <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none" aria-hidden="true">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <span class="form-error" id="confirmPasswordError"></span>
+                    </div>
+
+                </div>
+
+                <!-- Optional fields -->
+                <p class="form-section-label">Optional Details</p>
+
+                <div class="form-grid">
+
+                    <!-- Phone Number -->
+                    <div class="form-group">
+                        <label class="form-label" for="phoneNumber">
+                            Phone Number <span class="optional">(optional)</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81a19.79 19.79 0 01-3.07-8.68A2 2 0 012 1h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 8.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+                                </svg>
+                            </span>
+                            <input type="tel" id="phoneNumber" name="phoneNumber" class="form-input"
+                                placeholder="0300-0000000" autocomplete="tel" maxlength="12" />
+                        </div>
+                        <span class="form-error" id="phoneError"></span>
+                    </div>
+
+                    <!-- CNIC -->
+                    <div class="form-group">
+                        <label class="form-label" for="cnic">
+                            CNIC <span class="optional">(optional)</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                                    <line x1="2" y1="10" x2="22" y2="10"/>
+                                </svg>
+                            </span>
+                            <input type="text" id="cnic" name="cnic" class="form-input"
+                                placeholder="XXXXX-XXXXXXX-X" maxlength="15" />
+                        </div>
+                        <span class="form-hint">Format: 42101-1234567-8</span>
+                        <span class="form-error" id="cnicError"></span>
+                    </div>
+
+                    <!-- Address -->
+                    <div class="form-group form-group--full">
+                        <label class="form-label" for="address">
+                            Address <span class="optional">(optional)</span>
+                        </label>
+                        <div class="input-wrapper">
+                            <span class="input-icon" style="top: 13px; align-self: flex-start;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                                    <circle cx="12" cy="10" r="3"/>
+                                </svg>
+                            </span>
+                            <input type="text" id="address" name="address" class="form-input"
+                                placeholder="House 12, Street 5, Islamabad" autocomplete="street-address" />
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Submit -->
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span class="btn-text">Register as Hotel Manager</span>
+                    <div class="spinner" aria-hidden="true"></div>
+                </button>
+
+            </form>
+
+        </div>
+    </main>
+
+</div>
+
+<!-- Scripts -->
+<script src="../../../js/config/api.js"></script>
+<script src="../../../js/utils/validation.js"></script>
+<script src="../../../js/services/authService.js"></script>
+<script>
+
+(function () {
+    'use strict';
+
+    const form           = document.getElementById('registerForm');
+    const submitBtn      = document.getElementById('submitBtn');
+    const alertBanner    = document.getElementById('alertBanner');
+    const alertMessage   = document.getElementById('alertMessage');
+
+    const fullNameInput  = document.getElementById('fullName');
+    const emailInput     = document.getElementById('email');
+    const passwordInput  = document.getElementById('password');
+    const confirmInput   = document.getElementById('confirmPassword');
+    const phoneInput     = document.getElementById('phoneNumber');
+    const cnicInput      = document.getElementById('cnic');
+
+    function showError(id, msg) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.textContent = msg;
+    }
+
+    function clearError(id) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '';
+    }
+
+    function setInputState(input, state) {
+        input.classList.remove('is-valid', 'is-error');
+        if (state) input.classList.add(state);
+    }
+
+    function showAlert(type, msg) {
+        alertBanner.className = `alert alert--${type} show`;
+        alertMessage.textContent = msg;
+        alertBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function hideAlert() {
+        alertBanner.classList.remove('show');
+    }
+
+    // Password toggle
+    function bindToggle(btnId, inputEl) {
+        const btn = document.getElementById(btnId);
+        btn.addEventListener('click', () => {
+            const isPass = inputEl.type === 'password';
+            inputEl.type = isPass ? 'text' : 'password';
+            btn.querySelector('.eye-open').style.display  = isPass ? 'none' : '';
+            btn.querySelector('.eye-closed').style.display = isPass ? '' : 'none';
+            btn.setAttribute('aria-label', isPass ? 'Hide password' : 'Show password');
+        });
+    }
+    bindToggle('togglePassword', passwordInput);
+    bindToggle('toggleConfirm',  confirmInput);
+
+    // Password strength
+    const strengthWidget = document.getElementById('passwordStrength');
+    const strengthFill   = document.getElementById('strengthFill');
+    const strengthLabel  = document.getElementById('strengthLabel');
+
+    passwordInput.addEventListener('input', () => {
+        const val = passwordInput.value;
+        if (!val) { strengthWidget.style.display = 'none'; return; }
+        strengthWidget.style.display = 'block';
+        const result = Validator.passwordStrength(val);
+        const widths = ['20%', '40%', '60%', '80%', '100%'];
+        strengthFill.style.width      = widths[result.level];
+        strengthFill.style.background = result.color;
+        strengthLabel.textContent     = result.label;
+        strengthLabel.style.color     = result.color;
+    });
+
+    // Auto-format
+    cnicInput.addEventListener('input', (e) => { e.target.value = Validator.formatCNIC(e.target.value); });
+    phoneInput.addEventListener('input', (e) => { e.target.value = Validator.formatPhone(e.target.value); });
+
+    // Blur validation
+    fullNameInput.addEventListener('blur', () => validateFullName());
+    emailInput.addEventListener('blur',    () => validateEmail());
+    passwordInput.addEventListener('blur', () => validatePassword());
+    confirmInput.addEventListener('blur',  () => validateConfirm());
+    phoneInput.addEventListener('blur',    () => validatePhone());
+    cnicInput.addEventListener('blur',     () => validateCNIC());
+
+    function validateFullName() {
+        const v = fullNameInput.value.trim();
+        if (!Validator.required(v)) { showError('fullNameError', 'Full name is required.'); setInputState(fullNameInput, 'is-error'); return false; }
+        if (!Validator.minLength(v, 3)) { showError('fullNameError', 'Name must be at least 3 characters.'); setInputState(fullNameInput, 'is-error'); return false; }
+        if (!Validator.name(v)) { showError('fullNameError', 'Name cannot contain numbers or special characters.'); setInputState(fullNameInput, 'is-error'); return false; }
+        clearError('fullNameError'); setInputState(fullNameInput, 'is-valid'); return true;
+    }
+
+    function validateEmail() {
+        const v = emailInput.value.trim();
+        if (!Validator.required(v)) { showError('emailError', 'Email address is required.'); setInputState(emailInput, 'is-error'); return false; }
+        if (!Validator.email(v)) { showError('emailError', 'Please enter a valid email address.'); setInputState(emailInput, 'is-error'); return false; }
+        clearError('emailError'); setInputState(emailInput, 'is-valid'); return true;
+    }
+
+    function validatePassword() {
+        const v = passwordInput.value;
+        if (!Validator.required(v)) { showError('passwordError', 'Password is required.'); setInputState(passwordInput, 'is-error'); return false; }
+        if (!Validator.minLength(v, 8)) { showError('passwordError', 'Password must be at least 8 characters.'); setInputState(passwordInput, 'is-error'); return false; }
+        const strength = Validator.passwordStrength(v);
+        if (strength.level === 0) { showError('passwordError', 'Password is too weak. Add numbers or symbols.'); setInputState(passwordInput, 'is-error'); return false; }
+        clearError('passwordError'); setInputState(passwordInput, 'is-valid'); return true;
+    }
+
+    function validateConfirm() {
+        const v = confirmInput.value;
+        if (!Validator.required(v)) { showError('confirmPasswordError', 'Please confirm your password.'); setInputState(confirmInput, 'is-error'); return false; }
+        if (!Validator.passwordsMatch(passwordInput.value, v)) { showError('confirmPasswordError', 'Passwords do not match.'); setInputState(confirmInput, 'is-error'); return false; }
+        clearError('confirmPasswordError'); setInputState(confirmInput, 'is-valid'); return true;
+    }
+
+    function validatePhone() {
+        const v = phoneInput.value.trim();
+        if (!v) return true;
+        if (!Validator.phone(v)) { showError('phoneError', 'Enter a valid Pakistani number (e.g. 0300-0000000).'); setInputState(phoneInput, 'is-error'); return false; }
+        clearError('phoneError'); setInputState(phoneInput, 'is-valid'); return true;
+    }
+
+    function validateCNIC() {
+        const v = cnicInput.value.trim();
+        if (!v) return true;
+        if (!Validator.cnic(v)) { showError('cnicError', 'Enter a valid CNIC (e.g. 42101-1234567-8).'); setInputState(cnicInput, 'is-error'); return false; }
+        clearError('cnicError'); setInputState(cnicInput, 'is-valid'); return true;
+    }
+
+    // Submit
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+
+        // Step 1: check if any required field is empty
+        const requiredEmpty =
+            !fullNameInput.value.trim() ||
+            !emailInput.value.trim()    ||
+            !passwordInput.value        ||
+            !confirmInput.value;
+
+        if (requiredEmpty) {
+            validateFullName();
+            validateEmail();
+            validatePassword();
+            validateConfirm();
+            showAlert('error', 'Please fill in all required fields.');
+            return;
+        }
+
+        // Step 2: run full validation (format checks)
+        const nameOk    = validateFullName();
+        const emailOk   = validateEmail();
+        const passOk    = validatePassword();
+        const confirmOk = validateConfirm();
+        const phoneOk   = validatePhone();
+        const cnicOk    = validateCNIC();
+
+        if (!emailOk) {
+            showAlert('error', 'Please enter a valid email address.');
+            return;
+        }
+
+        if (!nameOk || !passOk || !confirmOk || !phoneOk || !cnicOk) {
+            showAlert('error', 'Please fix the highlighted fields and try again.');
+            return;
+        }
+
+        const payload = {
+            fullName:    fullNameInput.value.trim(),
+            email:       emailInput.value.trim().toLowerCase(),
+            password:    passwordInput.value,
+            userType:    'HotelManager',
+            phoneNumber: phoneInput.value.trim().replace(/-/g, '') || null,
+            cnic:        cnicInput.value.trim()  || null,
+            address:     document.getElementById('address').value.trim() || null,
+        };
+
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        try {
+            await AuthService.register(payload);
+            showAlert('success', 'Hotel Manager account created! Redirecting to login…');
+            submitBtn.classList.remove('loading');
+            setTimeout(() => { window.location.href = 'login.html'; }, 2000);
+
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+
+            if (err.status === 409) {
+                showAlert('error', 'An account with this email already exists. Please sign in.');
+                setInputState(emailInput, 'is-error');
+                showError('emailError', 'Email already in use.');
+            } else if (err.status === 422 && err.errors) {
+                const fieldMap = { phoneNumber: 'phone' };
+                Object.entries(err.errors).forEach(([field, msg]) => {
+                    const id = (fieldMap[field] || field) + 'Error';
+                    showError(id, msg);
+                });
+                showAlert('error', 'Please fix the errors above and try again.');
+            } else {
+                showAlert('error', err.message || 'Something went wrong. Please try again.');
+            }
+        }
+    });
+
+})();
+
+</script>
+
+</body>
+</html>

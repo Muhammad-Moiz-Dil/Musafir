@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Log In — Tripify</title>
+    <link rel="stylesheet" href="../../../css/pages/auth.css" />
+    <style>
+        /* Admin-specific overrides */
+        .auth-panel {
+            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+        }
+        .btn-submit {
+            background: linear-gradient(135deg, #0f3460 0%, #1a4a8a 100%);
+            box-shadow: 0 4px 14px rgba(15,52,96,0.40);
+        }
+        .btn-submit:hover {
+            box-shadow: 0 6px 20px rgba(15,52,96,0.50);
+        }
+        .auth-card__subtitle a,
+        .auth-card__subtitle a:hover { color: #0f3460; }
+        .form-input:focus { border-color: #0f3460; }
+        .auth-panel__heading span { color: var(--accent); }
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(245,166,35,0.15);
+            border: 1px solid rgba(245,166,35,0.3);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-page">
+
+    <!-- LEFT PANEL -->
+    <aside class="auth-panel" aria-hidden="true">
+        <div class="auth-panel__logo">
+            <div class="auth-panel__logo-icon">✈</div>
+            <span class="auth-panel__logo-text">Tripify</span>
+        </div>
+
+        <div class="auth-panel__body">
+            <div>
+                <h1 class="auth-panel__heading">
+                    Admin<br>
+                    <span>Control</span><br>
+                    Panel
+                </h1>
+                <p class="auth-panel__tagline">
+                    Manage destinations, users, hotels, and platform settings from the Tripify administration dashboard.
+                </p>
+            </div>
+
+            <div class="auth-panel__illustration">
+                <svg viewBox="0 0 420 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <!-- Dashboard grid illustration -->
+                    <rect x="40" y="40" width="160" height="90" rx="6" fill="rgba(255,255,255,0.07)"/>
+                    <rect x="50" y="50" width="60" height="35" rx="4" fill="rgba(245,166,35,0.25)"/>
+                    <rect x="120" y="50" width="70" height="16" rx="3" fill="rgba(255,255,255,0.12)"/>
+                    <rect x="120" y="72" width="50" height="10" rx="3" fill="rgba(255,255,255,0.08)"/>
+                    <rect x="50" y="95" width="140" height="8" rx="3" fill="rgba(255,255,255,0.07)"/>
+                    <rect x="50" y="110" width="100" height="8" rx="3" fill="rgba(255,255,255,0.05)"/>
+
+                    <rect x="220" y="40" width="160" height="40" rx="6" fill="rgba(255,255,255,0.07)"/>
+                    <rect x="230" y="50" width="25" height="20" rx="3" fill="rgba(245,166,35,0.3)"/>
+                    <rect x="265" y="52" width="80" height="8" rx="2" fill="rgba(255,255,255,0.1)"/>
+                    <rect x="265" y="64" width="55" height="6" rx="2" fill="rgba(255,255,255,0.06)"/>
+
+                    <rect x="220" y="90" width="75" height="40" rx="6" fill="rgba(255,255,255,0.07)"/>
+                    <rect x="305" y="90" width="75" height="40" rx="6" fill="rgba(255,255,255,0.07)"/>
+                    <rect x="230" y="100" width="40" height="20" rx="3" fill="rgba(100,160,255,0.2)"/>
+                    <rect x="315" y="100" width="40" height="20" rx="3" fill="rgba(100,255,160,0.2)"/>
+
+                    <rect x="40" y="145" width="340" height="30" rx="6" fill="rgba(255,255,255,0.05)"/>
+                    <rect x="50" y="153" width="80" height="14" rx="3" fill="rgba(255,255,255,0.08)"/>
+                    <rect x="145" y="153" width="80" height="14" rx="3" fill="rgba(255,255,255,0.06)"/>
+                    <rect x="240" y="153" width="80" height="14" rx="3" fill="rgba(255,255,255,0.06)"/>
+
+                    <circle cx="370" cy="38" r="14" fill="rgba(245,166,35,0.20)"/>
+                    <circle cx="376" cy="34" r="11" fill="rgba(15,52,96,0.6)"/>
+                </svg>
+            </div>
+
+            <ul class="auth-panel__features">
+                <li class="auth-panel__feature"><span class="auth-panel__feature-dot"></span>Manage all users and accounts</li>
+                <li class="auth-panel__feature"><span class="auth-panel__feature-dot"></span>Review flagged content and complaints</li>
+                <li class="auth-panel__feature"><span class="auth-panel__feature-dot"></span>Configure platform settings</li>
+            </ul>
+        </div>
+
+        <p class="auth-panel__footer">&copy; 2025 Tripify. All rights reserved.</p>
+    </aside>
+
+    <!-- RIGHT PANEL -->
+    <main class="auth-form-area">
+        <div class="auth-card">
+
+            <div class="auth-card__header">
+                <div class="admin-badge">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    ADMIN ACCESS ONLY
+                </div>
+                <h2 class="auth-card__title">Admin Log In</h2>
+                <p class="auth-card__subtitle">
+                    Not an admin?
+                    <a href="login.html">Go to regular sign in</a>
+                </p>
+            </div>
+
+            <!-- Alert banner -->
+            <div class="alert alert--error" id="alertBanner" role="alert">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.75 4a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0V5zm-.75 6a.875.875 0 110-1.75A.875.875 0 018 11z"/>
+                </svg>
+                <span id="alertMessage"></span>
+            </div>
+
+            <form id="adminLoginForm" novalidate>
+
+                <!-- Email -->
+                <div class="form-group form-group--full" style="margin-bottom: 16px;">
+                    <label class="form-label" for="email">Admin Email <span class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 7l10 7 10-7"/>
+                            </svg>
+                        </span>
+                        <input type="email" id="email" name="email" class="form-input"
+                            placeholder="admin@tripify.com" autocomplete="email" required />
+                    </div>
+                    <span class="form-error" id="emailError"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group form-group--full" style="margin-bottom: 8px;">
+                    <label class="form-label" for="password">Password <span class="required">*</span></label>
+                    <div class="input-wrapper has-toggle">
+                        <span class="input-icon">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                            </svg>
+                        </span>
+                        <input type="password" id="password" name="password" class="form-input"
+                            placeholder="Enter admin password" autocomplete="current-password" required />
+                        <button type="button" class="password-toggle" id="togglePassword" aria-label="Show password">
+                            <svg class="eye-open" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                            </svg>
+                            <svg class="eye-closed" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none" aria-hidden="true">
+                                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <span class="form-error" id="passwordError"></span>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span class="btn-text">Log In as Admin</span>
+                    <div class="spinner" aria-hidden="true"></div>
+                </button>
+
+            </form>
+
+        </div>
+    </main>
+
+</div>
+
+<script src="../../../js/config/api.js"></script>
+<script src="../../../js/utils/validation.js"></script>
+<script src="../../../js/services/authService.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    const form        = document.getElementById('adminLoginForm');
+    const submitBtn   = document.getElementById('submitBtn');
+    const alertBanner = document.getElementById('alertBanner');
+    const alertMsg    = document.getElementById('alertMessage');
+    const emailInput  = document.getElementById('email');
+    const passInput   = document.getElementById('password');
+
+    function showError(id, msg) { const el = document.getElementById(id); if (el) el.textContent = msg; }
+    function clearError(id)     { const el = document.getElementById(id); if (el) el.textContent = ''; }
+    function setInputState(input, state) { input.classList.remove('is-valid', 'is-error'); if (state) input.classList.add(state); }
+
+    function showAlert(type, msg) {
+        alertBanner.className = `alert alert--${type} show`;
+        alertMsg.textContent = msg;
+        alertBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    function hideAlert() { alertBanner.classList.remove('show'); }
+
+    // Password toggle
+    const toggleBtn = document.getElementById('togglePassword');
+    toggleBtn.addEventListener('click', () => {
+        const isPass = passInput.type === 'password';
+        passInput.type = isPass ? 'text' : 'password';
+        toggleBtn.querySelector('.eye-open').style.display  = isPass ? 'none' : '';
+        toggleBtn.querySelector('.eye-closed').style.display = isPass ? '' : 'none';
+        toggleBtn.setAttribute('aria-label', isPass ? 'Hide password' : 'Show password');
+    });
+
+    emailInput.addEventListener('blur', validateEmail);
+    passInput.addEventListener('blur',  validatePassword);
+
+    function validateEmail() {
+        const v = emailInput.value.trim();
+        if (!Validator.required(v)) { showError('emailError', 'Email is required.'); setInputState(emailInput, 'is-error'); return false; }
+        if (!Validator.email(v))    { showError('emailError', 'Enter a valid email address.'); setInputState(emailInput, 'is-error'); return false; }
+        clearError('emailError'); setInputState(emailInput, 'is-valid'); return true;
+    }
+
+    function validatePassword() {
+        const v = passInput.value;
+        if (!Validator.required(v)) { showError('passwordError', 'Password is required.'); setInputState(passInput, 'is-error'); return false; }
+        clearError('passwordError'); setInputState(passInput, 'is-valid'); return true;
+    }
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideAlert();
+
+        const ok = [validateEmail(), validatePassword()].every(Boolean);
+        if (!ok) return;
+
+        submitBtn.disabled = true;
+        submitBtn.classList.add('loading');
+
+        try {
+            const data = await AuthService.adminLogin(
+                emailInput.value.trim().toLowerCase(),
+                passInput.value
+            );
+
+            showAlert('success', `Welcome, ${data.user.fullName}! Loading admin panel…`);
+            submitBtn.classList.remove('loading');
+
+            setTimeout(() => {
+                window.location.href = '../admin/dashboard.html';
+            }, 1500);
+
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('loading');
+
+            if (err.status === 401) {
+                showAlert('error', 'Invalid email or password. Please try again.');
+                setInputState(emailInput, 'is-error');
+                setInputState(passInput, 'is-error');
+            } else if (err.status === 403) {
+                showAlert('error', 'Access denied. This portal is for administrators only.');
+                setInputState(emailInput, 'is-error');
+            } else if (err.status === 422 && err.errors) {
+                Object.entries(err.errors).forEach(([field, msg]) => showError(`${field}Error`, msg));
+                showAlert('error', 'Please fix the errors above and try again.');
+            } else if (!navigator.onLine) {
+                showAlert('error', 'No internet connection. Please check your network and try again.');
+            } else {
+                showAlert('error', err.message || 'Something went wrong. Please try again.');
+            }
+        }
+    });
+
+})();
+</script>
+
+</body>
+</html>

@@ -151,8 +151,8 @@ public class AuthController {
         @Pattern(regexp = "Tourist|HotelManager", message = "User type must be Tourist or HotelManager.")
         private String userType;
 
-        @Pattern(regexp = "^(\\+92|0092|0)?3[0-9]{9}$|^$",
-                 message = "Enter a valid Pakistani phone number.")
+        @Pattern(regexp = "^03[0-9]{9}$|^$",
+                 message = "Phone number must be 11 digits starting with 03 (e.g. 03001234567).")
         private String phoneNumber;
 
         @Pattern(regexp = "^\\d{5}-\\d{7}-\\d$|^$",

@@ -4,15 +4,15 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Dashboard — Tripify</title>
-<link rel="icon" type="image/png" href="../../../../../public/assets/images/favicon.png"/>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../css/pages/dashboard.css">
 <style>
 /* Welcome Banner */
 .welcome-banner {
-    background: linear-gradient(135deg,#1b4965 0%,#1e6b8c 50%,#0d2e45 100%);
-    border: 1px solid rgba(245,166,35,0.12);
+    background: linear-gradient(135deg,#1a3a5c 0%,#1d6280 50%,#0d2235 100%);
+    border: 1px solid rgba(245,166,35,0.15);
     border-radius: 20px;
     padding: 28px 32px;
     display: flex;
@@ -22,6 +22,7 @@
     margin-bottom: 22px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
 }
 .welcome-banner::before {
     content:'';
@@ -402,7 +403,7 @@ const h = new Date().getHours();
 document.getElementById('greeting').textContent = h<12?'Good morning,':h<18?'Good afternoon,':'Good evening,';
 
 // User
-const user = JSON.parse(localStorage.getItem('user') || '{"fullName":"Ahmed Tariq","userType":"Tourist"}');
+const user = JSON.parse(localStorage.getItem('tripify_user') || '{"fullName":"Traveller","userType":"Tourist"}');
 const initials = (user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
 document.getElementById('welcomeName').textContent = (user.fullName||'Ahmed Tariq') + '! 👋';
 document.getElementById('sidebarName').textContent  = user.fullName||'Ahmed Tariq';

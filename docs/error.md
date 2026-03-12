@@ -124,6 +124,27 @@ Each entry follows:
 - **Config**: `SecurityConfig.java`, `GlobalExceptionHandler.java`, `application.properties`
 - **API**: `POST /api/auth/register` — returns 201 on success, 409 on duplicate email, 422 on field errors
 
+### UC-04 — Update Personal Profile
+- **Frontend**: `Frontend/src/html/pages/user/profile.html` (full rewrite — 4 tabs: Personal Info, Preferences, Security, Account)
+- **JS**: `js/config/api.js` updated with `USER.PROFILE`, `USER.UPLOAD_AVATAR`, `USER.CHANGE_PASSWORD`, `USER.PREFERENCES`
+- **Backend files created**:
+  - `Backend/main/java/com/model/UserPreferences.java` — JPA entity for `UserPreferences` table
+  - `Backend/main/java/com/repository/UserPreferencesRepository.java` — `findByUserId()`
+  - `Backend/main/java/com/service/ProfileService.java` — `getProfile`, `updateProfile`, `changePassword`, `getPreferences`, `savePreferences`, `saveAvatarPath`
+  - `Backend/main/java/com/controller/ProfileController.java` — 6 endpoints under `/api/users`
+- **Backend files updated**:
+  - `SecurityConfig.java` — added `.requestMatchers("/uploads/**").permitAll()`
+  - `application.properties` — added multipart size limits and `file:uploads/` static location
+- **Database**: `database/TripifyDB_MySQL.sql` — added `UserPreferences` table (preference_id, user_id UNIQUE FK, age_group, travel_preferences JSON, updated_at)
+- **API endpoints**:
+  - `GET  /api/users/profile` — fetch full profile (name, email, phone, cnic, address, memberSince, profilePicture)
+  - `PUT  /api/users/profile` — update name/phone/cnic/address with field-level 422 validation
+  - `POST /api/users/profile/avatar` — multipart JPG/PNG upload (max 2MB), saved to `uploads/avatars/`
+  - `PUT  /api/users/password` — change password (verifies old, BCrypt encodes new)
+  - `GET  /api/users/preferences` — get or auto-create age group + travel preferences
+  - `PUT  /api/users/preferences` — save age group and JSON travel preferences array
+- **Features**: auth guard, localStorage cache + API merge, CNIC auto-format, age-group chip presets, avatar cache-busting, per-field error display, password show/hide toggle, success toast system
+
 ---
 
 ### [BUG-002] MySQL password missing in application.properties

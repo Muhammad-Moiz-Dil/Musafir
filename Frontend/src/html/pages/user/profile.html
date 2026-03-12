@@ -4,233 +4,555 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>My Profile — Tripify</title>
-<link rel="icon" type="image/png" href="../../../../../public/assets/images/favicon.png"/>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../css/pages/dashboard.css">
 <style>
-.profile-layout { display:grid; grid-template-columns:300px 1fr; gap:22px; }
+/* ─ Profile layout ─ */
+.profile-layout {
+    display: grid;
+    grid-template-columns: 288px 1fr;
+    gap: 22px;
+    align-items: start;
+}
 
-/* Profile card */
+/* ─ Profile card (left sticky) ─ */
 .profile-card {
-    background:linear-gradient(160deg,#0f2235 0%,#1b4965 100%);
-    border:1px solid rgba(245,166,35,0.15); border-radius:var(--r-xl); padding:28px;
-    text-align:center; position:sticky; top:calc(var(--topbar-h) + 16px);
+    background: linear-gradient(160deg, #0f2235 0%, #1b4965 100%);
+    border: 1px solid rgba(245,166,35,0.15);
+    border-radius: var(--r-xl);
+    padding: 28px 22px;
+    text-align: center;
+    position: sticky;
+    top: calc(var(--topbar-h) + 16px);
 }
-.profile-avatar-wrap { position:relative; display:inline-block; margin-bottom:16px; }
+.profile-avatar-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 14px;
+}
 .profile-avatar {
-    width:88px; height:88px; border-radius:50%;
-    background:linear-gradient(135deg,var(--navy-mid),var(--teal));
-    display:flex; align-items:center; justify-content:center;
-    font-size:32px; font-weight:700; color:var(--white);
-    border:3px solid rgba(245,166,35,0.4); margin:0 auto;
-    transition:var(--ease);
+    width: 84px; height: 84px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--navy-mid), var(--teal));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; font-weight: 700; color: var(--white);
+    border: 3px solid rgba(245,166,35,0.4);
+    margin: 0 auto;
+    overflow: hidden;
+    transition: var(--ease);
 }
-.avatar-edit {
-    position:absolute; bottom:2px; right:2px;
-    width:26px; height:26px; background:var(--accent); border-radius:50%; border:2px solid var(--sidebar);
-    display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer;
-    transition:var(--ease);
+.profile-avatar img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
 }
-.avatar-edit:hover { transform:scale(1.1); }
-.profile-name { font-family:var(--display); font-size:20px; font-weight:700; color:var(--white); margin-bottom:4px; }
-.profile-email { font-size:12.5px; color:var(--t2); margin-bottom:16px; }
-.profile-badge { display:inline-flex; align-items:center; gap:5px; background:var(--accent-glow); border:1px solid rgba(245,166,35,0.2); color:var(--accent); font-size:12px; font-weight:600; padding:4px 12px; border-radius:20px; margin-bottom:20px; }
-.profile-stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:20px; }
-.pstat { background:rgba(255,255,255,0.05); border-radius:var(--r-sm); padding:10px 6px; }
-.pstat-num { font-family:var(--display); font-size:18px; font-weight:700; color:var(--accent); }
-.pstat-lbl { font-size:10px; color:var(--t3); margin-top:2px; }
+.avatar-edit-label {
+    position: absolute; bottom: 2px; right: 2px;
+    width: 26px; height: 26px;
+    background: var(--accent); border-radius: 50%;
+    border: 2px solid #0b1622;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; cursor: pointer;
+    transition: var(--ease);
+}
+.avatar-edit-label:hover { transform: scale(1.1); background: var(--accent-dk); }
+.profile-name {
+    font-family: var(--display);
+    font-size: 18px; font-weight: 700; color: var(--white);
+    margin-bottom: 3px;
+}
+.profile-email { font-size: 12px; color: var(--t2); margin-bottom: 14px; word-break: break-all; }
+.profile-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--accent-glow); border: 1px solid rgba(245,166,35,0.2);
+    color: var(--accent); font-size: 11.5px; font-weight: 600;
+    padding: 4px 12px; border-radius: 20px; margin-bottom: 18px;
+}
+.profile-stats-row {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 6px; margin-bottom: 18px;
+}
+.pstat {
+    background: rgba(255,255,255,0.05);
+    border-radius: var(--r-sm); padding: 9px 4px;
+}
+.pstat-num { font-family: var(--display); font-size: 17px; font-weight: 700; color: var(--accent); }
+.pstat-lbl { font-size: 9.5px; color: var(--t3); margin-top: 1px; }
 
-/* Sidebar nav for profile page */
-.profile-nav { display:flex; flex-direction:column; gap:4px; }
+/* ─ Profile nav ─ */
+.profile-nav { display: flex; flex-direction: column; gap: 3px; }
 .pnav-item {
-    display:flex; align-items:center; gap:10px; padding:9px 12px;
-    border-radius:var(--r-sm); color:var(--t2); font-size:13px; cursor:pointer;
-    transition:var(--ease); border:1px solid transparent;
+    display: flex; align-items: center; gap: 9px;
+    padding: 9px 11px; border-radius: var(--r-sm);
+    color: var(--t2); font-size: 13px; cursor: pointer;
+    transition: var(--ease); border: 1px solid transparent;
 }
-.pnav-item:hover { background:var(--surface-2); color:var(--t1); }
-.pnav-item.active { background:var(--accent-glow); color:var(--accent); border-color:rgba(245,166,35,0.15); }
+.pnav-item:hover { background: var(--surface-2); color: var(--t1); }
+.pnav-item.active {
+    background: var(--accent-glow); color: var(--accent);
+    border-color: rgba(245,166,35,0.15);
+}
 
-/* Right panel */
-.profile-section { display:none; }
-.profile-section.active { display:block; }
-.info-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:22px; margin-bottom:16px; }
-.info-card-title { font-size:15px; font-weight:700; color:var(--white); margin-bottom:18px; display:flex; align-items:center; justify-content:space-between; }
-.info-row { display:flex; align-items:center; gap:14px; padding:12px 0; border-bottom:1px solid var(--border); }
-.info-row:last-child { border-bottom:none; }
-.info-label { font-size:12px; color:var(--t3); width:140px; flex-shrink:0; }
-.info-value { font-size:13.5px; color:var(--t1); font-weight:500; flex:1; }
-.info-value.editable { cursor:text; }
+/* ─ Content sections ─ */
+.profile-section { display: none; }
+.profile-section.active { display: block; }
 
-/* Preferences */
-.pref-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:10px; }
+/* ─ Info card ─ */
+.info-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 22px;
+    margin-bottom: 14px;
+}
+.info-card-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+}
+.info-card-title { font-size: 15px; font-weight: 700; color: var(--white); }
+.info-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 11px 0; border-bottom: 1px solid var(--border);
+}
+.info-row:last-child { border-bottom: none; }
+.info-lbl { font-size: 11.5px; color: var(--t3); width: 130px; flex-shrink: 0; }
+.info-val { font-size: 13.5px; color: var(--t1); font-weight: 500; flex: 1; }
+
+/* ─ Form helpers ─ */
+.field-error {
+    font-size: 11.5px; color: #ef4444;
+    margin-top: 4px; display: block; min-height: 16px;
+}
+.form-input.is-error  { border-color: rgba(239,68,68,0.6); }
+.form-input.is-valid  { border-color: rgba(34,197,94,0.5); }
+.pw-wrap { position: relative; }
+.pw-wrap .form-input { padding-right: 42px; }
+.pw-toggle {
+    position: absolute; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none; color: var(--t3);
+    cursor: pointer; padding: 0; font-size: 16px;
+    transition: var(--ease);
+}
+.pw-toggle:hover { color: var(--t1); }
+
+/* ─ Preferences ─ */
+.pref-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+}
 .pref-chip {
-    background:var(--surface-2); border:1px solid var(--border);
-    border-radius:var(--r); padding:12px; text-align:center;
-    cursor:pointer; transition:var(--ease);
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--r); padding: 12px 10px;
+    text-align: center; cursor: pointer; transition: var(--ease);
 }
-.pref-chip:hover, .pref-chip.selected { background:var(--accent-glow); border-color:rgba(245,166,35,0.3); }
-.pref-chip-icon { font-size:22px; margin-bottom:5px; }
-.pref-chip-label { font-size:11.5px; font-weight:600; color:var(--t1); }
-.pref-chip.selected .pref-chip-label { color:var(--accent); }
+.pref-chip:hover { border-color: rgba(245,166,35,0.3); background: var(--surface-3); }
+.pref-chip.selected {
+    background: var(--accent-glow); border-color: rgba(245,166,35,0.35);
+}
+.pref-chip-icon { font-size: 20px; margin-bottom: 6px; }
+.pref-chip-lbl {
+    font-size: 11.5px; font-weight: 600; color: var(--t1);
+}
+.pref-chip.selected .pref-chip-lbl { color: var(--accent); }
 
-/* Logout */
+/* ─ Logout / Danger ─ */
 .logout-card {
-    background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15);
-    border-radius:var(--r-lg); padding:22px;
+    background: rgba(239,68,68,0.06);
+    border: 1px solid rgba(239,68,68,0.15);
+    border-radius: var(--r-lg); padding: 22px; margin-bottom: 14px;
+}
+.danger-zone {
+    background: rgba(239,68,68,0.04);
+    border: 1px solid rgba(239,68,68,0.12);
+    border-radius: var(--r-lg); padding: 22px;
 }
 
-@media (max-width:900px) { .profile-layout { grid-template-columns:1fr; } .profile-card { position:static; } }
+/* ─ Delete account modal ─ */
+.del-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(5,12,20,0.82); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+}
+.del-modal-overlay.open { display: flex; }
+.del-modal {
+    background: linear-gradient(160deg,#0f2235,#1b3a52);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: var(--r-xl); padding: 32px 28px;
+    width: 100%; max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.del-modal-title {
+    font-size: 18px; font-weight: 700; color: #ef4444;
+    margin-bottom: 8px;
+}
+.del-modal-sub {
+    font-size: 13px; color: var(--t2); margin-bottom: 22px; line-height: 1.5;
+}
+.del-modal-label {
+    font-size: 12px; font-weight: 600; color: var(--t2);
+    text-transform: uppercase; letter-spacing: .05em; margin-bottom: 7px;
+}
+.del-modal-pw-wrap {
+    position: relative; margin-bottom: 6px;
+}
+.del-modal-pw-wrap input {
+    width: 100%; padding: 10px 40px 10px 13px; box-sizing: border-box;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--r-sm); color: var(--white); font-size: 14px;
+    outline: none; transition: border-color .2s;
+}
+.del-modal-pw-wrap input:focus { border-color: #ef4444; }
+.del-modal-pw-wrap input.is-error { border-color: #ef4444; }
+.del-modal-pw-toggle {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer; font-size: 15px; padding: 0;
+}
+.del-modal-err {
+    font-size: 12px; color: #ef4444; min-height: 18px; margin-bottom: 18px;
+}
+.del-modal-actions {
+    display: flex; gap: 10px; justify-content: flex-end;
+}
+.btn-cancel-del {
+    padding: 9px 20px; background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12); border-radius: var(--r-sm);
+    color: var(--t2); font-size: 13px; font-weight: 600; cursor: pointer;
+    transition: var(--ease);
+}
+.btn-cancel-del:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+.btn-confirm-del {
+    padding: 9px 20px; background: #ef4444;
+    border: none; border-radius: var(--r-sm);
+    color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+    transition: var(--ease);
+}
+.btn-confirm-del:hover:not(:disabled) { background: #dc2626; }
+.btn-confirm-del:disabled { opacity: 0.6; cursor: not-allowed; }
+.success-msg {
+    background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25);
+    border-radius: var(--r-sm); padding: 10px 14px;
+    color: #22c55e; font-size: 13px; margin-top: 12px;
+    display: none;
+}
+.success-msg.show { display: flex; align-items: center; gap: 8px; }
+
+/* ── Password strength ── */
+.pw-strength { margin-top: 8px; display: none; }
+.pw-strength.show { display: block; }
+.pw-strength-bars {
+    display: flex; gap: 4px; margin-bottom: 5px;
+}
+.pw-bar {
+    flex: 1; height: 4px; border-radius: 2px;
+    background: var(--border); transition: background 0.3s;
+}
+.pw-strength-label { font-size: 11.5px; font-weight: 600; }
+.pw-strength.weak   .pw-bar:nth-child(1)                          { background: #ef4444; }
+.pw-strength.fair   .pw-bar:nth-child(1),
+.pw-strength.fair   .pw-bar:nth-child(2)                          { background: #f59e0b; }
+.pw-strength.strong .pw-bar:nth-child(1),
+.pw-strength.strong .pw-bar:nth-child(2),
+.pw-strength.strong .pw-bar:nth-child(3)                          { background: #22c55e; }
+.pw-strength.weak   .pw-strength-label { color: #ef4444; }
+.pw-strength.fair   .pw-strength-label { color: #f59e0b; }
+.pw-strength.strong .pw-strength-label { color: #22c55e; }
+.pw-rules { list-style: none; padding: 0; margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 5px; }
+.pw-rule {
+    font-size: 11px; padding: 2px 8px; border-radius: 20px;
+    background: var(--surface-2); color: var(--t3);
+    border: 1px solid var(--border); transition: all 0.2s;
+}
+.pw-rule.pass { background: rgba(34,197,94,0.1); color: #22c55e; border-color: rgba(34,197,94,0.3); }
+
+@media (max-width: 900px) {
+    .profile-layout { grid-template-columns: 1fr; }
+    .profile-card { position: static; }
+}
 </style>
 </head>
 <body>
 
 <div class="sidebar-overlay" id="overlay"></div>
 
+<!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo"><div class="logo-icon">✈</div><span class="logo-text">Tripify</span></div>
     <nav class="sidebar-nav">
         <span class="nav-section-label">Main</span>
-        <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
-        <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
-        <a href="trip-cost.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
-        <a href="route-finder.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
+        <a href="dashboard.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+            <span>Dashboard</span>
+        </a>
+        <a href="destinations.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
+            <span>Explore</span>
+        </a>
+        <a href="trip-cost.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span>
+            <span>Trip Cost</span>
+        </a>
+        <a href="route-finder.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span>
+            <span>Route Finder</span>
+        </a>
         <span class="nav-section-label">Discover</span>
-        <a href="hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
-        <a href="wishlist.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
+        <a href="hotels.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            <span>Hotels</span>
+        </a>
+        <a href="wishlist.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+            <span>Wishlist</span>
+        </a>
         <div class="nav-divider"></div>
-        <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
-        <a href="profile.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
+        <a href="emergency.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            <span>Emergency</span>
+        </a>
+        <a href="profile.html" class="nav-item active">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span>Profile</span>
+        </a>
     </nav>
     <div class="sidebar-footer">
         <div class="user-card" onclick="location.href='profile.html'">
-            <div class="user-avatar" id="sidebarInitials">AT</div>
-            <div><div class="user-name" id="sidebarName">Ahmed Tariq</div><div class="user-role">Tourist</div></div>
+            <div class="user-avatar" id="sidebarAvatar">AT</div>
+            <div><div class="user-name" id="sidebarName">Loading...</div><div class="user-role">Tourist</div></div>
         </div>
     </div>
 </aside>
 
+<!-- TOPBAR -->
 <header class="topbar">
-    <button class="menu-toggle" id="menuToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
     <span class="topbar-title">My Profile</span>
-    <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search..."></div>
+    <div class="topbar-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search destinations..." onkeydown="if(event.key==='Enter')location.href='destinations.html?q='+this.value">
+    </div>
     <div class="topbar-actions">
-        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
-        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
+        <button class="topbar-btn" title="Notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </button>
+        <div class="topbar-avatar" id="topbarAvatar" onclick="location.href='profile.html'" title="Profile">AT</div>
     </div>
 </header>
 
+<!-- MAIN -->
 <div class="main-wrap">
 <div class="page-content page-enter">
 
     <div class="page-header">
         <span class="page-tag">Account</span>
         <div class="page-title">My <span>Profile</span></div>
+        <div class="page-sub">Manage your personal information and account settings</div>
     </div>
 
     <div class="profile-layout">
-        <!-- Left: Profile Card -->
+
+        <!-- LEFT: PROFILE CARD -->
         <div>
             <div class="profile-card">
                 <div class="profile-avatar-wrap">
-                    <div class="profile-avatar" id="bigAvatar">AT</div>
-                    <div class="avatar-edit" title="Change photo">✏️</div>
+                    <div class="profile-avatar" id="bigAvatar">
+                        <span id="bigAvatarInitials">AT</span>
+                    </div>
+                    <label class="avatar-edit-label" for="avatarInput" title="Change photo">✏️</label>
+                    <input type="file" id="avatarInput" accept="image/jpeg,image/png" style="display:none" onchange="handleAvatarUpload(this)">
                 </div>
-                <div class="profile-name" id="profileName">Ahmed Tariq</div>
-                <div class="profile-email" id="profileEmail">ahmed@example.com</div>
+                <div class="profile-name" id="profileName">Loading...</div>
+                <div class="profile-email" id="profileEmail">—</div>
                 <div class="profile-badge">🧳 Tourist</div>
                 <div class="profile-stats-row">
                     <div class="pstat"><div class="pstat-num">3</div><div class="pstat-lbl">Trips</div></div>
-                    <div class="pstat"><div class="pstat-num">5</div><div class="pstat-lbl">Wishlist</div></div>
+                    <div class="pstat"><div class="pstat-num" id="wishCount">0</div><div class="pstat-lbl">Wishlist</div></div>
                     <div class="pstat"><div class="pstat-num">4</div><div class="pstat-lbl">Visited</div></div>
                 </div>
                 <div class="profile-nav">
-                    <div class="pnav-item active" onclick="switchTab('info',this)">👤 Personal Info</div>
-                    <div class="pnav-item" onclick="switchTab('preferences',this)">🎯 Preferences</div>
-                    <div class="pnav-item" onclick="switchTab('security',this)">🔒 Security</div>
-                    <div class="pnav-item" onclick="switchTab('account',this)">⚙️ Account</div>
+                    <div class="pnav-item active" data-tab="info">👤 Personal Info</div>
+                    <div class="pnav-item" data-tab="preferences">🎯 Preferences</div>
+                    <div class="pnav-item" data-tab="security">🔒 Security</div>
+                    <div class="pnav-item" data-tab="account">⚙️ Account</div>
                 </div>
             </div>
         </div>
 
-        <!-- Right: Info panels -->
+        <!-- RIGHT: CONTENT PANELS -->
         <div>
-            <!-- Personal Info -->
+
+            <!-- PERSONAL INFO TAB -->
             <div class="profile-section active" id="sec-info">
-                <div class="info-card">
-                    <div class="info-card-title">Personal Information <button class="btn btn-ghost btn-sm" id="editBtn" onclick="toggleEdit()">✏️ Edit</button></div>
-                    <div class="info-row"><span class="info-label">Full Name</span><span class="info-value" id="infoName">Ahmed Tariq</span></div>
-                    <div class="info-row"><span class="info-label">Email Address</span><span class="info-value" id="infoEmail">ahmed@example.com</span></div>
-                    <div class="info-row"><span class="info-label">Phone Number</span><span class="info-value" id="infoPhone">0300-1234567</span></div>
-                    <div class="info-row"><span class="info-label">CNIC</span><span class="info-value" id="infoCnic">42101-1234567-8</span></div>
-                    <div class="info-row"><span class="info-label">Address</span><span class="info-value" id="infoAddress">Karachi, Pakistan</span></div>
-                    <div class="info-row"><span class="info-label">Account Type</span><span class="info-value"><span class="badge badge-accent">Tourist</span></span></div>
-                    <div class="info-row"><span class="info-label">Member Since</span><span class="info-value" id="infoJoined">—</span></div>
+                <!-- View mode -->
+                <div class="info-card" id="viewMode">
+                    <div class="info-card-hdr">
+                        <div class="info-card-title">Personal Information</div>
+                        <button class="btn btn-ghost btn-sm" onclick="showEditMode()">✏️ Edit</button>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Full Name</span>
+                        <span class="info-val" id="dispName">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Email Address</span>
+                        <span class="info-val" id="dispEmail">—</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Phone Number</span>
+                        <span class="info-val" id="dispPhone">Not provided</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">CNIC</span>
+                        <span class="info-val" id="dispCnic">Not provided</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Address</span>
+                        <span class="info-val" id="dispAddress">Not provided</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Account Type</span>
+                        <span class="info-val"><span class="badge badge-accent">Tourist</span></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-lbl">Member Since</span>
+                        <span class="info-val" id="dispMemberSince">—</span>
+                    </div>
                 </div>
-                <!-- Edit form (hidden by default) -->
-                <div id="editForm" style="display:none">
-                    <div class="info-card">
+
+                <!-- Edit mode -->
+                <div class="info-card" id="editMode" style="display:none">
+                    <div class="info-card-hdr">
                         <div class="info-card-title">Edit Information</div>
-                        <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="eName" placeholder="Your full name"></div>
-                        <div class="form-group"><label class="form-label">Phone Number</label><input class="form-input" id="ePhone" placeholder="0300-XXXXXXX"></div>
-                        <div class="form-group"><label class="form-label">Address</label><input class="form-input" id="eAddress" placeholder="City, Pakistan"></div>
-                        <div style="display:flex;gap:10px">
-                            <button class="btn btn-primary" onclick="saveEdit()">💾 Save Changes</button>
-                            <button class="btn btn-ghost" onclick="toggleEdit()">Cancel</button>
-                        </div>
+                        <button class="btn btn-ghost btn-sm" onclick="cancelEdit()">✕ Cancel</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Full Name <span style="color:#ef4444">*</span></label>
+                        <input class="form-input" id="eName" type="text" placeholder="Your full name" oninput="clearFieldError('fullName')">
+                        <span class="field-error" id="err-fullName"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input class="form-input" id="ePhone" type="tel" placeholder="03001234567" maxlength="11" oninput="autoFormatPhone(this);clearFieldError('phoneNumber')">
+                        <span class="field-error" id="err-phoneNumber"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">CNIC</label>
+                        <input class="form-input" id="eCnic" type="text" placeholder="XXXXX-XXXXXXX-X" maxlength="15" oninput="autoFormatCnic(this);clearFieldError('cnic')" onblur="validateCnicField()">
+                        <span class="field-error" id="err-cnic"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        <input class="form-input" id="eAddress" type="text" placeholder="City, Province, Pakistan">
+                        <span class="field-error" id="err-address"></span>
+                    </div>
+
+                    <div style="display:flex;gap:10px;margin-top:4px">
+                        <button class="btn btn-primary" id="saveProfileBtn" onclick="saveProfile()">💾 Save Changes</button>
+                        <button class="btn btn-ghost" onclick="cancelEdit()">Cancel</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Preferences -->
+            <!-- PREFERENCES TAB -->
             <div class="profile-section" id="sec-preferences">
                 <div class="info-card">
-                    <div class="info-card-title">Travel Preferences</div>
-                    <p class="card-sub" style="margin-bottom:16px">Select what interests you — we'll personalise your recommendations</p>
+                    <div class="info-card-hdr">
+                        <div class="info-card-title">Age Group</div>
+                    </div>
+                    <select class="form-select" id="ageGroup" onchange="onAgeGroupChange(this.value)">
+                        <option value="Under 18">Under 18</option>
+                        <option value="18-25" selected>18–25</option>
+                        <option value="26-35">26–35</option>
+                        <option value="36-50">36–50</option>
+                        <option value="50+">50+</option>
+                    </select>
+                    <p style="font-size:12px;color:var(--t2);margin-top:8px">
+                        Selecting your age group auto-fills recommended travel preferences below.
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <div class="info-card-hdr">
+                        <div class="info-card-title">Travel Preferences</div>
+                    </div>
+                    <p style="font-size:12.5px;color:var(--t2);margin-bottom:16px">
+                        Select what interests you — we'll personalise your destination recommendations.
+                    </p>
                     <div class="pref-grid" id="prefGrid">
-                        <div class="pref-chip selected" onclick="togglePref(this)"><div class="pref-chip-icon">🏔️</div><div class="pref-chip-label">Mountains</div></div>
-                        <div class="pref-chip" onclick="togglePref(this)"><div class="pref-chip-icon">🌊</div><div class="pref-chip-label">Lakes & Rivers</div></div>
-                        <div class="pref-chip selected" onclick="togglePref(this)"><div class="pref-chip-icon">⚡</div><div class="pref-chip-label">Adventure</div></div>
-                        <div class="pref-chip" onclick="togglePref(this)"><div class="pref-chip-icon">👨‍👩‍👧</div><div class="pref-chip-label">Family Trips</div></div>
-                        <div class="pref-chip" onclick="togglePref(this)"><div class="pref-chip-icon">🏛️</div><div class="pref-chip-label">History & Culture</div></div>
-                        <div class="pref-chip selected" onclick="togglePref(this)"><div class="pref-chip-icon">📸</div><div class="pref-chip-label">Photography</div></div>
-                        <div class="pref-chip" onclick="togglePref(this)"><div class="pref-chip-icon">🥾</div><div class="pref-chip-label">Trekking</div></div>
-                        <div class="pref-chip" onclick="togglePref(this)"><div class="pref-chip-icon">🍽️</div><div class="pref-chip-label">Local Food</div></div>
+                        <div class="pref-chip" data-pref="Mountains"><div class="pref-chip-icon">🏔️</div><div class="pref-chip-lbl">Mountains</div></div>
+                        <div class="pref-chip" data-pref="Lakes & Rivers"><div class="pref-chip-icon">🌊</div><div class="pref-chip-lbl">Lakes &amp; Rivers</div></div>
+                        <div class="pref-chip" data-pref="Adventure"><div class="pref-chip-icon">⚡</div><div class="pref-chip-lbl">Adventure</div></div>
+                        <div class="pref-chip" data-pref="Family Trips"><div class="pref-chip-icon">👨‍👩‍👧</div><div class="pref-chip-lbl">Family Trips</div></div>
+                        <div class="pref-chip" data-pref="History & Culture"><div class="pref-chip-icon">🏛️</div><div class="pref-chip-lbl">History &amp; Culture</div></div>
+                        <div class="pref-chip" data-pref="Photography"><div class="pref-chip-icon">📸</div><div class="pref-chip-lbl">Photography</div></div>
+                        <div class="pref-chip" data-pref="Trekking"><div class="pref-chip-icon">🥾</div><div class="pref-chip-lbl">Trekking</div></div>
+                        <div class="pref-chip" data-pref="Local Food"><div class="pref-chip-icon">🍽️</div><div class="pref-chip-lbl">Local Food</div></div>
+                        <div class="pref-chip" data-pref="Scenic"><div class="pref-chip-icon">🌅</div><div class="pref-chip-lbl">Scenic</div></div>
                     </div>
                 </div>
-                <div class="info-card">
-                    <div class="info-card-title">Age Group</div>
-                    <select class="form-select" id="ageGroup">
-                        <option>Under 18</option>
-                        <option selected>18–25</option>
-                        <option>26–35</option>
-                        <option>36–50</option>
-                        <option>50+</option>
-                    </select>
-                    <p style="font-size:12px;color:var(--t2);margin-top:8px">We use this to personalise age-appropriate destination recommendations.</p>
-                </div>
-                <button class="btn btn-primary" onclick="showToast('✅','Preferences saved!')">Save Preferences</button>
+
+                <button class="btn btn-primary" id="savePrefBtn" onclick="savePreferences()">💾 Save Preferences</button>
             </div>
 
-            <!-- Security -->
+            <!-- SECURITY TAB -->
             <div class="profile-section" id="sec-security">
                 <div class="info-card">
-                    <div class="info-card-title">Change Password</div>
-                    <div class="form-group"><label class="form-label">Current Password</label><input type="password" class="form-input" placeholder="Enter current password"></div>
-                    <div class="form-group"><label class="form-label">New Password</label><input type="password" class="form-input" placeholder="Min 8 characters"></div>
-                    <div class="form-group"><label class="form-label">Confirm New Password</label><input type="password" class="form-input" placeholder="Repeat new password"></div>
-                    <button class="btn btn-primary" onclick="showToast('🔒','Password update will be implemented with backend.')">Update Password</button>
-                </div>
-                <div class="info-card">
-                    <div class="info-card-title">Active Sessions</div>
-                    <div class="info-row">
-                        <span class="info-label">💻 This Device</span>
-                        <span class="info-value" style="font-size:12px">Current session · <span style="color:var(--success)">Active now</span></span>
+                    <div class="info-card-hdr">
+                        <div class="info-card-title">Change Password</div>
                     </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Current Password <span style="color:#ef4444">*</span></label>
+                        <div class="pw-wrap">
+                            <input class="form-input" id="pwCurrent" type="password" placeholder="Enter your current password" autocomplete="current-password" oninput="clearFieldError('currentPassword')">
+                            <button type="button" class="pw-toggle" onclick="togglePw('pwCurrent',this)">👁️</button>
+                        </div>
+                        <span class="field-error" id="err-currentPassword"></span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New Password <span style="color:#ef4444">*</span></label>
+                        <div class="pw-wrap">
+                            <input class="form-input" id="pwNew" type="password" placeholder="Min 8 characters" autocomplete="new-password" oninput="clearFieldError('newPassword');checkPasswordStrength(this.value)">
+                            <button type="button" class="pw-toggle" onclick="togglePw('pwNew',this)">👁️</button>
+                        </div>
+                        <span class="field-error" id="err-newPassword"></span>
+                        <div class="pw-strength" id="pwStrength">
+                            <div class="pw-strength-bars">
+                                <div class="pw-bar"></div>
+                                <div class="pw-bar"></div>
+                                <div class="pw-bar"></div>
+                            </div>
+                            <span class="pw-strength-label" id="pwStrengthLabel"></span>
+                            <ul class="pw-rules">
+                                <li class="pw-rule" id="rule-len">8+ characters</li>
+                                <li class="pw-rule" id="rule-upper">Uppercase</li>
+                                <li class="pw-rule" id="rule-lower">Lowercase</li>
+                                <li class="pw-rule" id="rule-num">Number</li>
+                                <li class="pw-rule" id="rule-special">Special char</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Confirm New Password <span style="color:#ef4444">*</span></label>
+                        <div class="pw-wrap">
+                            <input class="form-input" id="pwConfirm" type="password" placeholder="Repeat new password" autocomplete="new-password" oninput="clearFieldError('confirmPassword')">
+                            <button type="button" class="pw-toggle" onclick="togglePw('pwConfirm',this)">👁️</button>
+                        </div>
+                        <span class="field-error" id="err-confirmPassword"></span>
+                    </div>
+
+                    <button class="btn btn-primary" id="changePwBtn" onclick="changePassword()">🔒 Update Password</button>
+                    <div class="success-msg" id="pwSuccess">✅ Password changed successfully! Please log in again if prompted.</div>
                 </div>
             </div>
 
-            <!-- Account -->
+            <!-- ACCOUNT TAB -->
             <div class="profile-section" id="sec-account">
                 <div class="logout-card">
                     <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
@@ -240,78 +562,592 @@
                             <div style="font-size:13px;color:var(--t2)">You'll need to log in again to access your account.</div>
                         </div>
                     </div>
-                    <button class="btn btn-danger" onclick="logout()">🚪 Sign Out of Tripify</button>
+                    <button class="btn btn-danger" onclick="doLogout()">🚪 Sign Out of Tripify</button>
                 </div>
-                <div class="info-card" style="margin-top:16px;border-color:rgba(239,68,68,0.15)">
-                    <div class="info-card-title" style="color:var(--danger)">⚠️ Danger Zone</div>
+                <div class="danger-zone" style="margin-top:14px">
+                    <div style="font-size:15px;font-weight:700;color:#ef4444;margin-bottom:6px">⚠️ Danger Zone</div>
                     <p style="font-size:13px;color:var(--t2);margin-bottom:14px">Permanently delete your account and all associated data. This action cannot be undone.</p>
-                    <button class="btn btn-danger btn-sm" onclick="showToast('⚠️','Account deletion will be implemented with backend.')">Delete My Account</button>
+                    <button class="btn btn-danger btn-sm" onclick="openDeleteModal()">🗑️ Delete My Account</button>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
 </div>
 
+<!-- Delete Account Modal -->
+<div class="del-modal-overlay" id="deleteModal">
+    <div class="del-modal">
+        <div class="del-modal-title">🗑️ Delete Account</div>
+        <div class="del-modal-sub">
+            This will permanently delete your account and all your data including trips, favourites, and bookings.
+            <strong style="color:#ef4444">This cannot be undone.</strong>
+        </div>
+        <div class="del-modal-label">Confirm your password</div>
+        <div class="del-modal-pw-wrap">
+            <input type="password" id="delPwInput" placeholder="Enter your password"
+                   oninput="document.getElementById('delPwErr').textContent='';this.classList.remove('is-error')"/>
+            <button class="del-modal-pw-toggle" type="button" onclick="toggleDelPw()" id="delPwToggle">👁️</button>
+        </div>
+        <div class="del-modal-err" id="delPwErr"></div>
+        <div class="del-modal-actions">
+            <button class="btn-cancel-del" onclick="closeDeleteModal()">Cancel</button>
+            <button class="btn-confirm-del" id="delConfirmBtn" onclick="confirmDeleteAccount()">Delete Account</button>
+        </div>
+    </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="../../../js/config/api.js"></script>
+<script src="../../../js/services/authService.js"></script>
 <script>
-const user = JSON.parse(localStorage.getItem('user') || '{"fullName":"Ahmed Tariq","email":"ahmed@example.com","userType":"Tourist"}');
-const ini  = (user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+(function () {
+'use strict';
 
-// Fill in user info
-document.getElementById('bigAvatar').textContent     = ini;
-document.getElementById('profileName').textContent   = user.fullName   || 'Ahmed Tariq';
-document.getElementById('profileEmail').textContent  = user.email      || 'ahmed@example.com';
-document.getElementById('sidebarInitials').textContent= ini;
-document.getElementById('sidebarName').textContent   = user.fullName   || 'Ahmed Tariq';
-document.getElementById('topbarInitials').textContent = ini;
-document.getElementById('infoName').textContent  = user.fullName  || 'Ahmed Tariq';
-document.getElementById('infoEmail').textContent = user.email     || 'ahmed@example.com';
-document.getElementById('infoPhone').textContent = user.phoneNumber? '0'+user.phoneNumber.slice(-10) : '0300-1234567';
-document.getElementById('infoCnic').textContent  = user.cnic      || 'Not provided';
-document.getElementById('infoAddress').textContent= user.address  || 'Karachi, Pakistan';
-document.getElementById('infoJoined').textContent = 'January 2025';
+// ── Auth guard ────────────────────────────────────────────
+const token = localStorage.getItem('tripify_token');
+if (!token) { window.location.href = '../auth/login.html'; return; }
 
-function switchTab(tab, el){
-    document.querySelectorAll('.profile-section').forEach(s=>s.classList.remove('active'));
-    document.querySelectorAll('.pnav-item').forEach(i=>i.classList.remove('active'));
-    document.getElementById('sec-'+tab).classList.add('active');
-    el.classList.add('active');
+// ── State ─────────────────────────────────────────────────
+let userData = JSON.parse(localStorage.getItem('tripify_user') || '{}');
+
+// ── Helper: initials from name ─────────────────────────────
+function initials(name) {
+    return (name || 'U').split(' ').map(function(n){ return n[0]; }).join('').slice(0, 2).toUpperCase();
 }
-function togglePref(el){ el.classList.toggle('selected'); }
 
-let editing = false;
-function toggleEdit(){
-    editing=!editing;
-    document.getElementById('editForm').style.display=editing?'block':'none';
-    document.getElementById('editBtn').textContent=editing?'✕ Cancel':'✏️ Edit';
-    if(editing){
-        document.getElementById('eName').value=user.fullName||'';
-        document.getElementById('ePhone').value=user.phoneNumber||'';
-        document.getElementById('eAddress').value=user.address||'';
+// ── Helper: update all UI with user data ───────────────────
+function populateUI(u) {
+    userData = u;
+    var ini = initials(u.fullName);
+
+    // Sidebar / topbar
+    document.getElementById('sidebarName').textContent   = u.fullName || '—';
+    document.getElementById('sidebarAvatar').textContent = ini;
+    document.getElementById('topbarAvatar').textContent  = ini;
+
+    // Profile card
+    document.getElementById('profileName').textContent  = u.fullName || '—';
+    document.getElementById('profileEmail').textContent = u.email    || '—';
+
+    // Avatar
+    var bigAvatar = document.getElementById('bigAvatar');
+    if (u.profilePicture && u.profilePicture !== '') {
+        bigAvatar.innerHTML = '<img src="http://localhost:8080' + u.profilePicture + '?t=' + Date.now() + '" alt="Avatar" onerror="this.parentElement.innerHTML=\'<span>' + ini + '</span>\'">';
+    } else {
+        bigAvatar.innerHTML = '<span id="bigAvatarInitials">' + ini + '</span>';
+    }
+
+    // View fields
+    document.getElementById('dispName').textContent        = u.fullName    || '—';
+    document.getElementById('dispEmail').textContent       = u.email       || '—';
+    document.getElementById('dispPhone').textContent       = u.phoneNumber || 'Not provided';
+    document.getElementById('dispCnic').textContent        = u.cnic        || 'Not provided';
+    document.getElementById('dispAddress').textContent     = u.address     || 'Not provided';
+    document.getElementById('dispMemberSince').textContent = u.memberSince || '—';
+
+    // Wishlist count
+    var wl = JSON.parse(localStorage.getItem('tripify_wishlist') || '[]');
+    document.getElementById('wishCount').textContent = wl.length;
+}
+
+// ── Fetch full profile from API ────────────────────────────
+async function loadProfile() {
+    try {
+        var res = await fetch(ENDPOINTS.USER.PROFILE, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.status === 401) { AuthService.logout(); return; }
+        if (!res.ok) return;
+        var u = await res.json();
+        var stored = JSON.parse(localStorage.getItem('tripify_user') || '{}');
+        var merged = Object.assign({}, stored, u);
+        localStorage.setItem('tripify_user', JSON.stringify(merged));
+        populateUI(merged);
+    } catch (e) {
+        populateUI(userData);
     }
 }
-function saveEdit(){
-    user.fullName=document.getElementById('eName').value.trim()||user.fullName;
-    user.address=document.getElementById('eAddress').value.trim();
-    localStorage.setItem('user',JSON.stringify(user));
-    document.getElementById('infoName').textContent=user.fullName;
-    document.getElementById('profileName').textContent=user.fullName;
-    const ni=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-    document.getElementById('bigAvatar').textContent=ni;
-    toggleEdit(); showToast('✅','Profile updated!');
+
+// ── Fetch preferences ──────────────────────────────────────
+async function loadPreferences() {
+    try {
+        var res = await fetch(ENDPOINTS.USER.PREFERENCES, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        var p = await res.json();
+        var ag = document.getElementById('ageGroup');
+        if (p.ageGroup) ag.value = p.ageGroup;
+        var prefs = [];
+        try { prefs = JSON.parse(p.travelPreferences || '[]'); } catch(e){}
+        document.querySelectorAll('.pref-chip').forEach(function(c) {
+            if (prefs.includes(c.dataset.pref)) c.classList.add('selected');
+            else c.classList.remove('selected');
+        });
+    } catch (e) {}
 }
 
-function logout(){
-    localStorage.removeItem('token'); localStorage.removeItem('user');
-    showToast('👋','Signed out successfully...'); setTimeout(()=>location.href='../auth/login.html',1500);
+// ── Populate from localStorage immediately ─────────────────
+if (userData.fullName) populateUI(userData);
+
+// ── Load fresh data from API ───────────────────────────────
+loadProfile();
+loadPreferences();
+
+// ── Tab navigation ─────────────────────────────────────────
+document.querySelectorAll('.pnav-item').forEach(function(item) {
+    item.addEventListener('click', function() {
+        document.querySelectorAll('.pnav-item').forEach(function(i) { i.classList.remove('active'); });
+        document.querySelectorAll('.profile-section').forEach(function(s) { s.classList.remove('active'); });
+        item.classList.add('active');
+        document.getElementById('sec-' + item.dataset.tab).classList.add('active');
+    });
+});
+
+// ── Sidebar toggle ─────────────────────────────────────────
+var sidebar = document.getElementById('sidebar');
+var overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', function() {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+});
+overlay.addEventListener('click', function() {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+});
+
+// ── Personal Info: Edit / Save ─────────────────────────────
+window.showEditMode = function () {
+    document.getElementById('eName').value    = userData.fullName    || '';
+    document.getElementById('ePhone').value   = userData.phoneNumber || '';
+    document.getElementById('eCnic').value    = userData.cnic        || '';
+    document.getElementById('eAddress').value = userData.address     || '';
+    clearAllFieldErrors();
+    document.getElementById('viewMode').style.display = 'none';
+    document.getElementById('editMode').style.display = 'block';
+};
+
+window.cancelEdit = function () {
+    document.getElementById('viewMode').style.display = 'block';
+    document.getElementById('editMode').style.display = 'none';
+    clearAllFieldErrors();
+};
+
+window.saveProfile = async function () {
+    clearAllFieldErrors();
+    var body = {
+        fullName:    document.getElementById('eName').value.trim(),
+        phoneNumber: document.getElementById('ePhone').value.trim().replace(/-/g, ''),
+        cnic:        document.getElementById('eCnic').value.trim(),
+        address:     document.getElementById('eAddress').value.trim()
+    };
+
+    if (!body.fullName) { showFieldError('fullName', 'Full name is required.'); return; }
+
+    // Phone: optional, but if provided must be exactly 11 digits starting with 03
+    if (body.phoneNumber) {
+        if (!/^03[0-9]{9}$/.test(body.phoneNumber)) {
+            showFieldError('phoneNumber', 'Enter an 11-digit Pakistani number starting with 03 (e.g. 03001234567).');
+            return;
+        }
+    }
+
+    // CNIC validation — must be empty OR a valid Pakistani CNIC
+    if (body.cnic) {
+        var cnicDigits = body.cnic.replace(/\D/g, '');
+        if (cnicDigits.length !== 13) {
+            showFieldError('cnic', 'CNIC must have exactly 13 digits (format: XXXXX-XXXXXXX-X).');
+            return;
+        }
+        // Province/territory code: first digit must be 1–7
+        var provinceCode = parseInt(cnicDigits.charAt(0), 10);
+        if (provinceCode < 1 || provinceCode > 7) {
+            showFieldError('cnic', 'Invalid CNIC — first digit must be 1–7 (province code).');
+            return;
+        }
+        // Reject obviously fake values (all same digit)
+        if (/^(\d)\1{12}$/.test(cnicDigits)) {
+            showFieldError('cnic', 'Enter a valid Pakistani CNIC number.');
+            return;
+        }
+        // Normalise to XXXXX-XXXXXXX-X before sending
+        body.cnic = cnicDigits.slice(0,5) + '-' + cnicDigits.slice(5,12) + '-' + cnicDigits.slice(12);
+    }
+
+    var btn = document.getElementById('saveProfileBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+
+    try {
+        var res = await fetch(ENDPOINTS.USER.PROFILE, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        var data = await res.json();
+
+        if (res.status === 422) {
+            if (data.errors) Object.entries(data.errors).forEach(function(e) { showFieldError(e[0], e[1]); });
+            showToast('❌', 'Please fix the errors.');
+            return;
+        }
+        if (!res.ok) { showToast('❌', data.message || 'Update failed.'); return; }
+
+        var merged = Object.assign({}, userData, data.user);
+        localStorage.setItem('tripify_user', JSON.stringify(merged));
+        populateUI(merged);
+        cancelEdit();
+        showToast('✅', 'Profile updated successfully!');
+    } catch (e) {
+        showToast('❌', 'Network error. Check your connection.');
+    } finally {
+        btn.disabled = false; btn.textContent = '💾 Save Changes';
+    }
+};
+
+// ── Phone: digits only, max 11 ───────────────────────────────
+window.autoFormatPhone = function (input) {
+    input.value = input.value.replace(/\D/g, '').slice(0, 11);
+};
+
+// ── CNIC auto-format (based on digit count, max 13 digits) ──
+window.autoFormatCnic = function (input) {
+    var d = input.value.replace(/\D/g, '').slice(0, 13); // keep only digits, max 13
+    var v = d;
+    if (d.length > 5)  v = d.slice(0,5) + '-' + d.slice(5);
+    if (d.length > 12) v = d.slice(0,5) + '-' + d.slice(5,12) + '-' + d.slice(12);
+    input.value = v;
+};
+
+// ── CNIC blur validation ─────────────────────────────────────
+window.validateCnicField = function () {
+    var val = document.getElementById('eCnic').value.trim();
+    if (!val) return;
+    var digits = val.replace(/\D/g, '');
+    if (digits.length !== 13) {
+        showFieldError('cnic', 'CNIC must have exactly 13 digits (format: XXXXX-XXXXXXX-X).'); return;
+    }
+    var pc = parseInt(digits.charAt(0), 10);
+    if (pc < 1 || pc > 7) {
+        showFieldError('cnic', 'Invalid CNIC — first digit must be 1–7 (province code).'); return;
+    }
+    if (/^(\d)\1{12}$/.test(digits)) {
+        showFieldError('cnic', 'Enter a valid Pakistani CNIC number.'); return;
+    }
+};
+
+// ── Avatar upload ───────────────────────────────────────────
+window.handleAvatarUpload = async function (input) {
+    var file = input.files[0];
+    if (!file) return;
+
+    if (!['image/jpeg','image/png'].includes(file.type)) {
+        showToast('❌', 'Only JPG and PNG images are allowed.'); input.value = ''; return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+        showToast('❌', 'Image must be smaller than 2MB.'); input.value = ''; return;
+    }
+
+    var bigAvatar = document.getElementById('bigAvatar');
+    var origContent = bigAvatar.innerHTML;
+    bigAvatar.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,0.5)">⏳</div>';
+
+    var form = new FormData();
+    form.append('file', file);
+
+    try {
+        var res = await fetch(ENDPOINTS.USER.UPLOAD_AVATAR, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: form
+        });
+        var data = await res.json();
+
+        if (!res.ok) { bigAvatar.innerHTML = origContent; showToast('❌', data.message || 'Upload failed.'); return; }
+
+        var imgUrl = 'http://localhost:8080' + data.avatarUrl + '?t=' + Date.now();
+        bigAvatar.innerHTML = '<img src="' + imgUrl + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%">';
+
+        userData.profilePicture = data.avatarUrl;
+        localStorage.setItem('tripify_user', JSON.stringify(userData));
+        showToast('✅', 'Profile photo updated!');
+    } catch (e) {
+        bigAvatar.innerHTML = origContent;
+        showToast('❌', 'Upload failed. Check your connection.');
+    }
+    input.value = '';
+};
+
+// ── Preferences ────────────────────────────────────────────
+document.querySelectorAll('.pref-chip').forEach(function(c) {
+    c.addEventListener('click', function() { c.classList.toggle('selected'); });
+});
+
+var AGE_PRESETS = {
+    'Under 18': ['Family Trips', 'Photography', 'Adventure'],
+    '18-25':    ['Adventure', 'Trekking', 'Photography', 'Mountains'],
+    '26-35':    ['Mountains', 'Lakes & Rivers', 'Trekking', 'Local Food'],
+    '36-50':    ['History & Culture', 'Family Trips', 'Local Food', 'Scenic'],
+    '50+':      ['History & Culture', 'Local Food', 'Scenic'],
+};
+
+window.onAgeGroupChange = function (val) {
+    var preset = AGE_PRESETS[val] || [];
+    document.querySelectorAll('.pref-chip').forEach(function(c) {
+        if (preset.includes(c.dataset.pref)) c.classList.add('selected');
+        else c.classList.remove('selected');
+    });
+};
+
+window.savePreferences = async function () {
+    var ageGroup = document.getElementById('ageGroup').value;
+    var selected = Array.from(document.querySelectorAll('.pref-chip.selected')).map(function(c) { return c.dataset.pref; });
+    var btn = document.getElementById('savePrefBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+
+    try {
+        var res = await fetch(ENDPOINTS.USER.PREFERENCES, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ageGroup: ageGroup, travelPreferences: JSON.stringify(selected) })
+        });
+        if (!res.ok) { showToast('❌', 'Failed to save preferences.'); return; }
+        showToast('✅', 'Preferences saved!');
+    } catch (e) {
+        showToast('❌', 'Network error.');
+    } finally {
+        btn.disabled = false; btn.textContent = '💾 Save Preferences';
+    }
+};
+
+// ── Password change ────────────────────────────────────────
+window.changePassword = async function () {
+    clearAllFieldErrors();
+    document.getElementById('pwSuccess').classList.remove('show');
+
+    var cur  = document.getElementById('pwCurrent').value;
+    var nw   = document.getElementById('pwNew').value;
+    var conf = document.getElementById('pwConfirm').value;
+
+    var valid = true;
+    if (!cur)          { showFieldError('currentPassword', 'Current password is required.'); valid = false; }
+    if (nw.length < 8) { showFieldError('newPassword', 'New password must be at least 8 characters.'); valid = false; }
+    if (nw !== conf)   { showFieldError('confirmPassword', 'Passwords do not match.'); valid = false; }
+    if (!valid) return;
+
+    var btn = document.getElementById('changePwBtn');
+    btn.disabled = true; btn.textContent = 'Updating...';
+
+    try {
+        var res = await fetch(ENDPOINTS.USER.CHANGE_PASSWORD, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ currentPassword: cur, newPassword: nw, confirmPassword: conf })
+        });
+        var data = await res.json();
+
+        if (res.status === 422) {
+            if (data.errors) Object.entries(data.errors).forEach(function(e) { showFieldError(e[0], e[1]); });
+            return;
+        }
+        if (!res.ok) { showToast('❌', data.message || 'Failed to update password.'); return; }
+
+        document.getElementById('pwCurrent').value = '';
+        document.getElementById('pwNew').value = '';
+        document.getElementById('pwConfirm').value = '';
+        document.getElementById('pwStrength').className = 'pw-strength';
+        document.getElementById('pwSuccess').classList.add('show');
+        showToast('🔒', 'Password changed successfully!');
+    } catch (e) {
+        showToast('❌', 'Network error.');
+    } finally {
+        btn.disabled = false; btn.textContent = '🔒 Update Password';
+    }
+};
+
+// ── Password strength checker ───────────────────────────────
+window.checkPasswordStrength = function (val) {
+    var box = document.getElementById('pwStrength');
+    if (!val) { box.className = 'pw-strength'; return; }
+    box.classList.add('show');
+
+    var rules = {
+        len:     val.length >= 8,
+        upper:   /[A-Z]/.test(val),
+        lower:   /[a-z]/.test(val),
+        num:     /[0-9]/.test(val),
+        special: /[^A-Za-z0-9]/.test(val)
+    };
+
+    // Update rule pills
+    Object.keys(rules).forEach(function(k) {
+        var el = document.getElementById('rule-' + k);
+        if (el) el.className = 'pw-rule' + (rules[k] ? ' pass' : '');
+    });
+
+    // Score: each passing rule = 1 point
+    var score = Object.values(rules).filter(Boolean).length;
+
+    var label = document.getElementById('pwStrengthLabel');
+    box.classList.remove('weak', 'fair', 'strong');
+    if (!rules.len || score <= 2) {
+        box.classList.add('weak');  label.textContent = 'Weak';
+    } else if (score <= 3) {
+        box.classList.add('fair');  label.textContent = 'Fair';
+    } else {
+        box.classList.add('strong'); label.textContent = 'Strong';
+    }
+};
+
+// ── Password toggle visibility ──────────────────────────────
+window.togglePw = function (inputId, btn) {
+    var input = document.getElementById(inputId);
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁️'; }
+};
+
+// ── Delete Account ─────────────────────────────────────────
+window.openDeleteModal = function () {
+    document.getElementById('delPwInput').value = '';
+    document.getElementById('delPwErr').textContent = '';
+    document.getElementById('delPwInput').classList.remove('is-error');
+    document.getElementById('delPwToggle').textContent = '👁️';
+    document.getElementById('delPwInput').type = 'password';
+    document.getElementById('deleteModal').classList.add('open');
+    setTimeout(function() { document.getElementById('delPwInput').focus(); }, 100);
+};
+
+window.closeDeleteModal = function () {
+    document.getElementById('deleteModal').classList.remove('open');
+};
+
+window.toggleDelPw = function () {
+    var input = document.getElementById('delPwInput');
+    var btn = document.getElementById('delPwToggle');
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁️'; }
+};
+
+window.confirmDeleteAccount = async function () {
+    var password = document.getElementById('delPwInput').value.trim();
+    var errEl = document.getElementById('delPwErr');
+    var input = document.getElementById('delPwInput');
+    var btn = document.getElementById('delConfirmBtn');
+
+    if (!password) {
+        errEl.textContent = 'Password is required.';
+        input.classList.add('is-error');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Deleting...';
+
+    try {
+        var res = await fetch(ENDPOINTS.USER.DELETE_ACCOUNT, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + AuthService.getToken()
+            },
+            body: JSON.stringify({ password: password })
+        });
+        var data = await res.json();
+
+        if (res.status === 422) {
+            var msg = (data.errors && data.errors.password) ? data.errors.password : (data.message || 'Incorrect password.');
+            errEl.textContent = msg;
+            input.classList.add('is-error');
+            btn.disabled = false; btn.textContent = 'Delete Account';
+            return;
+        }
+        if (res.status === 409) {
+            errEl.textContent = data.message || 'Cannot delete account at this time.';
+            btn.disabled = false; btn.textContent = 'Delete Account';
+            return;
+        }
+        if (!res.ok) {
+            errEl.textContent = data.message || 'Something went wrong. Please try again.';
+            btn.disabled = false; btn.textContent = 'Delete Account';
+            return;
+        }
+
+        // Success — clear session and redirect
+        closeDeleteModal();
+        showToast('🗑️', 'Account deleted. Goodbye!', 2500);
+        setTimeout(function() {
+            localStorage.removeItem('tripify_token');
+            localStorage.removeItem('tripify_user');
+            window.location.href = '../auth/login.html';
+        }, 2000);
+
+    } catch (e) {
+        errEl.textContent = 'Network error. Please check your connection.';
+        btn.disabled = false; btn.textContent = 'Delete Account';
+    }
+};
+
+// Close modal when clicking outside
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+
+// ── Logout ─────────────────────────────────────────────────
+window.doLogout = function () {
+    showToast('👋', 'Signing out...');
+    setTimeout(function() {
+        localStorage.removeItem('tripify_token');
+        localStorage.removeItem('tripify_user');
+        window.location.href = '../auth/login.html';
+    }, 1200);
+};
+
+// ── Error helpers ──────────────────────────────────────────
+function inputIdForField(field) {
+    if (field === 'fullName')        return 'eName';
+    if (field === 'phoneNumber')     return 'ePhone';
+    if (field === 'cnic')            return 'eCnic';
+    if (field === 'address')         return 'eAddress';
+    if (field === 'currentPassword') return 'pwCurrent';
+    if (field === 'newPassword')     return 'pwNew';
+    if (field === 'confirmPassword') return 'pwConfirm';
+    return '';
 }
 
-const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
-document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
-overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
-function showToast(icon,msg,dur=2800){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+function showFieldError(field, msg) {
+    var el = document.getElementById('err-' + field);
+    var input = document.getElementById(inputIdForField(field));
+    if (el) el.textContent = msg;
+    if (input) input.classList.add('is-error');
+}
+
+window.clearFieldError = function (field) {
+    var el = document.getElementById('err-' + field);
+    var input = document.getElementById(inputIdForField(field));
+    if (el) el.textContent = '';
+    if (input) input.classList.remove('is-error');
+};
+
+function clearAllFieldErrors() {
+    document.querySelectorAll('.field-error').forEach(function(e) { e.textContent = ''; });
+    document.querySelectorAll('.form-input').forEach(function(i) { i.classList.remove('is-error', 'is-valid'); });
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(icon, msg, dur) {
+    dur = dur || 3000;
+    var c = document.getElementById('toastContainer');
+    var t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + msg + '</span>';
+    c.appendChild(t);
+    setTimeout(function() { t.classList.add('out'); setTimeout(function() { t.remove(); }, 300); }, dur);
+}
+window.showToast = showToast;
+
+})();
 </script>
 </body>
 </html>

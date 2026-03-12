@@ -11,7 +11,10 @@ const ENDPOINTS = {
         LOGOUT:      `${API_CONFIG.BASE_URL}/auth/logout`,
     },
     USER: {
-        PROFILE:        `${API_CONFIG.BASE_URL}/users/profile`,
-        UPDATE_PROFILE: `${API_CONFIG.BASE_URL}/users/profile`,
+        PROFILE:          `${API_CONFIG.BASE_URL}/users/profile`,
+        UPLOAD_AVATAR:    `${API_CONFIG.BASE_URL}/users/profile/avatar`,
+        CHANGE_PASSWORD:  `${API_CONFIG.BASE_URL}/users/password`,
+        PREFERENCES:      `${API_CONFIG.BASE_URL}/users/preferences`,
+        DELETE_ACCOUNT:   `${API_CONFIG.BASE_URL}/users/account`,
     },
 };

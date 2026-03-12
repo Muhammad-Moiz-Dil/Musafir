@@ -1,0 +1,117 @@
+TRIPIFY/
+│
+├── Backend/
+│   ├── main/
+│   │   └── java/
+│   │       └── com/
+│   │           ├── config/
+│   │           ├── controller/
+│   │           ├── exception handling/
+│   │           ├── model/
+│   │           ├── repository/
+│   │           ├── service/
+│   │           └── utility/
+│   │
+│   ├── src/
+│      └── pom.xml
+│   
+│   
+│
+├── database/
+│   ├── migrations/
+│   ├── seeds/
+│   └── schemas/
+│
+├── docs/
+│   ├── filestructure.txt
+│   └── README.md
+│
+└── Frontend/
+    ├── package.json
+    │
+    ├── public/
+    │   └── assets/
+    │       ├── images/
+    │       └── videos/
+    │
+    └── src/
+        ├── css/
+        │   ├── common/    //expected to be made
+        │   ├── components/
+        │   ├── layouts/
+        │   └── pages/
+        │
+        ├── html/
+        │   ├── components/
+        │   ├── includes/
+        │   └── pages/
+        │       ├── admin/      //expected that these pages would be made
+        │       ├── analytics/
+        │       ├── auth/
+        │       ├── destinations/
+        │       ├── emergency/
+        │       ├── trip/
+        │       └── user/
+        │
+        └── js/
+            ├── config/  //expected
+            ├── context/
+            ├── hooks/
+            ├── routes/
+            ├── services/
+            └── utils/
+
+
+
+
+Backend/
+│
+├── main/java/com/
+│   ├── config/                      # Security, CORS, JWT configs
+│   ├── controller/                  # REST API endpoints
+│   ├── exception handling/          # Error handling
+│   ├── model/                       # Database entities (User, Destination, etc.)
+│   ├── repository/                  # Database queries
+│   ├── service/                     # Business logic
+│   └── utility/                     # Helper functions
+│
+├── src/
+    └── pom.xml                      # Maven dependencies
+
+
+
+
+Frontend/
+│
+├── package.json                     # npm dependencies
+│
+├── public/assets/
+│   ├── images/                      # Logo, icons, photos
+│   └── videos/                      # Video files
+│
+└── src/
+    ├── css/
+    │   ├── common/                  # Reset, variables, utilities
+    │   ├── components/              # Component styles
+    │   ├── layouts/                 # Grid, responsive
+    │   └── pages/                   # Page-specific styles
+    │
+    ├── html/
+    │   ├── components/              # Reusable UI (cards, buttons)
+    │   ├── includes/                # Header, Footer, Navbar
+    │   └── pages/
+    │       ├── admin/               # Admin dashboard, etc.
+    │       ├── analytics/           # Charts, reports
+    │       ├── auth/                # Login, Register
+    │       ├── destinations/        # Search, Details
+    │       ├── emergency/           # Emergency info
+    │       ├── trip/                # Trip planner, cost
+    │       └── user/                # Profile, Bookings
+    │
+    └── js/
+        ├── config/                  # API URLs, constants
+        ├── context/                 # React context (Auth, etc.)
+        ├── hooks/                   # Custom hooks
+        ├── routes/                  # Route definitions
+        ├── services/                # API calls
+        └── utils/                   # Helper functions

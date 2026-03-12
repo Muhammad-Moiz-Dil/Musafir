@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Safety & Emergency — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+/* SOS Banner */
+.sos-banner {
+    background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.06));
+    border:1px solid rgba(239,68,68,0.3); border-radius:var(--r-xl);
+    padding:24px 28px; margin-bottom:26px;
+    display:flex; align-items:center; gap:20px; flex-wrap:wrap;
+}
+.sos-icon { font-size:44px; flex-shrink:0; }
+.sos-title { font-family:var(--display); font-size:22px; font-weight:700; color:var(--white); margin-bottom:4px; }
+.sos-sub { font-size:13px; color:rgba(255,255,255,0.6); }
+.sos-numbers { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+.sos-num {
+    display:flex; align-items:center; gap:8px;
+    background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3);
+    border-radius:var(--r-sm); padding:8px 16px;
+    font-size:16px; font-weight:700; color:#ff6b6b; cursor:pointer;
+    transition:var(--ease);
+}
+.sos-num:hover { background:rgba(239,68,68,0.25); }
+
+/* Emergency cards grid */
+.emg-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:14px; margin-bottom:28px; }
+.emg-card { background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.15); border-radius:var(--r-lg); padding:20px; transition:var(--ease); }
+.emg-card:hover { border-color:rgba(239,68,68,0.3); background:rgba(239,68,68,0.10); }
+.emg-card-icon { font-size:26px; margin-bottom:10px; }
+.emg-card-title { font-size:12.5px; font-weight:600; color:var(--t2); margin-bottom:4px; }
+.emg-card-num { font-size:24px; font-weight:800; color:#ef4444; font-family:var(--display); line-height:1; }
+.emg-card-sub { font-size:11px; color:var(--t3); margin-top:4px; }
+
+/* Destination contacts */
+.dest-contacts { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; margin-bottom:28px; }
+.dest-contact-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:18px;
+    transition:var(--ease);
+}
+.dest-contact-card:hover { border-color:rgba(245,166,35,0.2); }
+.dcc-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.dcc-img { width:40px; height:40px; border-radius:var(--r-sm); object-fit:cover; flex-shrink:0; }
+.dcc-name { font-size:14px; font-weight:700; color:var(--white); }
+.dcc-region { font-size:11px; color:var(--t3); }
+.dcc-contacts { display:flex; flex-direction:column; gap:7px; }
+.dcc-row { display:flex; align-items:center; justify-content:space-between; font-size:12.5px; }
+.dcc-label { color:var(--t2); }
+.dcc-val { font-weight:700; color:var(--accent); font-family:var(--display); font-size:14px; }
+
+/* Guidelines list */
+.guidelines-list { display:flex; flex-direction:column; gap:12px; }
+.guideline-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:16px 18px;
+    display:flex; gap:14px; align-items:flex-start; transition:var(--ease);
+}
+.guideline-card:hover { border-color:rgba(255,255,255,0.12); }
+.gc-icon { font-size:22px; flex-shrink:0; }
+.gc-title { font-size:14px; font-weight:700; color:var(--white); margin-bottom:5px; }
+.gc-text  { font-size:13px; color:var(--t2); line-height:1.7; }
+
+/* Alert section */
+.active-alerts { display:flex; flex-direction:column; gap:10px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">✈</div><span class="logo-text">Tripify</span></div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
+        <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="trip-cost.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
+        <a href="route-finder.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
+        <a href="wishlist.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarInitials">AT</div>
+            <div><div class="user-name" id="sidebarName">Ahmed Tariq</div><div class="user-role">Tourist</div></div>
+        </div>
+    </div>
+</aside>
+
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <span class="topbar-title">Safety &amp; Emergency</span>
+    <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search..."></div>
+    <div class="topbar-actions">
+        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
+    </div>
+</header>
+
+<div class="main-wrap">
+<div class="page-content page-enter">
+
+    <div class="page-header">
+        <span class="page-tag">Stay Safe</span>
+        <div class="page-title">Safety &amp; <span>Emergency</span></div>
+        <div class="page-sub">Emergency contacts, travel advisories and safety guidelines for Pakistan</div>
+    </div>
+
+    <!-- SOS Banner -->
+    <div class="sos-banner">
+        <div class="sos-icon">🚨</div>
+        <div style="flex:1">
+            <div class="sos-title">Emergency? Act Fast.</div>
+            <div class="sos-sub">Pakistan national emergency numbers — available 24/7</div>
+            <div class="sos-numbers">
+                <div class="sos-num">🚔 Police: 15</div>
+                <div class="sos-num">🚑 Rescue: 1122</div>
+                <div class="sos-num">🔥 Fire: 16</div>
+                <div class="sos-num">📞 Tourist: 1422</div>
+                <div class="sos-num">🏥 Edhi: 115</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- National Emergency Cards -->
+    <div class="sec-hdr"><h2>🆘 National Emergency Numbers</h2></div>
+    <div class="emg-grid">
+        <div class="emg-card"><div class="emg-card-icon">🚔</div><div class="emg-card-title">Police</div><div class="emg-card-num">15</div><div class="emg-card-sub">All provinces</div></div>
+        <div class="emg-card"><div class="emg-card-icon">🚑</div><div class="emg-card-title">Rescue / Ambulance</div><div class="emg-card-num">1122</div><div class="emg-card-sub">Punjab &amp; KPK</div></div>
+        <div class="emg-card"><div class="emg-card-icon">🔥</div><div class="emg-card-title">Fire Brigade</div><div class="emg-card-num">16</div><div class="emg-card-sub">All cities</div></div>
+        <div class="emg-card"><div class="emg-card-icon">🏥</div><div class="emg-card-title">Edhi Foundation</div><div class="emg-card-num">115</div><div class="emg-card-sub">National</div></div>
+        <div class="emg-card"><div class="emg-card-icon">📞</div><div class="emg-card-title">Tourist Helpline</div><div class="emg-card-num">1422</div><div class="emg-card-sub">PTDC — National</div></div>
+        <div class="emg-card"><div class="emg-card-icon">🌊</div><div class="emg-card-title">NDMA</div><div class="emg-card-num">1700</div><div class="emg-card-sub">Disaster Management</div></div>
+        <div class="emg-card"><div class="emg-card-icon">⚡</div><div class="emg-card-title">Motorway Police</div><div class="emg-card-num">130</div><div class="emg-card-sub">Highways</div></div>
+        <div class="emg-card"><div class="emg-card-icon">🆘</div><div class="emg-card-title">Emergency Helpline</div><div class="emg-card-num">1080</div><div class="emg-card-sub">General emergencies</div></div>
+    </div>
+
+    <!-- Active Travel Alerts -->
+    <div class="sec-hdr mb-14"><h2>⚠️ Active Travel Alerts</h2><span class="badge badge-warning">3 Active</span></div>
+    <div class="active-alerts mb-28">
+        <div class="alert-bar danger"><span class="alert-icon">⛰️</span><div class="alert-body"><div class="alert-title">Skardu — Road Closures (Dec–Feb)</div><div class="alert-sub">Heavy snowfall is blocking several access roads to Skardu. Verify with NHHA before travel.</div></div></div>
+        <div class="alert-bar"><span class="alert-icon">🌧️</span><div class="alert-body"><div class="alert-title">Murree &amp; Naran — Monsoon Advisory (Jul–Aug)</div><div class="alert-sub">Heavy rainfall expected. Risk of flash floods and landslides on mountain roads. Exercise caution.</div></div></div>
+        <div class="alert-bar info"><span class="alert-icon">ℹ️</span><div class="alert-body"><div class="alert-title">Hunza — NOC Requirements</div><div class="alert-sub">Foreign tourists may require No Objection Certificate (NOC) for some restricted areas beyond Karimabad.</div></div></div>
+    </div>
+
+    <!-- Per-Destination Emergency -->
+    <div class="sec-hdr mb-14"><h2>📍 Destination Emergency Contacts</h2></div>
+    <div class="dest-contacts mb-28">
+        <div class="dest-contact-card">
+            <div class="dcc-head"><img class="dcc-img" src="../../../../public/assets/images/hunza-valley.jpg" alt="Hunza"><div><div class="dcc-name">Hunza Valley</div><div class="dcc-region">Gilgit-Baltistan</div></div></div>
+            <div class="dcc-contacts">
+                <div class="dcc-row"><span class="dcc-label">🚔 Gilgit Police</span><span class="dcc-val">05811-920070</span></div>
+                <div class="dcc-row"><span class="dcc-label">🏥 DHQ Hospital</span><span class="dcc-val">05811-920050</span></div>
+                <div class="dcc-row"><span class="dcc-label">📞 PTDC Gilgit</span><span class="dcc-val">05811-920080</span></div>
+            </div>
+        </div>
+        <div class="dest-contact-card">
+            <div class="dcc-head"><img class="dcc-img" src="../../../../public/assets/images/murree.jpeg" alt="Murree"><div><div class="dcc-name">Murree</div><div class="dcc-region">Punjab</div></div></div>
+            <div class="dcc-contacts">
+                <div class="dcc-row"><span class="dcc-label">🚔 Murree Police</span><span class="dcc-val">051-3465010</span></div>
+                <div class="dcc-row"><span class="dcc-label">🚑 Rescue 1122</span><span class="dcc-val">1122</span></div>
+                <div class="dcc-row"><span class="dcc-label">🏥 THQ Hospital</span><span class="dcc-val">051-3465022</span></div>
+            </div>
+        </div>
+        <div class="dest-contact-card">
+            <div class="dcc-head"><img class="dcc-img" src="../../../../public/assets/images/swat.jpg" alt="Swat"><div><div class="dcc-name">Swat Valley</div><div class="dcc-region">KPK</div></div></div>
+            <div class="dcc-contacts">
+                <div class="dcc-row"><span class="dcc-label">🚔 Swat Police</span><span class="dcc-val">0946-9230100</span></div>
+                <div class="dcc-row"><span class="dcc-label">🚑 PKRD</span><span class="dcc-val">1122</span></div>
+                <div class="dcc-row"><span class="dcc-label">🏥 Saidu Hospital</span><span class="dcc-val">0946-9230300</span></div>
+            </div>
+        </div>
+        <div class="dest-contact-card">
+            <div class="dcc-head"><img class="dcc-img" src="../../../../public/assets/images/skardu.jpeg" alt="Skardu"><div><div class="dcc-name">Skardu</div><div class="dcc-region">Gilgit-Baltistan</div></div></div>
+            <div class="dcc-contacts">
+                <div class="dcc-row"><span class="dcc-label">🚔 Skardu Police</span><span class="dcc-val">05815-920070</span></div>
+                <div class="dcc-row"><span class="dcc-label">🏥 DHQ Skardu</span><span class="dcc-val">05815-920099</span></div>
+                <div class="dcc-row"><span class="dcc-label">✈️ Skardu Airport</span><span class="dcc-val">05815-920055</span></div>
+            </div>
+        </div>
+        <div class="dest-contact-card">
+            <div class="dcc-head"><img class="dcc-img" src="../../../../public/assets/images/naran kaghan.jpg" alt="Naran"><div><div class="dcc-name">Naran Kaghan</div><div class="dcc-region">KPK</div></div></div>
+            <div class="dcc-contacts">
+                <div class="dcc-row"><span class="dcc-label">🚔 Naran Police</span><span class="dcc-val">0997-360011</span></div>
+                <div class="dcc-row"><span class="dcc-label">🚑 Rescue 1122</span><span class="dcc-val">1122</span></div>
+                <div class="dcc-row"><span class="dcc-label">🏥 THQ Mansehra</span><span class="dcc-val">0997-302241</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Travel Safety Guidelines -->
+    <div class="sec-hdr mb-14"><h2>🛡️ Travel Safety Guidelines</h2></div>
+    <div class="guidelines-list">
+        <div class="guideline-card"><span class="gc-icon">📱</span><div><div class="gc-title">Keep Emergency Contacts Saved</div><div class="gc-text">Save local police, nearest hospital, and PTDC helpline in your phone before departing. Share your itinerary with someone at home, including expected return dates.</div></div></div>
+        <div class="guideline-card"><span class="gc-icon">💧</span><div><div class="gc-title">Carry Drinking Water</div><div class="gc-text">Mountain areas may have limited clean water access. Carry at least 2 litres per person per day. Purification tablets are recommended for trekking trips.</div></div></div>
+        <div class="guideline-card"><span class="gc-icon">🏥</span><div><div class="gc-title">First Aid Kit is Essential</div><div class="gc-text">Remote mountain areas are far from hospitals. Carry a basic first aid kit with bandages, antiseptic, altitude sickness tablets, painkillers, and oral rehydration salts.</div></div></div>
+        <div class="guideline-card"><span class="gc-icon">🌦️</span><div><div class="gc-title">Check Weather Before You Go</div><div class="gc-text">Mountain weather is unpredictable. Check forecasts on PMD (Pakistan Meteorological Department) before travelling to high-altitude areas. Never ignore storm warnings.</div></div></div>
+        <div class="guideline-card"><span class="gc-icon">🚗</span><div><div class="gc-title">Vehicle Safety</div><div class="gc-text">Rent a 4x4 vehicle for mountain roads. Ensure tyres are in good condition. Never drive at night on mountain passes. Carry a spare tyre and basic tools.</div></div></div>
+        <div class="guideline-card"><span class="gc-icon">📡</span><div><div class="gc-title">Communication in Remote Areas</div><div class="gc-text">Mobile signal is weak or absent in many mountain regions. Inform someone of your route and check-in times. Satellite communicators are recommended for serious treks.</div></div></div>
+        <div class="guideline-card"><span class="gc-icon">🏔️</span><div><div class="gc-title">Altitude Sickness Prevention</div><div class="gc-text">Ascend gradually. Do not go above 500m elevation gain per day. Drink plenty of water. If you feel severe headache, nausea or confusion, descend immediately and seek medical help.</div></div></div>
+    </div>
+
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
+const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('sidebarInitials').textContent=ini; document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq'; document.getElementById('topbarInitials').textContent=ini;
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+// SOS click to copy
+document.querySelectorAll('.sos-num').forEach(el=>{
+    el.addEventListener('click',()=>{
+        const num=el.textContent.split(':')[1]?.trim();
+        if(num) navigator.clipboard?.writeText(num).then(()=>{
+            const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">📋</span><span>Copied ${num} to clipboard</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},2500);
+        });
+    });
+});
+</script>
+</body>
+</html>

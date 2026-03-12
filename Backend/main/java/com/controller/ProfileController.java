@@ -1,0 +1,217 @@
+package com.controller;
+
+import com.model.User;
+import com.model.UserPreferences;
+import com.repository.UserRepository;
+import com.service.ProfileService;
+import com.service.UserService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.time.format.DateTimeFormatter;
+import java.util.Map;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/users")
+@CrossOrigin(origins = "*")
+public class ProfileController {
+
+    private final ProfileService profileService;
+    private final UserRepository userRepo;
+
+    // Avatar storage directory (relative to where the JAR runs, i.e., Backend/ folder)
+    private static final String AVATAR_DIR = "uploads/avatars/";
+    private static final String AVATAR_URL_PREFIX = "/uploads/avatars/";
+
+    public ProfileController(ProfileService profileService, UserRepository userRepo) {
+        this.profileService = profileService;
+        this.userRepo = userRepo;
+    }
+
+    private String currentEmail() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    /** GET /api/users/profile */
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile() {
+        User u = profileService.getProfile(currentEmail());
+        return ResponseEntity.ok(buildProfileMap(u));
+    }
+
+    /** PUT /api/users/profile */
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestBody ProfileService.UpdateProfileRequest req) {
+        try {
+            User u = profileService.updateProfile(currentEmail(), req);
+            return ResponseEntity.ok(Map.of(
+                "message", "Profile updated successfully.",
+                "user", buildProfileMap(u)
+            ));
+        } catch (UserService.FieldValidationException ex) {
+            return ResponseEntity.status(422).body(Map.of(
+                "message", "Validation failed.",
+                "errors", ex.getErrors()
+            ));
+        }
+    }
+
+    /** POST /api/users/profile/avatar */
+    @PostMapping("/profile/avatar")
+    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
+        String email = currentEmail();
+        User u = profileService.getProfile(email);
+
+        // Validate type
+        String contentType = file.getContentType();
+        if (contentType == null || (!contentType.equals("image/jpeg") && !contentType.equals("image/png"))) {
+            return ResponseEntity.status(400).body(Map.of("message", "Only JPG and PNG images are allowed."));
+        }
+
+        // Validate size (max 2MB)
+        if (file.getSize() > 2 * 1024 * 1024) {
+            return ResponseEntity.status(400).body(Map.of("message", "Image must be smaller than 2MB."));
+        }
+
+        try {
+            // Ensure directory exists
+            Path dir = Paths.get(AVATAR_DIR);
+            if (!Files.exists(dir)) Files.createDirectories(dir);
+
+            // Save file as userId_uuid.jpg/png
+            String ext = contentType.equals("image/png") ? ".png" : ".jpg";
+            String filename = u.getUserId() + "_" + UUID.randomUUID().toString().substring(0, 8) + ext;
+            Path dest = dir.resolve(filename);
+
+            // Delete old avatar if exists
+            if (u.getProfilePicture() != null && !u.getProfilePicture().isBlank()) {
+                try {
+                    String oldFilename = u.getProfilePicture().replace(AVATAR_URL_PREFIX, "");
+                    Files.deleteIfExists(Paths.get(AVATAR_DIR + oldFilename));
+                } catch (Exception ignored) {}
+            }
+
+            Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
+            String avatarUrl = AVATAR_URL_PREFIX + filename;
+            profileService.saveAvatarPath(u.getUserId(), avatarUrl);
+
+            return ResponseEntity.ok(Map.of(
+                "message", "Avatar uploaded successfully.",
+                "avatarUrl", avatarUrl
+            ));
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to save image. Please try again."));
+        }
+    }
+
+    /** PUT /api/users/password */
+    @PutMapping("/password")
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest req) {
+        // Frontend validations
+        java.util.Map<String, String> frontErrors = new java.util.HashMap<>();
+        if (req.getCurrentPassword() == null || req.getCurrentPassword().isBlank())
+            frontErrors.put("currentPassword", "Current password is required.");
+        if (req.getNewPassword() == null || req.getNewPassword().length() < 8)
+            frontErrors.put("newPassword", "New password must be at least 8 characters.");
+        if (req.getConfirmPassword() == null || !req.getConfirmPassword().equals(req.getNewPassword()))
+            frontErrors.put("confirmPassword", "Passwords do not match.");
+        if (!frontErrors.isEmpty())
+            return ResponseEntity.status(422).body(Map.of("message","Validation failed.","errors",frontErrors));
+
+        try {
+            profileService.changePassword(currentEmail(), req.getCurrentPassword(), req.getNewPassword());
+            return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
+        } catch (UserService.FieldValidationException ex) {
+            return ResponseEntity.status(422).body(Map.of("message", "Validation failed.", "errors", ex.getErrors()));
+        }
+    }
+
+    /** GET /api/users/preferences */
+    @GetMapping("/preferences")
+    public ResponseEntity<?> getPreferences() {
+        User u = profileService.getProfile(currentEmail());
+        UserPreferences p = profileService.getPreferences(u.getUserId());
+        return ResponseEntity.ok(Map.of(
+            "ageGroup", p.getAgeGroup() != null ? p.getAgeGroup() : "18-25",
+            "travelPreferences", p.getTravelPreferences() != null ? p.getTravelPreferences() : "[]"
+        ));
+    }
+
+    /** DELETE /api/users/account */
+    @DeleteMapping("/account")
+    public ResponseEntity<?> deleteAccount(@RequestBody DeleteAccountRequest req) {
+        if (req.getPassword() == null || req.getPassword().isBlank()) {
+            return ResponseEntity.status(422).body(Map.of(
+                "message", "Validation failed.",
+                "errors", Map.of("password", "Password is required.")
+            ));
+        }
+        try {
+            profileService.deleteAccount(currentEmail(), req.getPassword());
+            return ResponseEntity.ok(Map.of("message", "Your account has been permanently deleted."));
+        } catch (UserService.FieldValidationException ex) {
+            return ResponseEntity.status(422).body(Map.of("message", "Validation failed.", "errors", ex.getErrors()));
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            return ResponseEntity.status(409).body(Map.of("message", "Cannot delete account: it has active reservations or data linked to it. Please contact support."));
+        }
+    }
+
+    /** PUT /api/users/preferences */
+    @PutMapping("/preferences")
+    public ResponseEntity<?> savePreferences(@RequestBody SavePreferencesRequest req) {
+        User u = profileService.getProfile(currentEmail());
+        profileService.savePreferences(u.getUserId(), req.getAgeGroup(), req.getTravelPreferences());
+        return ResponseEntity.ok(Map.of("message", "Preferences saved successfully."));
+    }
+
+    // ── Helpers ───────────────────────────────────────────────
+
+    private Map<String, Object> buildProfileMap(User u) {
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM yyyy");
+        return Map.of(
+            "id",             u.getUserId(),
+            "email",          u.getEmail(),
+            "fullName",       u.getFullName(),
+            "userType",       u.getUserType().name(),
+            "phoneNumber",    u.getPhoneNumber()     != null ? u.getPhoneNumber()     : "",
+            "cnic",           u.getCnic()            != null ? u.getCnic()            : "",
+            "address",        u.getAddress()         != null ? u.getAddress()         : "",
+            "profilePicture", u.getProfilePicture()  != null ? u.getProfilePicture()  : "",
+            "memberSince",    u.getCreatedAt()       != null ? u.getCreatedAt().format(fmt) : "January 2026"
+        );
+    }
+
+    // ── DTOs ──────────────────────────────────────────────────
+
+    public static class ChangePasswordRequest {
+        private String currentPassword;
+        private String newPassword;
+        private String confirmPassword;
+        public String getCurrentPassword()  { return currentPassword; }
+        public void setCurrentPassword(String p) { this.currentPassword = p; }
+        public String getNewPassword() { return newPassword; }
+        public void setNewPassword(String p) { this.newPassword = p; }
+        public String getConfirmPassword() { return confirmPassword; }
+        public void setConfirmPassword(String p) { this.confirmPassword = p; }
+    }
+
+    public static class SavePreferencesRequest {
+        private String ageGroup;
+        private String travelPreferences; // JSON array string
+        public String getAgeGroup() { return ageGroup; }
+        public void setAgeGroup(String a) { this.ageGroup = a; }
+        public String getTravelPreferences() { return travelPreferences; }
+        public void setTravelPreferences(String t) { this.travelPreferences = t; }
+    }
+
+    public static class DeleteAccountRequest {
+        private String password;
+        public String getPassword() { return password; }
+        public void setPassword(String p) { this.password = p; }
+    }
+}

@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+/* Welcome Banner */
+.welcome-banner {
+    background: linear-gradient(135deg,#1a3a5c 0%,#1d6280 50%,#0d2235 100%);
+    border: 1px solid rgba(245,166,35,0.15);
+    border-radius: 20px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 22px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+}
+.welcome-banner::before {
+    content:'';
+    position: absolute;
+    top:-60px; right:-60px;
+    width: 220px; height: 220px;
+    background: rgba(245,166,35,0.07);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.welcome-banner::after {
+    content:'';
+    position: absolute;
+    bottom:-80px; right:100px;
+    width: 180px; height: 180px;
+    background: rgba(245,166,35,0.05);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.welcome-greeting { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 5px; }
+.welcome-name {
+    font-family: var(--display);
+    font-size: clamp(22px,3vw,32px);
+    font-weight: 700; color: var(--white); line-height: 1.2;
+}
+.welcome-sub { font-size: 13.5px; color: rgba(255,255,255,0.55); margin-top: 6px; }
+.welcome-illus { font-size: 56px; position: relative; z-index: 1; flex-shrink: 0; }
+
+/* Big search */
+.search-section { margin-bottom: 26px; }
+.search-section .search-bar { border-radius: 16px; padding: 14px 20px; }
+.search-section .search-bar input { font-size: 15px; }
+.search-btn {
+    background: var(--accent); border: none; border-radius: 10px;
+    color: var(--navy); padding: 8px 20px;
+    font-size: 13.5px; font-weight: 700; white-space: nowrap;
+    transition: var(--ease);
+}
+.search-btn:hover { background: var(--accent-dk); }
+
+/* Recommended row */
+.rec-section { margin-bottom: 26px; }
+
+/* Quick actions */
+.actions-section { margin-bottom: 26px; }
+
+/* Wishlist preview */
+.wish-section {}
+.wish-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px,1fr));
+    gap: 14px;
+}
+.wish-empty {
+    grid-column: 1/-1;
+    text-align: center; padding: 36px 20px;
+    background: var(--surface); border: 1px dashed var(--border);
+    border-radius: var(--r-lg); color: var(--t3);
+}
+.wish-empty span { font-size: 32px; display: block; margin-bottom: 8px; }
+.wish-empty p { font-size: 13px; }
+</style>
+</head>
+<body>
+
+<!-- Overlay -->
+<div class="sidebar-overlay" id="overlay"></div>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">✈</div>
+        <span class="logo-text">Tripify</span>
+    </div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item active">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+            <span>Dashboard</span>
+        </a>
+        <a href="destinations.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
+            <span>Explore</span>
+        </a>
+        <a href="trip-cost.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span>
+            <span>Trip Cost</span>
+        </a>
+        <a href="route-finder.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span>
+            <span>Route Finder</span>
+        </a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            <span>Hotels</span>
+        </a>
+        <a href="wishlist.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+            <span>Wishlist</span>
+        </a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            <span>Emergency</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span>Profile</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarInitials">AT</div>
+            <div>
+                <div class="user-name" id="sidebarName">Ahmed Tariq</div>
+                <div class="user-role">Tourist</div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- ── TOPBAR ── -->
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="topbar-title">Dashboard</span>
+    <div class="topbar-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search destinations..." id="topSearch">
+    </div>
+    <div class="topbar-actions">
+        <button class="topbar-btn" title="Notifications">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot"></span>
+        </button>
+        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'" title="Profile">AT</div>
+    </div>
+</header>
+
+<!-- ── MAIN ── -->
+<div class="main-wrap">
+<div class="page-content page-enter">
+
+    <!-- Welcome -->
+    <div class="welcome-banner">
+        <div>
+            <div class="welcome-greeting" id="greeting">Good morning</div>
+            <div class="welcome-name" id="welcomeName">Ahmed Tariq! 👋</div>
+            <div class="welcome-sub">Ready to plan your next adventure across Pakistan?</div>
+        </div>
+        <div class="welcome-illus">🏔️</div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-section">
+        <div class="search-bar">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="mainSearch" placeholder="Search destinations — Hunza, Murree, Swat...">
+            <button class="search-btn" onclick="doSearch()">Search</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon si-orange">🗺️</div>
+            <div>
+                <div class="stat-val" data-target="3">0</div>
+                <div class="stat-lbl">Trips Planned</div>
+                <div class="stat-chg chg-up">+1 this month</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-purple">❤️</div>
+            <div>
+                <div class="stat-val" data-target="5">0</div>
+                <div class="stat-lbl">Wishlist Items</div>
+                <div class="stat-chg chg-new">Saved 2 new</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-blue">🏨</div>
+            <div>
+                <div class="stat-val" data-target="2">0</div>
+                <div class="stat-lbl">Hotels Booked</div>
+                <div class="stat-chg chg-up">1 upcoming</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon si-green">📍</div>
+            <div>
+                <div class="stat-val" data-target="4">0</div>
+                <div class="stat-lbl">Destinations Visited</div>
+                <div class="stat-chg chg-up">↑ Explorer rank</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Weather Alerts -->
+    <div class="mb-22">
+        <div class="sec-hdr">
+            <h2>⛅ Weather &amp; Travel Alerts</h2>
+            <a href="emergency.html" class="see-all">View All →</a>
+        </div>
+        <div class="alert-bar danger">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-body">
+                <div class="alert-title">Heavy Snowfall in Skardu</div>
+                <div class="alert-sub">Roads to Skardu may be blocked Jan–Feb. Check NDMA advisories before travel.</div>
+            </div>
+            <button class="alert-close" onclick="this.closest('.alert-bar').style.display='none'">✕</button>
+        </div>
+        <div class="alert-bar">
+            <span class="alert-icon">🌧️</span>
+            <div class="alert-body">
+                <div class="alert-title">Monsoon Season — Murree &amp; Naran</div>
+                <div class="alert-sub">July–August: expect heavy rainfall. Carry rain gear and allow extra travel time.</div>
+            </div>
+            <button class="alert-close" onclick="this.closest('.alert-bar').style.display='none'">✕</button>
+        </div>
+        <div class="alert-bar success">
+            <span class="alert-icon">✅</span>
+            <div class="alert-body">
+                <div class="alert-title">Clear Skies in Hunza Valley</div>
+                <div class="alert-sub">Spring season (Apr–Jun) is perfect for visiting Hunza. Cherry blossoms in full bloom!</div>
+            </div>
+            <button class="alert-close" onclick="this.closest('.alert-bar').style.display='none'">✕</button>
+        </div>
+    </div>
+
+    <!-- Recommended -->
+    <div class="rec-section">
+        <div class="sec-hdr">
+            <h2>⭐ Recommended for You</h2>
+            <a href="destinations.html" class="see-all">Browse All →</a>
+        </div>
+        <div class="h-scroll" id="recScroll"></div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="actions-section">
+        <div class="sec-hdr"><h2>⚡ Quick Actions</h2></div>
+        <div class="quick-grid">
+            <a href="trip-cost.html" class="quick-card">
+                <div class="quick-icon qi-orange">💰</div>
+                <div class="quick-title">Trip Cost Estimator</div>
+                <div class="quick-desc">Calculate fuel, food &amp; hotel costs before you pack your bags.</div>
+                <div class="quick-arrow">Estimate Now →</div>
+            </a>
+            <a href="route-finder.html" class="quick-card">
+                <div class="quick-icon qi-teal">🗺️</div>
+                <div class="quick-title">Route Finder</div>
+                <div class="quick-desc">Find the best route between your chosen destinations.</div>
+                <div class="quick-arrow">Find Route →</div>
+            </a>
+            <a href="hotels.html" class="quick-card">
+                <div class="quick-icon qi-blue">🏨</div>
+                <div class="quick-title">Book Hotels</div>
+                <div class="quick-desc">Browse and reserve verified hotels at every destination.</div>
+                <div class="quick-arrow">Browse Hotels →</div>
+            </a>
+            <a href="destinations.html" class="quick-card">
+                <div class="quick-icon qi-purple">🔭</div>
+                <div class="quick-title">Explore Destinations</div>
+                <div class="quick-desc">Discover Pakistan's most breathtaking places to visit.</div>
+                <div class="quick-arrow">Start Exploring →</div>
+            </a>
+            <a href="emergency.html" class="quick-card">
+                <div class="quick-icon qi-red">🛡️</div>
+                <div class="quick-title">Safety &amp; Emergency</div>
+                <div class="quick-desc">Emergency contacts, travel guidelines &amp; safety alerts.</div>
+                <div class="quick-arrow">View Safety Info →</div>
+            </a>
+            <a href="wishlist.html" class="quick-card">
+                <div class="quick-icon qi-green">❤️</div>
+                <div class="quick-title">My Wishlist</div>
+                <div class="quick-desc">Your saved destinations — plan your dream trips here.</div>
+                <div class="quick-arrow">View Wishlist →</div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Wishlist Preview -->
+    <div class="wish-section">
+        <div class="sec-hdr">
+            <h2>❤️ My Wishlist</h2>
+            <a href="wishlist.html" class="see-all">Manage →</a>
+        </div>
+        <div class="wish-preview-grid" id="wishPreview"></div>
+    </div>
+
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const DESTS = [
+    { id:1, name:'Hunza Valley',   region:'Gilgit-Baltistan', img:'../../../../public/assets/images/hunza-valley.jpg', rating:4.8, reviews:124, tags:['Mountain','Scenic','Trekking'], badge:'⭐ Top Pick' },
+    { id:2, name:'Murree',         region:'Punjab',           img:'../../../../public/assets/images/murree.jpeg',       rating:4.5, reviews:98,  tags:['Hill Station','Family'],        badge:null },
+    { id:3, name:'Swat Valley',    region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/swat.jpg',        rating:4.6, reviews:110, tags:['Green','Scenic'],               badge:'🌿 Scenic' },
+    { id:4, name:'Skardu',         region:'Gilgit-Baltistan', img:'../../../../public/assets/images/skardu.jpeg',       rating:4.7, reviews:87,  tags:['Adventure','K2'],               badge:'🏔️ K2 Gateway' },
+    { id:5, name:'Naran Kaghan',   region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/naran kaghan.jpg', rating:4.4, reviews:76, tags:['Valley','Nature'],              badge:null },
+];
+
+// wishlist from localStorage
+let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[1,4]');
+
+function saveWish() { localStorage.setItem('tripify_wishlist', JSON.stringify(wishlist)); }
+
+function starStr(r) {
+    const full = Math.floor(r); const half = r%1>=0.5?1:0; const empty = 5-full-half;
+    return '★'.repeat(full) + (half?'½':'') + '☆'.repeat(empty);
+}
+
+function renderRec() {
+    const c = document.getElementById('recScroll');
+    c.innerHTML = DESTS.map(d => `
+    <div class="dest-card" onclick="location.href='destination-detail.html?id=${d.id}'">
+        <div class="dest-card-img">
+            <img src="${d.img}" alt="${d.name}" loading="lazy">
+            <div class="dest-card-img-overlay"></div>
+            ${d.badge ? `<span class="dc-badge">${d.badge}</span>` : ''}
+            <button class="dc-wish ${wishlist.includes(d.id)?'active':''}" onclick="toggleWish(event,${d.id})" title="Wishlist">
+                ${wishlist.includes(d.id)?'❤️':'🤍'}
+            </button>
+        </div>
+        <div class="dest-card-body">
+            <div class="dc-name">${d.name}</div>
+            <div class="dc-region">📍 ${d.region}</div>
+            <div class="dc-rating"><span class="stars">${starStr(d.rating)}</span> ${d.rating} (${d.reviews})</div>
+            <div class="dc-tags">${d.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        </div>
+    </div>`).join('');
+}
+
+function renderWishPreview() {
+    const c = document.getElementById('wishPreview');
+    const items = DESTS.filter(d => wishlist.includes(d.id));
+    if (!items.length) {
+        c.innerHTML = `<div class="wish-empty"><span>🤍</span><p>No saved destinations yet.<br>Explore and add your favourites!</p></div>`;
+        return;
+    }
+    c.innerHTML = items.map(d => `
+    <div class="wish-card">
+        <div class="wish-img"><img src="${d.img}" alt="${d.name}" loading="lazy"></div>
+        <div class="wish-body">
+            <div class="wish-name">${d.name}</div>
+            <div class="wish-region">📍 ${d.region}</div>
+        </div>
+        <button class="wish-remove" onclick="removeWish(${d.id})" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function toggleWish(e, id) {
+    e.stopPropagation();
+    if (wishlist.includes(id)) { wishlist = wishlist.filter(x=>x!==id); showToast('🤍','Removed from wishlist'); }
+    else { wishlist.push(id); showToast('❤️','Added to wishlist!'); }
+    saveWish(); renderRec(); renderWishPreview();
+}
+function removeWish(id) {
+    wishlist = wishlist.filter(x=>x!==id); saveWish();
+    renderRec(); renderWishPreview(); showToast('🗑️','Removed from wishlist');
+}
+
+function doSearch() {
+    const q = document.getElementById('mainSearch').value.trim();
+    if (q) location.href = `destinations.html?q=${encodeURIComponent(q)}`;
+    else location.href = 'destinations.html';
+}
+document.getElementById('mainSearch').addEventListener('keydown', e => { if (e.key==='Enter') doSearch(); });
+document.getElementById('topSearch').addEventListener('keydown', e => { if (e.key==='Enter') { const q=e.target.value.trim(); if(q) location.href=`destinations.html?q=${encodeURIComponent(q)}`; } });
+
+// Greeting
+const h = new Date().getHours();
+document.getElementById('greeting').textContent = h<12?'Good morning,':h<18?'Good afternoon,':'Good evening,';
+
+// User
+const user = JSON.parse(localStorage.getItem('tripify_user') || '{"fullName":"Traveller","userType":"Tourist"}');
+const initials = (user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('welcomeName').textContent = (user.fullName||'Ahmed Tariq') + '! 👋';
+document.getElementById('sidebarName').textContent  = user.fullName||'Ahmed Tariq';
+document.getElementById('sidebarInitials').textContent = initials;
+document.getElementById('topbarInitials').textContent  = initials;
+
+// Sidebar toggle
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', ()=>{ sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
+overlay.addEventListener('click', ()=>{ sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+
+// Counter animation
+function animateCounter(el) {
+    const target = parseInt(el.dataset.target);
+    let cur = 0; const inc = target/30;
+    const t = setInterval(()=>{ cur=Math.min(cur+inc,target); el.textContent=Math.floor(cur); if(cur>=target) clearInterval(t); },32);
+}
+const cObs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ animateCounter(e.target); cObs.unobserve(e.target); } });
+});
+document.querySelectorAll('[data-target]').forEach(el => cObs.observe(el));
+
+// Toast
+function showToast(icon, msg, dur=2800) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className='toast';
+    t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),300); },dur);
+}
+
+renderRec(); renderWishPreview();
+</script>
+</body>
+</html>

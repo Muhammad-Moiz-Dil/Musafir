@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tripify — Discover Pakistan</title>
+<link rel="icon" type="image/png" href="public/assets/images/favicon.png"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
     <style>
@@ -393,25 +394,19 @@
             transition: opacity 0.6s ease, transform 0.6s ease;
         }
         .d-card.visible { opacity: 1; transform: scale(1) translateY(0); }
-        .d-card:hover .d-bg { transform: scale(1.07); }
+        .d-card:hover .d-img { transform: scale(1.07); }
         .d-card:hover { transform: scale(1) translateY(-6px) !important; }
-        .d-bg {
+        .d-img {
             position: absolute; inset: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: center;
             transition: transform 0.5s ease;
+            display: block;
         }
-        .d-hunza  .d-bg { background: linear-gradient(170deg,#1a2a6c 0%,#b21f1f 55%,#fdbb2d 100%); }
-        .d-murree .d-bg { background: linear-gradient(170deg,#134e5e 0%,#71b280 100%); }
-        .d-swat   .d-bg { background: linear-gradient(170deg,#355c7d 0%,#6c5b7b 55%,#c06c84 100%); }
-        .d-skardu .d-bg { background: linear-gradient(170deg,#0f2027 0%,#203a43 55%,#2c5364 100%); }
-        .d-naran  .d-bg { background: linear-gradient(170deg,#003344 0%,#0a9396 55%,#94d2bd 100%); }
         .d-overlay {
             position: absolute; inset: 0;
             background: linear-gradient(to top, rgba(0,0,0,0.78) 0%, transparent 55%);
-        }
-        .d-mountains {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%;
-            opacity: 0.13;
         }
         .d-info {
             position: absolute;
@@ -838,12 +833,8 @@
     <div class="dest-grid">
 
         <!-- Hunza -->
-        <div class="d-card d-hunza" style="transition-delay:0.00s">
-            <div class="d-bg"></div>
-            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
-                <polygon points="0,300 40,120 70,160 110,58 140,130 170,82 200,110 200,300" fill="white"/>
-                <polygon points="102,58 110,18 118,58" fill="white" opacity="0.8"/>
-            </svg>
+        <div class="d-card" style="transition-delay:0.00s">
+            <img class="d-img" src="public/assets/images/hunza-valley.jpg" alt="Hunza Valley, Gilgit-Baltistan">
             <div class="d-overlay"></div>
             <span class="d-badge">⭐ Most Popular</span>
             <div class="d-info">
@@ -853,11 +844,8 @@
         </div>
 
         <!-- Murree -->
-        <div class="d-card d-murree" style="transition-delay:0.08s">
-            <div class="d-bg"></div>
-            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
-                <polygon points="0,300 50,150 90,190 130,100 160,145 200,115 200,300" fill="white"/>
-            </svg>
+        <div class="d-card" style="transition-delay:0.08s">
+            <img class="d-img" src="public/assets/images/murree.jpeg" alt="Murree, Punjab">
             <div class="d-overlay"></div>
             <div class="d-info">
                 <div class="d-name">Murree</div>
@@ -866,11 +854,8 @@
         </div>
 
         <!-- Swat -->
-        <div class="d-card d-swat" style="transition-delay:0.16s">
-            <div class="d-bg"></div>
-            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
-                <polygon points="0,300 45,138 88,168 128,88 158,128 195,98 200,105 200,300" fill="white"/>
-            </svg>
+        <div class="d-card" style="transition-delay:0.16s">
+            <img class="d-img" src="public/assets/images/swat.jpg" alt="Swat Valley, Khyber Pakhtunkhwa">
             <div class="d-overlay"></div>
             <span class="d-badge">🌿 Scenic</span>
             <div class="d-info">
@@ -880,12 +865,8 @@
         </div>
 
         <!-- Skardu -->
-        <div class="d-card d-skardu" style="transition-delay:0.24s">
-            <div class="d-bg"></div>
-            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
-                <polygon points="0,300 30,130 68,158 108,48 148,108 178,68 200,88 200,300" fill="white"/>
-                <polygon points="100,48 110,8 120,48" fill="white" opacity="0.9"/>
-            </svg>
+        <div class="d-card" style="transition-delay:0.24s">
+            <img class="d-img" src="public/assets/images/skardu.jpeg" alt="Skardu, Gilgit-Baltistan">
             <div class="d-overlay"></div>
             <span class="d-badge">🏔️ K2 Gateway</span>
             <div class="d-info">
@@ -895,11 +876,8 @@
         </div>
 
         <!-- Naran -->
-        <div class="d-card d-naran" style="transition-delay:0.32s">
-            <div class="d-bg"></div>
-            <svg class="d-mountains" viewBox="0 0 200 300" fill="none">
-                <polygon points="0,300 48,158 88,188 128,108 158,148 198,118 200,122 200,300" fill="white"/>
-            </svg>
+        <div class="d-card" style="transition-delay:0.32s">
+            <img class="d-img" src="public/assets/images/naran kaghan.jpg" alt="Naran Kaghan, Khyber Pakhtunkhwa">
             <div class="d-overlay"></div>
             <div class="d-info">
                 <div class="d-name">Naran Kaghan</div>

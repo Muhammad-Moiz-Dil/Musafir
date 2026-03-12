@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Destination Details — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+.dest-hero {
+    position: relative; height: 340px; border-radius: 20px; overflow: hidden; margin-bottom: 26px;
+}
+.dest-hero img { width:100%; height:100%; object-fit:cover; object-position:center; }
+.dest-hero-overlay {
+    position:absolute; inset:0;
+    background:linear-gradient(to top,rgba(7,14,23,0.92) 0%,rgba(7,14,23,0.3) 50%,transparent 100%);
+}
+.dest-hero-content {
+    position:absolute; bottom:0; left:0; right:0; padding:28px 32px;
+}
+.dest-hero-name { font-family:var(--display); font-size:clamp(26px,4vw,40px); font-weight:800; color:var(--white); margin-bottom:6px; }
+.dest-hero-region { font-size:14px; color:rgba(255,255,255,0.65); display:flex; align-items:center; gap:6px; }
+.dest-hero-wish {
+    position:absolute; top:20px; right:20px;
+    width:42px; height:42px; border-radius:50%;
+    background:rgba(0,0,0,0.45); backdrop-filter:blur(8px);
+    border:none; font-size:20px; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:var(--ease);
+}
+.dest-hero-wish:hover { transform:scale(1.12); background:rgba(239,68,68,0.6); }
+
+.info-strip {
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:14px; margin-bottom:26px;
+}
+.info-chip {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); padding:14px 16px; text-align:center;
+    transition:var(--ease);
+}
+.info-chip:hover { border-color:rgba(245,166,35,0.25); }
+.info-chip-icon { font-size:22px; margin-bottom:5px; }
+.info-chip-val { font-size:14px; font-weight:700; color:var(--white); }
+.info-chip-lbl { font-size:11px; color:var(--t3); margin-top:2px; }
+
+.detail-layout { display:grid; grid-template-columns:1fr 320px; gap:22px; }
+.detail-main {}
+.detail-side {}
+.section-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px 22px; margin-bottom:18px; }
+.section-card h3 { font-size:15px; font-weight:700; color:var(--white); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.desc-text { font-size:13.5px; color:var(--t2); line-height:1.8; }
+
+/* Seasonal chart */
+.seasonal-chart { display:flex; gap:6px; align-items:flex-end; height:80px; margin-top:4px; }
+.month-bar { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.month-bar-inner { width:100%; border-radius:4px 4px 0 0; transition:var(--ease); }
+.month-bar:hover .month-bar-inner { opacity:0.8; }
+.month-lbl { font-size:9px; color:var(--t3); }
+
+/* Guideline list */
+.guideline-item {
+    display:flex; gap:12px; align-items:flex-start;
+    padding:10px 0; border-bottom:1px solid var(--border);
+}
+.guideline-item:last-child { border-bottom:none; }
+.g-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+.g-title { font-size:13px; font-weight:600; color:var(--white); margin-bottom:2px; }
+.g-text  { font-size:12px; color:var(--t2); line-height:1.6; }
+
+/* Souvenir item */
+.souvenir-item {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 0; border-bottom:1px solid var(--border);
+}
+.souvenir-item:last-child { border-bottom:none; }
+.souvenir-name { font-size:13px; font-weight:600; color:var(--white); }
+.souvenir-vendor { font-size:11px; color:var(--t3); }
+.souvenir-price { font-size:13px; font-weight:700; color:var(--accent); }
+
+/* Action panel */
+.action-panel {
+    background:linear-gradient(135deg,#1b4965,#1e6b8c);
+    border:1px solid rgba(245,166,35,0.15);
+    border-radius:var(--r-lg); padding:22px; margin-bottom:18px;
+}
+.action-panel h3 { font-size:16px; font-weight:700; color:var(--white); margin-bottom:5px; }
+.action-panel p  { font-size:12.5px; color:rgba(255,255,255,0.6); margin-bottom:16px; line-height:1.6; }
+.action-btns { display:flex; flex-direction:column; gap:9px; }
+
+/* Star rating */
+.rate-stars { display:flex; gap:6px; margin:10px 0; }
+.rate-star { font-size:26px; cursor:pointer; transition:var(--ease); color:var(--t3); }
+.rate-star:hover, .rate-star.active { color:var(--accent); transform:scale(1.15); }
+
+@media (max-width:900px) { .detail-layout { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">✈</div><span class="logo-text">Tripify</span></div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
+        <a href="destinations.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="trip-cost.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
+        <a href="route-finder.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
+        <a href="wishlist.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarInitials">AT</div>
+            <div><div class="user-name" id="sidebarName">Ahmed Tariq</div><div class="user-role">Tourist</div></div>
+        </div>
+    </div>
+</aside>
+
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <span class="topbar-title" id="topbarTitle">Destination Details</span>
+    <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search destinations..."></div>
+    <div class="topbar-actions">
+        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
+    </div>
+</header>
+
+<div class="main-wrap">
+<div class="page-content page-enter" id="pageContent">
+    <!-- Dynamically rendered -->
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const DESTS = {
+    1:{ name:'Hunza Valley', region:'Gilgit-Baltistan', img:'../../../../public/assets/images/hunza-valley.jpg', rating:4.8, reviews:124, altitude:'2,438 m', bestTime:'Apr–Jun', budget:'Moderate', tags:['Mountain','Scenic','Trekking','Photography'],
+        desc:'Hunza Valley is a breathtaking mountain valley nestled between the towering Karakoram peaks in Gilgit-Baltistan. Famous for its ancient Baltit Fort, the pristine Attabad Lake, and spectacular cherry blossom season in spring, Hunza offers a unique blend of natural beauty, rich culture, and warm Burusho hospitality. The valley is surrounded by some of the world\'s highest peaks, making it a paradise for trekkers, photographers, and nature lovers.',
+        seasonal:[40,50,65,80,90,95,85,88,75,60,45,35],
+        guidelines:[ {icon:'🌸',title:'Best Time to Visit',text:'April–June for cherry blossoms. September–October for clear mountain views and harvest festivals.'}, {icon:'👗',title:'Dress Code',text:'Dress modestly and respectfully. Carry warm layers even in summer — nights are cold at altitude.'}, {icon:'🥾',title:'Trekking Tips',text:'Carry proper trekking gear. Acclimatize gradually. Hire a local guide for remote treks.'}, {icon:'💱',title:'Currency & Cash',text:'ATM access is limited beyond Karimabad. Carry sufficient PKR cash for your entire stay.'} ],
+        souvenirs:[ {name:'Hunza Apricots & Dry Fruits', vendor:'Local Markets, Karimabad', price:'Rs. 500–1500/kg'}, {name:'Gemstone Jewellery', vendor:'Karimabad Bazaar', price:'Rs. 1,000–15,000'}, {name:'Handwoven Wool Caps', vendor:'Artisan Shops', price:'Rs. 300–800'} ],
+        hotels:[ {name:'Eagle Nest Hotel', stars:4, price:'Rs. 8,500/night', rating:4.6}, {name:'Serena Hunza', stars:5, price:'Rs. 18,000/night', rating:4.9}, {name:'Hunza Inn', stars:3, price:'Rs. 4,000/night', rating:4.2} ]
+    },
+    2:{ name:'Murree', region:'Punjab', img:'../../../../public/assets/images/murree.jpeg', rating:4.5, reviews:98, altitude:'2,291 m', bestTime:'Apr–Oct', budget:'Budget',
+        desc:'Murree is Pakistan\'s most beloved hill station, located just 50 km from Islamabad. With its pine forests, colonial-era architecture along Mall Road, and cool mountain climate, Murree has been a favourite retreat for families for over 150 years. Visit for the scenic chairlift rides, fresh Kashmiri tea, and the magical snow-covered winters.',
+        seasonal:[55,60,70,82,88,84,78,80,76,68,55,48],
+        guidelines:[ {icon:'🚗',title:'Getting There',text:'Only 50 km from Islamabad. Avoid weekends in peak season — traffic jams can last 3–4 hours.'}, {icon:'❄️',title:'Winter Safety',text:'Roads can be icy Dec–Feb. Keep snow chains in the car. Check PDMA road status before travelling.'}, {icon:'🍎',title:'Local Food',text:'Try fresh apples, kashmiri tea, and freshly baked bread at local dhabas on Mall Road.'} ],
+        souvenirs:[ {name:'Kashmiri Shawls', vendor:'Mall Road Shops', price:'Rs. 1,500–5,000'}, {name:'Wooden Crafts', vendor:'Local Artisans', price:'Rs. 500–2,000'} ],
+        hotels:[ {name:'Shangrila Resort', stars:4, price:'Rs. 7,000/night', rating:4.4}, {name:'Mall Hotel', stars:3, price:'Rs. 3,500/night', rating:4.1} ]
+    },
+    3:{ name:'Swat Valley', region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/swat.jpg', rating:4.6, reviews:110, altitude:'980 m', bestTime:'Apr–Sep', budget:'Budget',
+        desc:'Often called the "Switzerland of Pakistan", Swat Valley is a land of lush green mountains, clear rivers, and ancient Buddhist heritage. The Swat River carves through lush meadows while ancient stupas and carvings dot the hillsides. Explore Mingora\'s bazaars, witness the Buddhist ruins at Butkara, and trek to alpine meadows in Kalam.',
+        seasonal:[50,58,72,85,90,92,88,90,80,65,52,44],
+        guidelines:[ {icon:'🏛️',title:'Historical Sites',text:'Visit Butkara Stupa and Mingora Museum. Hire local guides for historical context — very knowledgeable.'}, {icon:'🌊',title:'River Safety',text:'Do not swim in the Swat River during monsoon season. Currents are extremely dangerous Jul–Aug.'}, {icon:'🍽️',title:'Local Cuisine',text:'Try Peshawari chapli kabab and fresh fish at Kalam riverfront restaurants.'} ],
+        souvenirs:[ {name:'Swat Emeralds', vendor:'Mingora Gem Bazaar', price:'Rs. 5,000–50,000'}, {name:'Pashtun Embroidery', vendor:'Local Women Cooperatives', price:'Rs. 800–3,000'} ],
+        hotels:[ {name:'Serena Swat', stars:5, price:'Rs. 15,000/night', rating:4.7}, {name:'Kalam Valley Hotel', stars:3, price:'Rs. 3,000/night', rating:4.2} ]
+    },
+    4:{ name:'Skardu', region:'Gilgit-Baltistan', img:'../../../../public/assets/images/skardu.jpeg', rating:4.7, reviews:87, altitude:'2,228 m', bestTime:'Jun–Sep', budget:'Moderate',
+        desc:'Skardu is the adventure capital of Pakistan and gateway to K2 — the world\'s second highest peak. Surrounded by towering 8000m+ peaks, the cold desert plateau, and the surreal Shangrila Resort on Upper Kachura Lake, Skardu is unlike anywhere else on earth. The town sits at the confluence of the Indus and Shigar rivers, offering breathtaking landscapes at every turn.',
+        seasonal:[25,30,45,65,80,88,90,85,72,55,35,22],
+        guidelines:[ {icon:'✈️',title:'How to Get There',text:'PIA operates flights from Islamabad. Book in advance — seats fill quickly. Karakoram Highway (KKH) is an alternative but takes 2 days.'}, {icon:'🏔️',title:'Altitude Sickness',text:'Skardu is at 2,228m. Acclimatize for 1–2 days before trekking to higher elevations.'}, {icon:'🧊',title:'Weather',text:'Summer days are warm (25°C) but nights are cold (5–10°C). Winters are extreme — only visit June–September.'} ],
+        souvenirs:[ {name:'Skardu Salt Lamps', vendor:'Local Shops', price:'Rs. 500–2,000'}, {name:'Karakoram Gems', vendor:'Gem Dealers, Skardu Bazaar', price:'Rs. 2,000–20,000'} ],
+        hotels:[ {name:'Serena Skardu', stars:5, price:'Rs. 20,000/night', rating:4.8}, {name:'Shangrila Resort', stars:4, price:'Rs. 12,000/night', rating:4.6}, {name:'K2 Motel', stars:3, price:'Rs. 4,500/night', rating:4.0} ]
+    },
+    5:{ name:'Naran Kaghan', region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/naran kaghan.jpg', rating:4.4, reviews:76, altitude:'2,409 m', bestTime:'Jun–Aug', budget:'Budget',
+        desc:'Naran is the jewel of Kaghan Valley, home to the famous Saif-ul-Malook Lake — a high-altitude alpine lake surrounded by snow-capped peaks. The valley is accessible via Mansehra and offers one of Pakistan\'s most dramatic landscapes, with roaring rivers, glaciers, and vast summer meadows (called payees) filled with wildflowers.',
+        seasonal:[20,25,40,60,75,85,88,82,70,50,30,18],
+        guidelines:[ {icon:'📅',title:'Short Window',text:'Naran is accessible only June–September. The Babusar Top pass closes for the rest of the year due to heavy snow.'}, {icon:'🌙',title:'Night Temperature',text:'Even in summer, night temperatures drop to near 0°C. Pack a warm sleeping bag and heavy jacket.'}, {icon:'🚐',title:'4x4 Vehicles',text:'Beyond Naran town, roads are unpaved and steep. Hire a local 4x4 jeep — do not attempt in a regular car.'} ],
+        souvenirs:[ {name:'Honey (Wild Mountain)', vendor:'Naran Bazaar', price:'Rs. 1,200–3,000/kg'}, {name:'Woollen Blankets', vendor:'Local Weavers', price:'Rs. 1,500–4,000'} ],
+        hotels:[ {name:'Pine Park Hotel', stars:4, price:'Rs. 6,500/night', rating:4.3}, {name:'Kaghan Resort', stars:3, price:'Rs. 3,200/night', rating:4.0} ]
+    }
+};
+
+const id = parseInt(new URLSearchParams(location.search).get('id')) || 1;
+const d = DESTS[id] || DESTS[1];
+let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist')||'[1,4]');
+function saveWish(){ localStorage.setItem('tripify_wishlist',JSON.stringify(wishlist)); }
+function starStr(r){ return '★'.repeat(Math.floor(r))+(r%1>=0.5?'½':'')+'☆'.repeat(5-Math.floor(r)-(r%1>=0.5?1:0)); }
+
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const maxS = Math.max(...d.seasonal);
+function barColor(v){ return v>=80?'#22c55e':v>=60?'#f5a623':v>=40?'#3b82f6':'rgba(255,255,255,0.2)'; }
+
+document.getElementById('topbarTitle').textContent = d.name;
+document.getElementById('pageContent').innerHTML = `
+<div style="margin-bottom:14px">
+    <a href="destinations.html" class="btn btn-ghost btn-sm">← Back to Destinations</a>
+</div>
+
+<div class="dest-hero">
+    <img src="${d.img}" alt="${d.name}">
+    <div class="dest-hero-overlay"></div>
+    <div class="dest-hero-content">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            ${d.tags.map(t=>`<span class="badge badge-accent">${t}</span>`).join('')}
+        </div>
+        <div class="dest-hero-name">${d.name}</div>
+        <div class="dest-hero-region">📍 ${d.region} · ⛰️ ${d.altitude} · 📅 Best: ${d.bestTime} · 💰 ${d.budget}</div>
+    </div>
+    <button class="dest-hero-wish" id="wishBtn" onclick="toggleWish()">${wishlist.includes(id)?'❤️':'🤍'}</button>
+</div>
+
+<div class="info-strip">
+    <div class="info-chip"><div class="info-chip-icon">⭐</div><div class="info-chip-val">${d.rating}</div><div class="info-chip-lbl">${d.reviews} Reviews</div></div>
+    <div class="info-chip"><div class="info-chip-icon">⛰️</div><div class="info-chip-val">${d.altitude}</div><div class="info-chip-lbl">Altitude</div></div>
+    <div class="info-chip"><div class="info-chip-icon">📅</div><div class="info-chip-val">${d.bestTime}</div><div class="info-chip-lbl">Best Season</div></div>
+    <div class="info-chip"><div class="info-chip-icon">💰</div><div class="info-chip-val">${d.budget}</div><div class="info-chip-lbl">Budget Level</div></div>
+</div>
+
+<div class="detail-layout">
+<div class="detail-main">
+
+    <div class="section-card">
+        <h3>📖 About ${d.name}</h3>
+        <p class="desc-text">${d.desc}</p>
+    </div>
+
+    <div class="section-card">
+        <h3>🌤️ Monthly Suitability Index</h3>
+        <p style="font-size:12px;color:var(--t2);margin-bottom:12px">How suitable is each month for visiting? (Green = Ideal)</p>
+        <div class="seasonal-chart">
+            ${d.seasonal.map((v,i)=>`
+            <div class="month-bar" title="${months[i]}: ${v}% suitable">
+                <div class="month-bar-inner" style="height:${Math.round(v/maxS*70)}px;background:${barColor(v)};opacity:0.85;"></div>
+                <div class="month-lbl">${months[i].slice(0,1)}</div>
+            </div>`).join('')}
+        </div>
+        <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#22c55e;border-radius:2px;display:inline-block"></span>Ideal (80%+)</span>
+            <span style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#f5a623;border-radius:2px;display:inline-block"></span>Good (60%+)</span>
+            <span style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block"></span>OK (40%+)</span>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <h3>📋 Travel Guidelines</h3>
+        ${d.guidelines.map(g=>`
+        <div class="guideline-item">
+            <span class="g-icon">${g.icon}</span>
+            <div><div class="g-title">${g.title}</div><div class="g-text">${g.text}</div></div>
+        </div>`).join('')}
+    </div>
+
+    <div class="section-card">
+        <h3>🛍️ Souvenirs &amp; Local Goods</h3>
+        ${d.souvenirs.map(s=>`
+        <div class="souvenir-item">
+            <div><div class="souvenir-name">${s.name}</div><div class="souvenir-vendor">📍 ${s.vendor}</div></div>
+            <div class="souvenir-price">${s.price}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="section-card">
+        <h3>⭐ Rate This Destination</h3>
+        <p style="font-size:12.5px;color:var(--t2);margin-bottom:8px">How was your experience? Share your rating:</p>
+        <div class="rate-stars" id="rateStars">
+            ${[1,2,3,4,5].map(i=>`<span class="rate-star" data-val="${i}" onclick="setRating(${i})">★</span>`).join('')}
+        </div>
+        <p style="font-size:12px;color:var(--t3)" id="rateLabel">Click a star to rate</p>
+    </div>
+</div>
+
+<div class="detail-side">
+    <div class="action-panel">
+        <h3>🚀 Plan Your Visit</h3>
+        <p>Ready to explore ${d.name}? Use our tools to plan the perfect trip.</p>
+        <div class="action-btns">
+            <a href="trip-cost.html?dest=${id}" class="btn btn-primary btn-full">💰 Estimate Trip Cost</a>
+            <a href="route-finder.html?to=${id}" class="btn btn-ghost btn-full" style="background:rgba(255,255,255,0.1)">🗺️ Find Route</a>
+            <a href="hotels.html?dest=${id}" class="btn btn-outline-accent btn-full">🏨 View Hotels</a>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <h3>🏨 Top Hotels</h3>
+        ${d.hotels.map(h=>`
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+                <span style="font-size:13.5px;font-weight:600;color:var(--white)">${h.name}</span>
+                <span class="badge badge-accent">${'★'.repeat(h.stars)}</span>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="font-size:11.5px;color:var(--t3)">⭐ ${h.rating}</span>
+                <span style="font-size:13px;font-weight:700;color:var(--accent)">${h.price}</span>
+            </div>
+        </div>`).join('')}
+        <a href="hotels.html?dest=${id}" class="btn btn-ghost btn-full btn-sm" style="margin-top:12px">View All Hotels →</a>
+    </div>
+
+    <div class="section-card">
+        <h3>🚨 Emergency Contacts</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12.5px;color:var(--t2)">🚔 Police</span><span style="font-weight:700;color:var(--danger)">15</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12.5px;color:var(--t2)">🚑 Rescue</span><span style="font-weight:700;color:var(--danger)">1122</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12.5px;color:var(--t2)">📞 Tourist Helpline</span><span style="font-weight:700;color:var(--accent)">1422</span></div>
+        </div>
+        <a href="emergency.html" class="btn btn-danger btn-full btn-sm" style="margin-top:12px">Full Emergency Guide →</a>
+    </div>
+</div>
+</div>`;
+
+function toggleWish(){
+    if(wishlist.includes(id)){wishlist=wishlist.filter(x=>x!==id);document.getElementById('wishBtn').textContent='🤍';showToast('🤍','Removed from wishlist');}
+    else{wishlist.push(id);document.getElementById('wishBtn').textContent='❤️';showToast('❤️','Added to wishlist!');}
+    saveWish();
+}
+let userRating=0;
+function setRating(v){
+    userRating=v;
+    document.querySelectorAll('.rate-star').forEach((s,i)=>s.classList.toggle('active',i<v));
+    document.getElementById('rateLabel').textContent=`You rated ${v}/5 stars`;
+    showToast('⭐',`Thanks for your ${v}-star rating!`);
+}
+
+// User
+const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
+const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('sidebarInitials').textContent=ini;
+document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq';
+document.getElementById('topbarInitials').textContent=ini;
+
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+
+function showToast(icon,msg,dur=2800){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+</script>
+</body>
+</html>

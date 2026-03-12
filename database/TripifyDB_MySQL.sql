@@ -382,10 +382,23 @@ VALUES
 ('WEATHER_API_KEY', 'your_api_key_here', 'OpenWeatherMap API Key'),
 ('GOOGLE_MAPS_API_KEY', 'your_api_key_here', 'Google Maps API Key');
 
+-- ============================================
+-- 18. USER PREFERENCES TABLE
+-- ============================================
+CREATE TABLE user_preferences (
+      preference_id INT PRIMARY KEY AUTO_INCREMENT,
+      user_id INT NOT NULL UNIQUE,
+      age_group VARCHAR(20) DEFAULT '18-25',
+      travel_preferences JSON,
+      updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+      FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+  );
+
 SELECT 'Database setup complete!' AS Status;
+
 UPDATE Users
-  SET password_hash = '$2a$10$UBSS3mzzbjAmJvwSRZTaKOniKif8HJ/.plSnztlOXtD81TYJmV5I6'
-  WHERE email = 'admin@tripify.com';
+SET password_hash = '$2a$10$UBSS3mzzbjAmJvwSRZTaKOniKif8HJ/.plSnztlOXtD81TYJmV5I6'
+WHERE email = 'admin@tripify.com';
 
 SELECT *FROM USERS;
 

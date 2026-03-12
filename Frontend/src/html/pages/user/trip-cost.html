@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Trip Cost Estimator — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+.estimator-layout { display:grid; grid-template-columns:400px 1fr; gap:22px; }
+.input-panel {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-xl); padding:24px;
+}
+.input-panel h3 { font-size:16px; font-weight:700; color:var(--white); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+.range-group { margin-bottom:16px; }
+.range-label { display:flex; justify-content:space-between; font-size:12.5px; font-weight:600; color:var(--t2); margin-bottom:7px; }
+.range-val { color:var(--accent); }
+input[type=range] {
+    width:100%; -webkit-appearance:none; appearance:none;
+    height:5px; border-radius:3px; outline:none; cursor:pointer;
+    background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--prog,50%),rgba(255,255,255,0.12) var(--prog,50%),rgba(255,255,255,0.12) 100%);
+}
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance:none; width:17px; height:17px; border-radius:50%;
+    background:var(--accent); border:2px solid var(--bg); cursor:pointer;
+    box-shadow:var(--shadow-accent);
+}
+
+/* Results panel */
+.result-panel {
+    background:linear-gradient(160deg,#0f2235 0%,#1b4965 100%);
+    border:1px solid rgba(245,166,35,0.15);
+    border-radius:var(--r-xl); padding:24px;
+}
+.result-panel.has-result { border-color:rgba(245,166,35,0.3); }
+.result-placeholder { text-align:center; padding:40px 20px; }
+.result-placeholder span { font-size:48px; display:block; margin-bottom:12px; }
+.result-placeholder p { font-size:14px; color:var(--t2); }
+.total-box {
+    background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.25);
+    border-radius:var(--r-lg); padding:22px; text-align:center; margin-bottom:20px;
+}
+.total-label { font-size:13px; color:rgba(255,255,255,0.6); margin-bottom:5px; }
+.total-amount { font-family:var(--display); font-size:42px; font-weight:800; color:var(--accent); line-height:1; }
+.total-per { font-size:12px; color:var(--t2); margin-top:5px; }
+.breakdown { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+.breakdown-item {
+    display:flex; align-items:center; gap:12px;
+    background:rgba(255,255,255,0.04); border-radius:var(--r-sm); padding:12px 14px;
+}
+.bi-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.bi-label { flex:1; font-size:13px; font-weight:600; color:var(--white); }
+.bi-sub   { font-size:11px; color:var(--t2); }
+.bi-amount { font-size:14px; font-weight:700; color:var(--white); }
+.cost-bar { height:6px; border-radius:3px; margin-top:6px; transition:width 0.6s ease; }
+
+/* Popular routes */
+.route-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+.route-chip {
+    background:var(--surface-2); border:1px solid var(--border);
+    color:var(--t2); font-size:12px; padding:6px 12px; border-radius:20px;
+    cursor:pointer; transition:var(--ease);
+}
+.route-chip:hover { background:var(--accent-glow); border-color:rgba(245,166,35,0.25); color:var(--accent); }
+
+@media (max-width:900px) { .estimator-layout { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">✈</div><span class="logo-text">Tripify</span></div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
+        <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="trip-cost.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
+        <a href="route-finder.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
+        <a href="wishlist.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarInitials">AT</div>
+            <div><div class="user-name" id="sidebarName">Ahmed Tariq</div><div class="user-role">Tourist</div></div>
+        </div>
+    </div>
+</aside>
+
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <span class="topbar-title">Trip Cost Estimator</span>
+    <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search destinations..."></div>
+    <div class="topbar-actions">
+        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
+    </div>
+</header>
+
+<div class="main-wrap">
+<div class="page-content page-enter">
+
+    <div class="page-header">
+        <span class="page-tag">Plan Smart</span>
+        <div class="page-hdr-row">
+            <div>
+                <div class="page-title">Trip <span>Cost Estimator</span></div>
+                <div class="page-sub">Calculate fuel, food &amp; hotel costs before you hit the road</div>
+            </div>
+            <a href="route-finder.html" class="btn btn-ghost btn-sm">🗺️ Plan Route Instead</a>
+        </div>
+    </div>
+
+    <!-- Quick presets -->
+    <div class="mb-22">
+        <div style="font-size:12.5px;color:var(--t2);margin-bottom:8px;font-weight:600;">⚡ Quick Presets</div>
+        <div class="route-chips" id="presetChips">
+            <button class="route-chip" onclick="applyPreset(500,2,3)">🏔️ Islamabad → Hunza (500 km)</button>
+            <button class="route-chip" onclick="applyPreset(50,4,2)">🌲 Islamabad → Murree (50 km)</button>
+            <button class="route-chip" onclick="applyPreset(340,3,4)">🌊 Lahore → Swat (340 km)</button>
+            <button class="route-chip" onclick="applyPreset(620,2,5)">🏔️ Islamabad → Skardu (620 km)</button>
+            <button class="route-chip" onclick="applyPreset(250,4,3)">🌿 Islamabad → Naran (250 km)</button>
+        </div>
+    </div>
+
+    <div class="estimator-layout">
+        <!-- Input Panel -->
+        <div class="input-panel">
+            <h3>⚙️ Trip Parameters</h3>
+
+            <div class="form-group">
+                <label class="form-label">🚗 Transport Type</label>
+                <select class="form-select" id="transport">
+                    <option value="car">Private Car (12 km/L)</option>
+                    <option value="suv">SUV / 4x4 (8 km/L)</option>
+                    <option value="bus">Bus / Shared Van</option>
+                    <option value="flight">Domestic Flight</option>
+                </select>
+            </div>
+
+            <div class="range-group">
+                <div class="range-label"><span>📏 One-Way Distance</span><span class="range-val" id="distVal">250 km</span></div>
+                <input type="range" id="dist" min="50" max="1500" value="250" step="10">
+            </div>
+
+            <div class="range-group">
+                <div class="range-label"><span>👥 Number of Travelers</span><span class="range-val" id="travelersVal">3</span></div>
+                <input type="range" id="travelers" min="1" max="20" value="3" step="1">
+            </div>
+
+            <div class="range-group">
+                <div class="range-label"><span>🌙 Nights of Stay</span><span class="range-val" id="nightsVal">3 nights</span></div>
+                <input type="range" id="nights" min="1" max="14" value="3" step="1">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🏨 Hotel Category</label>
+                <select class="form-select" id="hotelCat">
+                    <option value="budget">Budget (Rs. 3,000/night)</option>
+                    <option value="mid" selected>Mid-Range (Rs. 7,000/night)</option>
+                    <option value="luxury">Luxury (Rs. 18,000/night)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">🍽️ Meal Preference</label>
+                <select class="form-select" id="mealPref">
+                    <option value="local">Local Dhabas (Rs. 400/meal)</option>
+                    <option value="mid" selected>Mid-Range (Rs. 800/meal)</option>
+                    <option value="restaurant">Restaurant (Rs. 1,500/meal)</option>
+                </select>
+            </div>
+
+            <button class="btn btn-primary btn-full" style="margin-top:6px" onclick="calculate()">
+                💰 Calculate Total Cost
+            </button>
+        </div>
+
+        <!-- Result Panel -->
+        <div class="result-panel" id="resultPanel">
+            <div class="result-placeholder" id="resultPlaceholder">
+                <span>💡</span>
+                <p>Adjust the parameters on the left and<br>click <strong style="color:var(--accent)">Calculate</strong> to see your cost breakdown.</p>
+            </div>
+            <div id="resultContent" style="display:none">
+                <div class="total-box">
+                    <div class="total-label">Estimated Total Trip Cost</div>
+                    <div class="total-amount" id="totalAmt">Rs. 0</div>
+                    <div class="total-per" id="totalPer"></div>
+                </div>
+                <div class="breakdown" id="breakdown"></div>
+                <div style="background:rgba(245,166,35,0.07);border:1px solid rgba(245,166,35,0.15);border-radius:var(--r);padding:12px 14px;font-size:12px;color:var(--t2);line-height:1.6;">
+                    ℹ️ <strong style="color:var(--t1)">Note:</strong> This is an estimate based on average Pakistani rates. Actual costs may vary by 20–30%. Always carry extra cash for emergencies.
+                </div>
+                <div style="display:flex;gap:10px;margin-top:14px">
+                    <a href="hotels.html" class="btn btn-outline-accent btn-sm" style="flex:1;justify-content:center">🏨 Book Hotels</a>
+                    <a href="route-finder.html" class="btn btn-ghost btn-sm" style="flex:1;justify-content:center">🗺️ Plan Route</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+// Range updaters
+function setRangeProg(el){
+    const pct=((el.value-el.min)/(el.max-el.min))*100;
+    el.style.setProperty('--prog',pct+'%');
+}
+['dist','travelers','nights'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.addEventListener('input',()=>{
+        if(id==='dist') document.getElementById('distVal').textContent=el.value+' km';
+        if(id==='travelers') document.getElementById('travelersVal').textContent=el.value;
+        if(id==='nights') document.getElementById('nightsVal').textContent=el.value+' night'+(el.value>1?'s':'');
+        setRangeProg(el);
+    });
+    setRangeProg(el);
+});
+
+function applyPreset(dist,travelers,nights){
+    document.getElementById('dist').value=dist;
+    document.getElementById('travelers').value=travelers;
+    document.getElementById('nights').value=nights;
+    document.getElementById('distVal').textContent=dist+' km';
+    document.getElementById('travelersVal').textContent=travelers;
+    document.getElementById('nightsVal').textContent=nights+' night'+(nights>1?'s':'');
+    ['dist','travelers','nights'].forEach(id=>setRangeProg(document.getElementById(id)));
+    calculate();
+}
+
+function fmtPKR(n){ return 'Rs. '+n.toLocaleString('en-PK'); }
+
+function calculate(){
+    const dist     = parseInt(document.getElementById('dist').value);
+    const travelers= parseInt(document.getElementById('travelers').value);
+    const nights   = parseInt(document.getElementById('nights').value);
+    const transport= document.getElementById('transport').value;
+    const hotelCat = document.getElementById('hotelCat').value;
+    const mealPref = document.getElementById('mealPref').value;
+
+    const hotelRate = {budget:3000, mid:7000, luxury:18000}[hotelCat];
+    const mealRate  = {local:400,   mid:800,  restaurant:1500}[mealPref];
+    const petrolPrice = 295; // PKR per litre
+
+    let fuelCost = 0;
+    if(transport==='car')    fuelCost = Math.round((dist*2/12)*petrolPrice);
+    else if(transport==='suv') fuelCost = Math.round((dist*2/8)*petrolPrice);
+    else if(transport==='bus') fuelCost = Math.round(dist*2*7*travelers); // Rs.7/km per person
+    else if(transport==='flight') fuelCost = Math.round(travelers*18000); // avg domestic flight
+
+    const hotelCost = hotelRate * nights * Math.ceil(travelers/2);
+    const foodCost  = mealRate  * 3 * travelers * (nights+1);
+    const misc      = Math.round((fuelCost+hotelCost+foodCost)*0.10);
+    const total     = fuelCost + hotelCost + foodCost + misc;
+
+    const items=[
+        {icon:'⛽',label:'Fuel / Transport',sub:`${dist*2} km × ${transport}`,amt:fuelCost,color:'#f5a623',pct:Math.round(fuelCost/total*100)},
+        {icon:'🏨',label:'Accommodation',sub:`${nights} nights × ${Math.ceil(travelers/2)} rooms`,amt:hotelCost,color:'#3b82f6',pct:Math.round(hotelCost/total*100)},
+        {icon:'🍽️',label:'Food & Meals',sub:`${travelers} traveler${travelers>1?'s':''} × ${nights+1} days`,amt:foodCost,color:'#22c55e',pct:Math.round(foodCost/total*100)},
+        {icon:'🎒',label:'Miscellaneous (10%)',sub:'Tips, entry fees, emergencies',amt:misc,color:'#a855f7',pct:Math.round(misc/total*100)},
+    ];
+
+    document.getElementById('totalAmt').textContent=fmtPKR(total);
+    document.getElementById('totalPer').textContent=`≈ ${fmtPKR(Math.round(total/travelers))} per person`;
+    document.getElementById('breakdown').innerHTML=items.map(it=>`
+    <div class="breakdown-item">
+        <div class="bi-icon" style="background:${it.color}22">${it.icon}</div>
+        <div style="flex:1">
+            <div class="bi-label">${it.label}</div>
+            <div class="bi-sub">${it.sub}</div>
+            <div class="cost-bar" style="background:${it.color};width:${it.pct}%;"></div>
+        </div>
+        <div class="bi-amount">${fmtPKR(it.amt)}</div>
+    </div>`).join('');
+
+    document.getElementById('resultPlaceholder').style.display='none';
+    document.getElementById('resultContent').style.display='block';
+    document.getElementById('resultPanel').classList.add('has-result');
+    showToast('💰','Cost calculated!');
+}
+
+// User
+const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
+const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('sidebarInitials').textContent=ini;
+document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq';
+document.getElementById('topbarInitials').textContent=ini;
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+function showToast(icon,msg,dur=2800){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+
+// Pre-calculate if dest param
+const qp=new URLSearchParams(location.search);
+if(qp.get('dest')) calculate();
+</script>
+</body>
+</html>

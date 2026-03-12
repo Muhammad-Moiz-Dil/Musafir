@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Route Finder — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+.route-layout { display:grid; grid-template-columns:340px 1fr; gap:22px; }
+
+/* Map placeholder */
+.map-wrap {
+    background:linear-gradient(160deg,#0a1a2a 0%,#0d2238 100%);
+    border:1px solid var(--border); border-radius:var(--r-xl);
+    overflow:hidden; position:relative; min-height:480px;
+    display:flex; align-items:center; justify-content:center;
+}
+.map-grid {
+    position:absolute; inset:0; pointer-events:none;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
+    background-size:40px 40px;
+}
+.map-overlay-card {
+    position:absolute; bottom:16px; right:16px;
+    background:rgba(7,14,23,0.88); backdrop-filter:blur(12px);
+    border:1px solid var(--border); border-radius:var(--r);
+    padding:14px 16px; min-width:180px;
+}
+.map-overlay-card h4 { font-size:12px; color:var(--t3); margin-bottom:8px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.map-stat { display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:5px; }
+.map-stat-val { font-weight:700; color:var(--accent); }
+.map-placeholder-text { text-align:center; z-index:1; }
+.map-placeholder-text span { font-size:50px; display:block; margin-bottom:14px; }
+.map-placeholder-text h3 { font-size:18px; font-weight:700; color:var(--white); margin-bottom:6px; }
+.map-placeholder-text p { font-size:13px; color:var(--t2); max-width:260px; line-height:1.6; }
+
+/* SVG map illustration */
+.pak-map { width:280px; height:280px; opacity:0.15; position:absolute; }
+
+/* Route dots */
+.route-stop {
+    display:flex; align-items:flex-start; gap:12px; padding:12px 0;
+    border-bottom:1px solid var(--border); position:relative;
+}
+.route-stop:last-child { border-bottom:none; }
+.route-dot {
+    width:28px; height:28px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; flex-shrink:0; margin-top:2px;
+}
+.route-dot.origin { background:rgba(34,197,94,0.2); border:2px solid #22c55e; color:#22c55e; }
+.route-dot.stop   { background:rgba(245,166,35,0.2); border:2px solid var(--accent); color:var(--accent); }
+.route-dot.dest   { background:rgba(239,68,68,0.2);  border:2px solid #ef4444; color:#ef4444; }
+.route-connector {
+    position:absolute; left:13px; top:40px; width:2px; height:calc(100% - 28px);
+    background:linear-gradient(to bottom,rgba(255,255,255,0.1),rgba(255,255,255,0.04));
+}
+.stop-name { font-size:13.5px; font-weight:600; color:var(--white); }
+.stop-dist { font-size:11.5px; color:var(--t2); margin-top:2px; }
+.stop-time { font-size:11px; color:var(--t3); }
+
+/* Input panel */
+.route-input-panel {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-xl); padding:22px; margin-bottom:16px;
+}
+.location-input-wrap {
+    display:flex; align-items:center; gap:10px;
+    background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--r-sm); padding:10px 14px;
+    transition:var(--ease); margin-bottom:8px;
+}
+.location-input-wrap:focus-within { border-color:rgba(245,166,35,0.35); background:var(--surface-3); }
+.loc-icon { font-size:16px; flex-shrink:0; }
+.location-input-wrap input {
+    flex:1; background:none; border:none; outline:none;
+    font-size:13.5px; font-family:var(--font); color:var(--t1);
+}
+.location-input-wrap input::placeholder { color:var(--t3); }
+.swap-btn {
+    width:32px; height:32px; background:var(--accent-glow);
+    border:1px solid rgba(245,166,35,0.2);
+    border-radius:50%; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:16px; margin:0 auto 8px;
+    transition:var(--ease);
+}
+.swap-btn:hover { background:rgba(245,166,35,0.25); transform:rotate(180deg); }
+
+/* Route suggestion cards */
+.route-suggestion {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); padding:14px 16px; cursor:pointer;
+    transition:var(--ease); margin-bottom:10px;
+    display:flex; align-items:center; gap:12px;
+}
+.route-suggestion:hover { border-color:var(--border-hover); background:var(--surface-2); }
+.route-suggestion.selected { border-color:rgba(245,166,35,0.4); background:var(--accent-glow); }
+.rs-icon { font-size:22px; }
+.rs-name { font-size:13.5px; font-weight:700; color:var(--white); }
+.rs-detail { font-size:12px; color:var(--t2); }
+.rs-stats { margin-left:auto; text-align:right; }
+.rs-dist { font-size:14px; font-weight:700; color:var(--accent); }
+.rs-time { font-size:11px; color:var(--t3); }
+
+@media (max-width:900px) { .route-layout { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">✈</div><span class="logo-text">Tripify</span></div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
+        <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="trip-cost.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
+        <a href="route-finder.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
+        <a href="wishlist.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarInitials">AT</div>
+            <div><div class="user-name" id="sidebarName">Ahmed Tariq</div><div class="user-role">Tourist</div></div>
+        </div>
+    </div>
+</aside>
+
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <span class="topbar-title">Route Finder</span>
+    <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search destinations..."></div>
+    <div class="topbar-actions">
+        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
+    </div>
+</header>
+
+<div class="main-wrap">
+<div class="page-content page-enter">
+
+    <div class="page-header">
+        <span class="page-tag">Navigate Pakistan</span>
+        <div class="page-hdr-row">
+            <div>
+                <div class="page-title">Route <span>Finder</span></div>
+                <div class="page-sub">Find the best driving routes between Pakistani destinations</div>
+            </div>
+            <a href="trip-cost.html" class="btn btn-ghost btn-sm">💰 Estimate Costs</a>
+        </div>
+    </div>
+
+    <div class="route-layout">
+        <!-- Left: Inputs + Route Details -->
+        <div>
+            <div class="route-input-panel">
+                <h3 style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:14px">📍 Plan Your Route</h3>
+                <div class="location-input-wrap">
+                    <span class="loc-icon">🟢</span>
+                    <input type="text" id="originInput" placeholder="From — e.g. Islamabad" value="Islamabad">
+                </div>
+                <button class="swap-btn" onclick="swapLocations()" title="Swap">⇅</button>
+                <div class="location-input-wrap">
+                    <span class="loc-icon">🔴</span>
+                    <input type="text" id="destInput" placeholder="To — e.g. Hunza Valley" value="Hunza Valley">
+                </div>
+                <div style="display:flex;gap:8px;margin-top:12px">
+                    <select class="form-select" id="viaSelect" style="flex:1">
+                        <option value="">No Stopover</option>
+                        <option>Abbottabad</option>
+                        <option>Mansehra</option>
+                        <option>Besham</option>
+                        <option>Chilas</option>
+                        <option>Gilgit</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="findRoute()" style="white-space:nowrap">Find Route</button>
+                </div>
+            </div>
+
+            <!-- Popular routes -->
+            <div style="font-size:12px;color:var(--t3);margin-bottom:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Popular Routes</div>
+            <div id="popularRoutes"></div>
+        </div>
+
+        <!-- Right: Map + Route Steps -->
+        <div>
+            <div class="map-wrap" id="mapWrap">
+                <div class="map-grid"></div>
+                <!-- Pakistan outline SVG placeholder -->
+                <svg class="pak-map" viewBox="0 0 300 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M80 20 L100 15 L140 25 L170 20 L200 40 L220 60 L210 80 L230 100 L250 110 L260 140 L240 160 L230 190 L200 210 L180 230 L160 250 L140 260 L120 240 L100 220 L80 200 L60 180 L50 160 L40 140 L50 110 L60 90 L70 60 Z" stroke="rgba(245,166,35,0.4)" stroke-width="2" fill="rgba(245,166,35,0.05)"/>
+                    <circle cx="130" cy="160" r="4" fill="#22c55e"/>
+                    <circle cx="100" cy="70" r="4" fill="#f5a623"/>
+                    <circle cx="170" cy="80" r="4" fill="#f5a623"/>
+                    <circle cx="200" cy="90" r="4" fill="#f5a623"/>
+                    <circle cx="160" cy="105" r="4" fill="#f5a623"/>
+                    <line x1="130" y1="160" x2="100" y2="70" stroke="rgba(245,166,35,0.3)" stroke-width="1.5" stroke-dasharray="5,3"/>
+                    <text x="125" y="165" font-size="9" fill="rgba(255,255,255,0.5)">Islamabad</text>
+                    <text x="90"  y="65"  font-size="9" fill="rgba(255,255,255,0.5)">Hunza</text>
+                    <text x="162" y="76"  font-size="9" fill="rgba(255,255,255,0.5)">Skardu</text>
+                    <text x="192" y="86"  font-size="9" fill="rgba(255,255,255,0.5)">Swat</text>
+                    <text x="150" y="101" font-size="9" fill="rgba(255,255,255,0.5)">Naran</text>
+                </svg>
+                <div class="map-placeholder-text">
+                    <span>🗺️</span>
+                    <h3>Interactive Map</h3>
+                    <p>Google Maps integration coming soon.<br>Select a route to see the path &amp; stops.</p>
+                </div>
+                <div class="map-overlay-card" id="mapStats" style="display:none">
+                    <h4>Route Summary</h4>
+                    <div class="map-stat"><span>Distance</span><span class="map-stat-val" id="statDist">—</span></div>
+                    <div class="map-stat"><span>Drive Time</span><span class="map-stat-val" id="statTime">—</span></div>
+                    <div class="map-stat"><span>Road Type</span><span class="map-stat-val" id="statRoad">—</span></div>
+                </div>
+            </div>
+
+            <!-- Route Steps -->
+            <div id="routeSteps" style="margin-top:16px;display:none">
+                <div class="card card-body">
+                    <h3 style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:14px">📌 Route Waypoints</h3>
+                    <div id="stepsContainer"></div>
+                    <div style="display:flex;gap:10px;margin-top:14px">
+                        <a href="trip-cost.html" class="btn btn-primary btn-sm">💰 Estimate Cost</a>
+                        <a href="hotels.html" class="btn btn-ghost btn-sm">🏨 Find Hotels</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const ROUTES = [
+    { icon:'🏔️', from:'Islamabad', to:'Hunza Valley', dist:'500 km', time:'~10 hrs', road:'KKH (N-35)', via:['Abbottabad','Besham','Chilas','Gilgit'], stops:[{type:'origin',name:'Islamabad'},{type:'stop',name:'Abbottabad',dist:'100 km from start',time:'1.5 hrs'},{type:'stop',name:'Besham',dist:'220 km from start',time:'3.5 hrs'},{type:'stop',name:'Chilas',dist:'380 km from start',time:'6 hrs'},{type:'stop',name:'Gilgit',dist:'460 km from start',time:'8 hrs'},{type:'dest',name:'Hunza Valley',dist:'500 km from start',time:'10 hrs'}] },
+    { icon:'🌲', from:'Islamabad', to:'Murree',         dist:'50 km',  time:'~1.5 hrs', road:'M-2 / GT Road', via:[], stops:[{type:'origin',name:'Islamabad'},{type:'stop',name:'Rawalpindi',dist:'15 km from start',time:'25 min'},{type:'dest',name:'Murree',dist:'50 km from start',time:'1.5 hrs'}] },
+    { icon:'🌿', from:'Lahore',    to:'Swat Valley',    dist:'340 km', time:'~6 hrs',  road:'M-1 / N-95',  via:['Islamabad','Nowshera'], stops:[{type:'origin',name:'Lahore'},{type:'stop',name:'Islamabad',dist:'310 km from start',time:'3 hrs'},{type:'stop',name:'Nowshera',dist:'270 km from Lahore',time:'4.5 hrs'},{type:'dest',name:'Swat Valley',dist:'340 km from start',time:'6 hrs'}] },
+    { icon:'🏔️', from:'Islamabad', to:'Skardu',         dist:'620 km', time:'~12 hrs', road:'KKH + N-35',  via:['Abbottabad','Gilgit'], stops:[{type:'origin',name:'Islamabad'},{type:'stop',name:'Abbottabad',dist:'100 km from start',time:'1.5 hrs'},{type:'stop',name:'Gilgit',dist:'460 km from start',time:'8 hrs'},{type:'dest',name:'Skardu',dist:'620 km from start',time:'12 hrs'}] },
+    { icon:'🌊', from:'Islamabad', to:'Naran Kaghan',   dist:'250 km', time:'~5 hrs',  road:'N-15 / Kaghan Rd', via:['Mansehra','Balakot'], stops:[{type:'origin',name:'Islamabad'},{type:'stop',name:'Mansehra',dist:'120 km from start',time:'2 hrs'},{type:'stop',name:'Balakot',dist:'170 km from start',time:'3 hrs'},{type:'dest',name:'Naran',dist:'250 km from start',time:'5 hrs'}] },
+];
+
+let selectedRoute = null;
+
+function renderPopularRoutes(){
+    document.getElementById('popularRoutes').innerHTML = ROUTES.map((r,i)=>`
+    <div class="route-suggestion ${selectedRoute===i?'selected':''}" onclick="selectRoute(${i})">
+        <span class="rs-icon">${r.icon}</span>
+        <div>
+            <div class="rs-name">${r.from} → ${r.to}</div>
+            <div class="rs-detail">Via ${r.road}</div>
+        </div>
+        <div class="rs-stats">
+            <div class="rs-dist">${r.dist}</div>
+            <div class="rs-time">${r.time}</div>
+        </div>
+    </div>`).join('');
+}
+
+function selectRoute(i){
+    selectedRoute=i; const r=ROUTES[i];
+    document.getElementById('originInput').value=r.from;
+    document.getElementById('destInput').value=r.to;
+    document.getElementById('statDist').textContent=r.dist;
+    document.getElementById('statTime').textContent=r.time;
+    document.getElementById('statRoad').textContent=r.road;
+    document.getElementById('mapStats').style.display='block';
+    document.getElementById('routeSteps').style.display='block';
+    document.getElementById('stepsContainer').innerHTML=r.stops.map((s,idx)=>`
+    <div class="route-stop">
+        ${idx<r.stops.length-1?'<div class="route-connector"></div>':''}
+        <div class="route-dot ${s.type}">${idx+1}</div>
+        <div>
+            <div class="stop-name">${s.name}</div>
+            ${s.dist?`<div class="stop-dist">📏 ${s.dist}</div>`:''}
+            ${s.time?`<div class="stop-time">⏱️ ${s.time} total</div>`:''}
+        </div>
+    </div>`).join('');
+    renderPopularRoutes();
+    showToast('🗺️',`Route loaded: ${r.from} → ${r.to}`);
+}
+
+function swapLocations(){
+    const a=document.getElementById('originInput'),b=document.getElementById('destInput');
+    [a.value,b.value]=[b.value,a.value];
+}
+
+function findRoute(){
+    const from=document.getElementById('originInput').value.trim();
+    const to=document.getElementById('destInput').value.trim();
+    if(!from||!to){ showToast('⚠️','Please enter origin and destination'); return; }
+    const idx=ROUTES.findIndex(r=>r.from.toLowerCase()===from.toLowerCase()&&r.to.toLowerCase().includes(to.toLowerCase().split(' ')[0]));
+    if(idx>=0) selectRoute(idx);
+    else showToast('🔍',`Showing closest match for ${from} → ${to}`);
+}
+
+// User + sidebar
+const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
+const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('sidebarInitials').textContent=ini;
+document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq';
+document.getElementById('topbarInitials').textContent=ini;
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+function showToast(icon,msg,dur=2800){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+
+renderPopularRoutes();
+// Auto-select first route
+selectRoute(0);
+</script>
+</body>
+</html>

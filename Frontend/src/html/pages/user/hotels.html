@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Hotels — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+.hotels-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px; }
+
+/* Booking Modal */
+.modal-bg {
+    position:fixed; inset:0;
+    background:rgba(7,14,23,0.88); backdrop-filter:blur(10px);
+    z-index:2000; display:flex; align-items:center; justify-content:center;
+    padding:20px; opacity:0; pointer-events:none; transition:opacity 0.3s;
+}
+.modal-bg.open { opacity:1; pointer-events:all; }
+.modal-box {
+    background:linear-gradient(160deg,#0f2235 0%,#1b4965 100%);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:var(--r-xl); padding:32px 28px; max-width:480px; width:100%;
+    transform:translateY(28px) scale(0.97); transition:transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    position:relative;
+}
+.modal-bg.open .modal-box { transform:translateY(0) scale(1); }
+.modal-close {
+    position:absolute; top:14px; right:14px;
+    width:32px; height:32px; background:rgba(255,255,255,0.07);
+    border:none; border-radius:8px; color:var(--t2);
+    font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:var(--ease);
+}
+.modal-close:hover { background:rgba(255,255,255,0.12); color:var(--t1); }
+.modal-title { font-family:var(--display); font-size:22px; font-weight:700; color:var(--white); margin-bottom:4px; }
+.modal-sub   { font-size:13px; color:var(--t2); margin-bottom:22px; }
+.date-row    { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.booking-summary {
+    background:rgba(245,166,35,0.08); border:1px solid rgba(245,166,35,0.18);
+    border-radius:var(--r); padding:14px; margin:16px 0;
+}
+.bs-row { display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px; }
+.bs-row:last-child { margin-bottom:0; border-top:1px solid rgba(255,255,255,0.07); padding-top:6px; }
+.bs-row .label { color:var(--t2); }
+.bs-row .val   { font-weight:700; color:var(--white); }
+.bs-row .val.accent { color:var(--accent); }
+
+/* Amenity chips */
+.amenities { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+.amenity { background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--t3); font-size:10.5px; padding:2px 8px; border-radius:20px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">✈</div><span class="logo-text">Tripify</span></div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
+        <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="trip-cost.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
+        <a href="route-finder.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
+        <a href="wishlist.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarInitials">AT</div>
+            <div><div class="user-name" id="sidebarName">Ahmed Tariq</div><div class="user-role">Tourist</div></div>
+        </div>
+    </div>
+</aside>
+
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <span class="topbar-title">Hotel Reservations</span>
+    <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search hotels..." id="topSearch"></div>
+    <div class="topbar-actions">
+        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
+    </div>
+</header>
+
+<div class="main-wrap">
+<div class="page-content page-enter">
+
+    <div class="page-header">
+        <span class="page-tag">Accommodation</span>
+        <div class="page-hdr-row">
+            <div>
+                <div class="page-title">Find &amp; Book <span>Hotels</span></div>
+                <div class="page-sub">Verified hotels across Pakistan's top destinations</div>
+            </div>
+            <div id="hotelCount" style="font-size:13px;color:var(--t2)"></div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="mb-22">
+        <div class="filter-bar">
+            <button class="filter-pill active" data-dest="all">All Destinations</button>
+            <button class="filter-pill" data-dest="Hunza Valley">🏔️ Hunza</button>
+            <button class="filter-pill" data-dest="Murree">🌲 Murree</button>
+            <button class="filter-pill" data-dest="Swat Valley">🌿 Swat</button>
+            <button class="filter-pill" data-dest="Skardu">⛰️ Skardu</button>
+            <button class="filter-pill" data-dest="Naran Kaghan">🌊 Naran</button>
+            <div class="filter-select-wrap">
+                <select id="priceFilter">
+                    <option value="">💰 Any Price</option>
+                    <option value="budget">Under Rs. 5,000</option>
+                    <option value="mid">Rs. 5,000–12,000</option>
+                    <option value="luxury">Rs. 12,000+</option>
+                </select>
+            </div>
+            <div class="filter-select-wrap">
+                <select id="starsFilter">
+                    <option value="">⭐ Any Stars</option>
+                    <option value="5">5 Star</option>
+                    <option value="4">4 Star</option>
+                    <option value="3">3 Star</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="hotels-grid" id="hotelsGrid"></div>
+</div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
+<div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="mTitle">Hotel Name</div>
+    <div class="modal-sub" id="mSub">📍 Location · ⭐⭐⭐⭐</div>
+
+    <div class="date-row">
+        <div class="form-group mb-0">
+            <label class="form-label">Check-in Date</label>
+            <input type="date" class="form-input" id="checkIn">
+        </div>
+        <div class="form-group mb-0">
+            <label class="form-label">Check-out Date</label>
+            <input type="date" class="form-input" id="checkOut">
+        </div>
+    </div>
+
+    <div class="form-group" style="margin-top:14px">
+        <label class="form-label">Number of Rooms</label>
+        <select class="form-select" id="rooms">
+            <option>1 Room</option><option>2 Rooms</option><option>3 Rooms</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Special Requests (optional)</label>
+        <textarea class="form-textarea" id="requests" placeholder="Any special requirements..."></textarea>
+    </div>
+
+    <div class="booking-summary">
+        <div class="bs-row"><span class="label">Price per night</span><span class="val" id="mPrice">—</span></div>
+        <div class="bs-row"><span class="label">Nights</span><span class="val" id="mNights">—</span></div>
+        <div class="bs-row"><span class="label">Total Estimate</span><span class="val accent" id="mTotal">—</span></div>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="confirmBooking()">🏨 Confirm Booking Request</button>
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const HOTELS = [
+    { id:1, name:'Eagle Nest Hotel', dest:'Hunza Valley', img:'../../../../public/assets/images/hunza-valley.jpg', stars:4, rating:4.6, reviews:89, price:8500, amenities:['WiFi','Parking','Restaurant','Mountain View'], desc:'Perched on a hilltop with panoramic views of Rakaposhi peak.' },
+    { id:2, name:'Serena Hunza',     dest:'Hunza Valley', img:'../../../../public/assets/images/hunza-valley.jpg', stars:5, rating:4.9, reviews:134, price:18000, amenities:['WiFi','Spa','Pool','Restaurant','Gym','Mountain View'], desc:'Pakistan\'s most iconic 5-star luxury hotel in the heart of Hunza.' },
+    { id:3, name:'Hunza Inn',        dest:'Hunza Valley', img:'../../../../public/assets/images/hunza-valley.jpg', stars:3, rating:4.2, reviews:62,  price:4000, amenities:['WiFi','Breakfast','Garden'], desc:'Cozy budget-friendly guesthouse with warm Hunzai hospitality.' },
+    { id:4, name:'Shangrila Resort', dest:'Murree',       img:'../../../../public/assets/images/murree.jpeg',      stars:4, rating:4.4, reviews:78,  price:7000, amenities:['WiFi','Restaurant','Parking','Fireplace'], desc:'Nestled in pine trees, just a short walk from Mall Road.' },
+    { id:5, name:'Mall Hotel',       dest:'Murree',       img:'../../../../public/assets/images/murree.jpeg',      stars:3, rating:4.1, reviews:55,  price:3500, amenities:['WiFi','Breakfast','Cable TV'], desc:'Budget-friendly stay in the heart of Murree town.' },
+    { id:6, name:'Serena Swat',      dest:'Swat Valley',  img:'../../../../public/assets/images/swat.jpg',         stars:5, rating:4.7, reviews:101, price:15000, amenities:['WiFi','Pool','Spa','Restaurant','Garden','Room Service'], desc:'Award-winning 5-star resort on the banks of the Swat River.' },
+    { id:7, name:'Kalam Valley Hotel',dest:'Swat Valley', img:'../../../../public/assets/images/swat.jpg',         stars:3, rating:4.2, reviews:44,  price:3000, amenities:['WiFi','Parking','River View'], desc:'Simple mountain hotel with stunning river views in Kalam.' },
+    { id:8, name:'Serena Skardu',    dest:'Skardu',       img:'../../../../public/assets/images/skardu.jpeg',      stars:5, rating:4.8, reviews:97,  price:20000, amenities:['WiFi','Spa','Restaurant','Mountain View','Library'], desc:'Luxury property surrounded by 8000m peaks in Skardu valley.' },
+    { id:9, name:'K2 Motel',         dest:'Skardu',       img:'../../../../public/assets/images/skardu.jpeg',      stars:3, rating:4.0, reviews:38,  price:4500, amenities:['WiFi','Parking','Meals'], desc:'No-frills clean stay, perfect base for K2 trekkers.' },
+    { id:10, name:'Pine Park Hotel', dest:'Naran Kaghan', img:'../../../../public/assets/images/naran kaghan.jpg', stars:4, rating:4.3, reviews:67,  price:6500, amenities:['WiFi','Restaurant','Garden','River View'], desc:'Charming hotel overlooking the Kunhar River in Naran valley.' },
+    { id:11, name:'Kaghan Resort',   dest:'Naran Kaghan', img:'../../../../public/assets/images/naran kaghan.jpg', stars:3, rating:4.0, reviews:41,  price:3200, amenities:['WiFi','Breakfast','Campfire'], desc:'Rustic mountain resort perfect for adventure travellers.' },
+    { id:12, name:'Shangrila Lake Resort', dest:'Skardu', img:'../../../../public/assets/images/skardu.jpeg',     stars:4, rating:4.6, reviews:112, price:12000, amenities:['WiFi','Lake View','Restaurant','Boat Rides'], desc:'Romantic retreat on the shores of Upper Kachura Lake.' },
+];
+
+let destFilter='all', priceFilter='', starsFilter='', searchQ='';
+let bookingHotel=null;
+
+function filtered(){
+    return HOTELS.filter(h=>{
+        const okDest  = destFilter==='all' || h.dest===destFilter;
+        const okPrice = !priceFilter || (priceFilter==='budget'&&h.price<5000)||(priceFilter==='mid'&&h.price>=5000&&h.price<=12000)||(priceFilter==='luxury'&&h.price>12000);
+        const okStars = !starsFilter || h.stars===parseInt(starsFilter);
+        const okQ     = !searchQ || h.name.toLowerCase().includes(searchQ) || h.dest.toLowerCase().includes(searchQ);
+        return okDest&&okPrice&&okStars&&okQ;
+    });
+}
+function starStr(n){ return '★'.repeat(n)+'☆'.repeat(5-n); }
+
+function render(){
+    const items=filtered();
+    document.getElementById('hotelCount').textContent=`${items.length} hotel${items.length!==1?'s':''} available`;
+    if(!items.length){ document.getElementById('hotelsGrid').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--t3)"><div style="font-size:40px;margin-bottom:12px">🏨</div><p>No hotels match your filters.</p></div>`; return; }
+    document.getElementById('hotelsGrid').innerHTML=items.map(h=>`
+    <div class="hotel-card">
+        <div class="hotel-img">
+            <img src="${h.img}" alt="${h.name}" loading="lazy">
+            <div class="hotel-img-overlay"></div>
+            <span style="position:absolute;top:10px;right:10px;background:rgba(245,166,35,0.9);color:#1a1a1a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">${'★'.repeat(h.stars)}</span>
+        </div>
+        <div class="hotel-body">
+            <div class="hotel-name">${h.name}</div>
+            <div class="hotel-loc">📍 ${h.dest}</div>
+            <div class="dc-rating"><span class="stars">${starStr(h.rating)}</span> ${h.rating} (${h.reviews})</div>
+            <div style="font-size:12px;color:var(--t2);margin-bottom:8px;line-height:1.55">${h.desc}</div>
+            <div class="amenities">${h.amenities.map(a=>`<span class="amenity">${a}</span>`).join('')}</div>
+            <div class="hotel-row">
+                <div><div class="hotel-price">Rs. ${h.price.toLocaleString()}<span>/night</span></div></div>
+                <button class="btn btn-primary btn-sm" onclick="openBooking(${h.id})">Book Now</button>
+            </div>
+        </div>
+    </div>`).join('');
+}
+
+function openBooking(id){
+    bookingHotel=HOTELS.find(h=>h.id===id);
+    document.getElementById('mTitle').textContent=bookingHotel.name;
+    document.getElementById('mSub').textContent=`📍 ${bookingHotel.dest} · ${'★'.repeat(bookingHotel.stars)}`;
+    document.getElementById('mPrice').textContent=`Rs. ${bookingHotel.price.toLocaleString()}`;
+    const today=new Date(),checkout=new Date();checkout.setDate(today.getDate()+3);
+    document.getElementById('checkIn').valueAsDate=today;
+    document.getElementById('checkOut').valueAsDate=checkout;
+    updateTotal();
+    ['checkIn','checkOut','rooms'].forEach(id=>document.getElementById(id).addEventListener('change',updateTotal));
+    document.getElementById('modalBg').classList.add('open');
+    document.body.style.overflow='hidden';
+}
+function updateTotal(){
+    const ci=new Date(document.getElementById('checkIn').value);
+    const co=new Date(document.getElementById('checkOut').value);
+    const nights=Math.max(1,Math.round((co-ci)/(1000*60*60*24)));
+    const rooms=parseInt(document.getElementById('rooms').value)||1;
+    document.getElementById('mNights').textContent=nights+' night'+(nights>1?'s':'');
+    document.getElementById('mTotal').textContent='Rs. '+(bookingHotel.price*nights*rooms).toLocaleString();
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('open'); document.body.style.overflow=''; }
+function confirmBooking(){ closeModal(); showToast('✅','Booking request sent! Hotel will confirm within 24 hours.'); }
+
+document.querySelectorAll('.filter-pill').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+        document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active'); destFilter=btn.dataset.dest; render();
+    });
+});
+document.getElementById('priceFilter').addEventListener('change',e=>{priceFilter=e.target.value;render();});
+document.getElementById('starsFilter').addEventListener('change',e=>{starsFilter=e.target.value;render();});
+document.getElementById('topSearch').addEventListener('input',e=>{searchQ=e.target.value.toLowerCase();render();});
+
+// URL param
+const qp=new URLSearchParams(location.search);
+if(qp.get('dest')){
+    const dests={1:'Hunza Valley',2:'Murree',3:'Swat Valley',4:'Skardu',5:'Naran Kaghan'};
+    const d=dests[parseInt(qp.get('dest'))];
+    if(d){ destFilter=d; document.querySelectorAll('.filter-pill').forEach(b=>{b.classList.toggle('active',b.dataset.dest===d);}); }
+}
+
+const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
+const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('sidebarInitials').textContent=ini; document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq'; document.getElementById('topbarInitials').textContent=ini;
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+function showToast(icon,msg,dur=3500){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+render();
+</script>
+</body>
+</html>

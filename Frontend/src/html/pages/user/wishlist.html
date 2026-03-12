@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Wishlist — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+.wish-full-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; }
+.wish-full-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-lg); overflow:hidden; transition:var(--ease); position:relative;
+}
+.wish-full-card:hover { border-color:var(--border-hover); transform:translateY(-5px); box-shadow:var(--shadow-lg); }
+.wfc-img { height:180px; overflow:hidden; position:relative; }
+.wfc-img img { width:100%; height:100%; object-fit:cover; transition:transform 0.5s; }
+.wish-full-card:hover .wfc-img img { transform:scale(1.07); }
+.wfc-img-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,0.65) 0%,transparent 50%); }
+.wfc-body { padding:16px; }
+.wfc-name { font-size:16px; font-weight:700; color:var(--white); margin-bottom:3px; }
+.wfc-region { font-size:12px; color:var(--t3); margin-bottom:8px; }
+.wfc-rating { display:flex; align-items:center; gap:5px; font-size:12px; color:var(--t2); margin-bottom:10px; }
+.wfc-desc { font-size:12.5px; color:var(--t2); line-height:1.6; margin-bottom:14px; }
+.wfc-actions { display:flex; gap:8px; }
+.wfc-remove {
+    position:absolute; top:12px; right:12px;
+    width:32px; height:32px; background:rgba(239,68,68,0.8);
+    border:none; border-radius:50%; color:white; font-size:14px;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; opacity:0; transition:var(--ease);
+}
+.wish-full-card:hover .wfc-remove { opacity:1; }
+.wfc-remove:hover { transform:scale(1.1); }
+
+/* Empty state */
+.wish-empty-state {
+    grid-column:1/-1; text-align:center; padding:70px 20px;
+    background:var(--surface); border:1px dashed rgba(255,255,255,0.08);
+    border-radius:var(--r-xl);
+}
+.wish-empty-state h3 { font-size:20px; font-weight:700; color:var(--white); margin:16px 0 8px; }
+.wish-empty-state p { font-size:14px; color:var(--t2); margin-bottom:22px; }
+
+/* Header stats */
+.wish-stats { display:flex; gap:22px; flex-wrap:wrap; margin-bottom:26px; }
+.wstat { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px 20px; text-align:center; min-width:100px; }
+.wstat-num { font-family:var(--display); font-size:22px; font-weight:700; color:var(--accent); }
+.wstat-lbl { font-size:11px; color:var(--t3); margin-top:2px; }
+
+/* Sort bar */
+.sort-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+.sort-bar-left { display:flex; align-items:center; gap:8px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay"></div>
+
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">✈</div><span class="logo-text">Tripify</span></div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
+        <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="trip-cost.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
+        <a href="route-finder.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
+        <a href="wishlist.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
+        <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarInitials">AT</div>
+            <div><div class="user-name" id="sidebarName">Ahmed Tariq</div><div class="user-role">Tourist</div></div>
+        </div>
+    </div>
+</aside>
+
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    <span class="topbar-title">My Wishlist</span>
+    <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search wishlist..."></div>
+    <div class="topbar-actions">
+        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
+    </div>
+</header>
+
+<div class="main-wrap">
+<div class="page-content page-enter">
+
+    <div class="page-header">
+        <span class="page-tag">Saved Destinations</span>
+        <div class="page-hdr-row">
+            <div>
+                <div class="page-title">My <span>Wishlist</span></div>
+                <div class="page-sub">Your dream destinations — plan them into real trips</div>
+            </div>
+            <a href="destinations.html" class="btn btn-primary btn-sm">+ Add Destinations</a>
+        </div>
+    </div>
+
+    <div class="wish-stats" id="wishStats"></div>
+
+    <div class="sort-bar">
+        <div class="sort-bar-left">
+            <span style="font-size:13px;color:var(--t2)">Sort by:</span>
+            <div class="filter-select-wrap">
+                <select id="sortSelect" onchange="render()">
+                    <option value="default">Added Order</option>
+                    <option value="rating">Highest Rated</option>
+                    <option value="name">Name (A–Z)</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑️ Clear All</button>
+    </div>
+
+    <div class="wish-full-grid" id="wishGrid"></div>
+
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const ALL_DESTS = [
+    { id:1, name:'Hunza Valley',  region:'Gilgit-Baltistan', img:'../../../../public/assets/images/hunza-valley.jpg', rating:4.8, reviews:124, tags:['Mountain','Scenic'], budget:'Moderate', bestTime:'Apr–Jun', desc:'Breathtaking Karakoram valley with cherry blossoms, ancient forts, and Attabad Lake.' },
+    { id:2, name:'Murree',        region:'Punjab',           img:'../../../../public/assets/images/murree.jpeg',      rating:4.5, reviews:98,  tags:['Family','Hill Station'], budget:'Budget', bestTime:'Apr–Oct', desc:'Pakistan\'s most beloved hill station with pine forests and cool mountain air.' },
+    { id:3, name:'Swat Valley',   region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/swat.jpg',      rating:4.6, reviews:110, tags:['Valley','Scenic'], budget:'Budget', bestTime:'Apr–Sep', desc:'The "Switzerland of Pakistan" — lush valleys, rivers, and Buddhist heritage.' },
+    { id:4, name:'Skardu',        region:'Gilgit-Baltistan', img:'../../../../public/assets/images/skardu.jpeg',     rating:4.7, reviews:87,  tags:['Adventure','K2'], budget:'Moderate', bestTime:'Jun–Sep', desc:'Gateway to K2 — cold deserts, turquoise lakes, and towering 8000m peaks.' },
+    { id:5, name:'Naran Kaghan',  region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/naran kaghan.jpg', rating:4.4, reviews:76, tags:['Nature','Valley'], budget:'Budget', bestTime:'Jun–Aug', desc:'Alpine valley with the famous Saif-ul-Malook Lake and vast summer meadows.' },
+];
+
+let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[1,4]');
+function save(){ localStorage.setItem('tripify_wishlist', JSON.stringify(wishlist)); }
+function starStr(r){ return '★'.repeat(Math.floor(r))+(r%1>=0.5?'½':'')+'☆'.repeat(5-Math.floor(r)-(r%1>=0.5?1:0)); }
+
+function getSorted(){
+    const items = ALL_DESTS.filter(d=>wishlist.includes(d.id));
+    const sort = document.getElementById('sortSelect').value;
+    if(sort==='rating') return [...items].sort((a,b)=>b.rating-a.rating);
+    if(sort==='name') return [...items].sort((a,b)=>a.name.localeCompare(b.name));
+    return items;
+}
+
+function renderStats(){
+    const items = ALL_DESTS.filter(d=>wishlist.includes(d.id));
+    const avgRating = items.length ? (items.reduce((s,d)=>s+d.rating,0)/items.length).toFixed(1) : '—';
+    document.getElementById('wishStats').innerHTML=`
+    <div class="wstat"><div class="wstat-num">${items.length}</div><div class="wstat-lbl">Saved</div></div>
+    <div class="wstat"><div class="wstat-num">${avgRating}</div><div class="wstat-lbl">Avg Rating</div></div>
+    <div class="wstat"><div class="wstat-num">${items.filter(d=>d.budget==='Budget').length}</div><div class="wstat-lbl">Budget Friendly</div></div>
+    <div class="wstat"><div class="wstat-num">${[...new Set(items.map(d=>d.region))].length}</div><div class="wstat-lbl">Regions</div></div>`;
+}
+
+function render(){
+    renderStats();
+    const items = getSorted();
+    const g = document.getElementById('wishGrid');
+    if(!items.length){
+        g.innerHTML=`<div class="wish-empty-state">
+            <div style="font-size:52px">🤍</div>
+            <h3>Your wishlist is empty</h3>
+            <p>Start exploring Pakistan's destinations and save your favourites!</p>
+            <a href="destinations.html" class="btn btn-primary">🔍 Explore Destinations</a>
+        </div>`;
+        return;
+    }
+    g.innerHTML=items.map(d=>`
+    <div class="wish-full-card">
+        <div class="wfc-img">
+            <img src="${d.img}" alt="${d.name}" loading="lazy">
+            <div class="wfc-img-overlay"></div>
+        </div>
+        <div class="wfc-body">
+            <div class="wfc-name">${d.name}</div>
+            <div class="wfc-region">📍 ${d.region}</div>
+            <div class="wfc-rating"><span class="stars">${starStr(d.rating)}</span> ${d.rating} (${d.reviews})</div>
+            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+                ${d.tags.map(t=>`<span class="tag">${t}</span>`).join('')}
+                <span class="badge badge-accent" style="font-size:10px">${d.budget}</span>
+            </div>
+            <div class="wfc-desc">${d.desc}</div>
+            <div class="wfc-actions">
+                <a href="destination-detail.html?id=${d.id}" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">View Details</a>
+                <a href="trip-cost.html?dest=${d.id}" class="btn btn-ghost btn-sm">💰</a>
+                <a href="hotels.html?dest=${d.id}" class="btn btn-ghost btn-sm">🏨</a>
+            </div>
+        </div>
+        <button class="wfc-remove" onclick="removeItem(${d.id})" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function removeItem(id){
+    wishlist=wishlist.filter(x=>x!==id); save(); render();
+    showToast('🗑️','Removed from wishlist');
+}
+function clearAll(){
+    if(!wishlist.length) return;
+    wishlist=[]; save(); render();
+    showToast('🗑️','Wishlist cleared');
+}
+
+const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
+const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('sidebarInitials').textContent=ini; document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq'; document.getElementById('topbarInitials').textContent=ini;
+const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
+overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+function showToast(icon,msg,dur=2800){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+
+render();
+</script>
+</body>
+</html>

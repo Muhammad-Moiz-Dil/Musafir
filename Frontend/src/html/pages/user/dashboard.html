@@ -321,7 +321,13 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="../../../js/config/api.js"></script>
+<script src="../../../js/services/authService.js"></script>
 <script>
+// ── Auth guard ─────────────────────────────────────────────
+const token = localStorage.getItem('tripify_token');
+if (!token) { window.location.href = '../auth/login.html'; }
+
 const DESTS = [
     { id:1, name:'Hunza Valley',   region:'Gilgit-Baltistan', img:'../../../../public/assets/images/hunza-valley.jpg', rating:4.8, reviews:124, tags:['Mountain','Scenic','Trekking'], badge:'⭐ Top Pick' },
     { id:2, name:'Murree',         region:'Punjab',           img:'../../../../public/assets/images/murree.jpeg',       rating:4.5, reviews:98,  tags:['Hill Station','Family'],        badge:null },
@@ -402,13 +408,46 @@ document.getElementById('topSearch').addEventListener('keydown', e => { if (e.ke
 const h = new Date().getHours();
 document.getElementById('greeting').textContent = h<12?'Good morning,':h<18?'Good afternoon,':'Good evening,';
 
-// User
-const user = JSON.parse(localStorage.getItem('tripify_user') || '{"fullName":"Traveller","userType":"Tourist"}');
-const initials = (user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-document.getElementById('welcomeName').textContent = (user.fullName||'Ahmed Tariq') + '! 👋';
-document.getElementById('sidebarName').textContent  = user.fullName||'Ahmed Tariq';
-document.getElementById('sidebarInitials').textContent = initials;
-document.getElementById('topbarInitials').textContent  = initials;
+// ── User profile ───────────────────────────────────────────
+function applyUserProfile(u) {
+    const ini = (u.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    document.getElementById('welcomeName').textContent = (u.fullName || 'Traveller') + '! 👋';
+    document.getElementById('sidebarName').textContent = u.fullName || 'Traveller';
+
+    const sidebarAvatar = document.getElementById('sidebarInitials');
+    const topbarAvatar  = document.getElementById('topbarInitials');
+
+    if (u.profilePicture && u.profilePicture !== '') {
+        const imgTag = '<img src="http://localhost:8080' + u.profilePicture + '?t=' + Date.now() + '" alt="Avatar" onerror="this.parentElement.textContent=\'' + ini + '\'">';
+        sidebarAvatar.innerHTML = imgTag;
+        topbarAvatar.innerHTML  = imgTag;
+    } else {
+        sidebarAvatar.textContent = ini;
+        topbarAvatar.textContent  = ini;
+    }
+}
+
+// Show immediately from localStorage while API loads
+const storedUser = JSON.parse(localStorage.getItem('tripify_user') || '{}');
+if (storedUser.fullName) applyUserProfile(storedUser);
+
+// Fetch fresh profile from backend
+async function loadUserProfile() {
+    try {
+        const res = await fetch(ENDPOINTS.USER.PROFILE, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.status === 401) { AuthService.logout(); return; }
+        if (!res.ok) return;
+        const u = await res.json();
+        const merged = Object.assign({}, storedUser, u);
+        localStorage.setItem('tripify_user', JSON.stringify(merged));
+        applyUserProfile(merged);
+    } catch (e) {
+        // backend unreachable — localStorage data already shown above
+    }
+}
+loadUserProfile();
 
 // Sidebar toggle
 const sidebar = document.getElementById('sidebar');

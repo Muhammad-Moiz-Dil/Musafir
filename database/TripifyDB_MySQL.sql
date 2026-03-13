@@ -338,6 +338,66 @@ VALUES
 ('Skardu', 'Pakistan', 'Gilgit-Baltistan', 'Gateway to K2 and mighty peaks', 35.2977, 75.6333, 'skardu.jpg'),
 ('Naran Kaghan', 'Pakistan', 'Khyber Pakhtunkhwa', 'Scenic valley with lakes and mountains', 34.9042, 73.6519, 'naran.jpg');
 
+-- ----------------------Some More Destinations-------------------------------------
+ INSERT INTO Destinations (name, country, city, description, latitude, longitude, image_url, is_active)
+  VALUES
+  ('Lahore', 'Pakistan', 'Punjab',
+   'Cultural capital of Pakistan — Mughal-era Badshahi Mosque, Lahore Fort, vibrant Food Street, and the bustling Anarkali Bazaar.',
+   31.5497, 74.3436, 'lahore.jpg', 1),
+
+  ('Islamabad', 'Pakistan', 'Capital Territory',
+   'Pakistan''s modern capital — Faisal Mosque, Margalla Hills hiking trails, Daman-e-Koh viewpoint, and Shakarparian gardens.',
+   33.6844, 73.0479, 'islamabad.jpg', 1),
+
+  ('Fairy Meadows', 'Pakistan', 'Gilgit-Baltistan',
+   'A grassy plateau at the base of Nanga Parbat — the world''s 9th highest peak. Accessible only by jeep and foot, one of
+  Pakistan''s most scenic campsites.',
+   35.3850, 74.5891, 'fairy-meadows.jpg', 1),
+
+  ('Mohenjo Daro', 'Pakistan', 'Sindh',
+   'One of the world''s earliest urban settlements dating back to 2500 BC. UNESCO World Heritage Site with remarkable ancient ruins
+  of the Indus Valley Civilization.',
+   27.3244, 68.1376, 'mohenjo-daro.jpg', 1),
+
+  ('Cholistan Desert', 'Pakistan', 'Punjab',
+   'A vast desert in Bahawalpur with ancient Derawar Fort, camel safaris, and the famous Cholistan Desert Jeep Rally held every
+  year.',
+   28.2500, 71.5000, 'cholistan.jpg', 1);
+   
+-- Fix destination descriptions and image_url values
+-- Run these in MySQL Workbench if you have already seeded the DB:
+UPDATE Destinations SET
+    image_url   = 'hunza.jpg',
+    description = 'A breathtaking mountain valley nestled between Karakoram peaks, famous for ancient Baltit Fort, pristine Attabad Lake, cherry blossoms in spring, and stunning K2 views.'
+WHERE name = 'Hunza Valley';
+
+UPDATE Destinations SET
+    image_url   = 'murree.jpg',
+    description = 'Pakistan''s most beloved hill station — cool pine forests, colonial Mall Road, chairlift rides, and fresh Kashmiri chai. Only 50 km from Islamabad.'
+WHERE name = 'Murree';
+
+UPDATE Destinations SET
+    image_url   = 'swat.jpg',
+    description = 'The "Switzerland of Pakistan" — lush green mountains, clear rivers, ancient Buddhist stupas at Butkara, and vibrant bazaars in Mingora.'
+WHERE name = 'Swat Valley';
+
+UPDATE Destinations SET
+    image_url   = 'skardu.jpg',
+    description = 'Gateway to K2 and the world''s highest peaks. Cold desert plateau, turquoise Shangrila lake, and the confluence of Indus and Shigar rivers.'
+WHERE name = 'Skardu';
+
+UPDATE Destinations SET
+    image_url   = 'naran.jpg',
+    description = 'Home to the famous Saif-ul-Malook Lake — a high-altitude alpine lake surrounded by snow-capped peaks, glaciers and wildflower meadows.'
+WHERE name = 'Naran Kaghan';
+
+
+  UPDATE Destinations SET image_url = 'islamabad.jpeg'     WHERE name = 'Islamabad';
+  UPDATE Destinations SET image_url = 'fairyMeadows.jpeg'  WHERE name = 'Fairy Meadows';
+  UPDATE Destinations SET image_url = 'mohenjodaro.jpeg'   WHERE name = 'Mohenjo Daro';
+  UPDATE Destinations SET image_url = 'cholistanDesert.jpeg' WHERE name = 'Cholistan Desert';
+
+
 INSERT INTO Hotels (destination_id, hotel_name, address, contact_number, star_rating, price_per_night, total_rooms, available_rooms, amenities)
 VALUES
 (1, 'Hunza Serena Inn', 'Karimabad, Hunza', '03451234567', 4, 15000, 50, 45, 'WiFi, Restaurant, Parking'),
@@ -401,5 +461,15 @@ SET password_hash = '$2a$10$UBSS3mzzbjAmJvwSRZTaKOniKif8HJ/.plSnztlOXtD81TYJmV5I
 WHERE email = 'admin@tripify.com';
 
 SELECT *FROM USERS;
+SELECT *FROM Destinations;
+SELECT *FROM user_preferences;
 
-UPDATE Users SET email = "shazi124@gmail.com" where user_id = 6;
+
+
+
+
+
+
+
+
+

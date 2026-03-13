@@ -129,43 +129,60 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="../../../js/config/api.js"></script>
 <script>
-const ALL_DESTS = [
-    { id:1, name:'Hunza Valley',  region:'Gilgit-Baltistan', img:'../../../../public/assets/images/hunza-valley.jpg', rating:4.8, reviews:124, tags:['Mountain','Scenic'], budget:'Moderate', bestTime:'Apr–Jun', desc:'Breathtaking Karakoram valley with cherry blossoms, ancient forts, and Attabad Lake.' },
-    { id:2, name:'Murree',        region:'Punjab',           img:'../../../../public/assets/images/murree.jpeg',      rating:4.5, reviews:98,  tags:['Family','Hill Station'], budget:'Budget', bestTime:'Apr–Oct', desc:'Pakistan\'s most beloved hill station with pine forests and cool mountain air.' },
-    { id:3, name:'Swat Valley',   region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/swat.jpg',      rating:4.6, reviews:110, tags:['Valley','Scenic'], budget:'Budget', bestTime:'Apr–Sep', desc:'The "Switzerland of Pakistan" — lush valleys, rivers, and Buddhist heritage.' },
-    { id:4, name:'Skardu',        region:'Gilgit-Baltistan', img:'../../../../public/assets/images/skardu.jpeg',     rating:4.7, reviews:87,  tags:['Adventure','K2'], budget:'Moderate', bestTime:'Jun–Sep', desc:'Gateway to K2 — cold deserts, turquoise lakes, and towering 8000m peaks.' },
-    { id:5, name:'Naran Kaghan',  region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/naran kaghan.jpg', rating:4.4, reviews:76, tags:['Nature','Valley'], budget:'Budget', bestTime:'Jun–Aug', desc:'Alpine valley with the famous Saif-ul-Malook Lake and vast summer meadows.' },
-];
+// ── Auth guard ─────────────────────────────────────────────
+const TOKEN = localStorage.getItem('tripify_token');
+if (!TOKEN) { window.location.href = '../auth/login.html'; }
 
-let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[1,4]');
-function save(){ localStorage.setItem('tripify_wishlist', JSON.stringify(wishlist)); }
-function starStr(r){ return '★'.repeat(Math.floor(r))+(r%1>=0.5?'½':'')+'☆'.repeat(5-Math.floor(r)-(r%1>=0.5?1:0)); }
+// ── State ─────────────────────────────────────────────────
+let allDests = [];
+let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[]');
+function save() { localStorage.setItem('tripify_wishlist', JSON.stringify(wishlist)); }
+function starStr(r) { return '★'.repeat(Math.floor(r)) + (r%1>=0.5?'½':'') + '☆'.repeat(5-Math.floor(r)-(r%1>=0.5?1:0)); }
 
-function getSorted(){
-    const items = ALL_DESTS.filter(d=>wishlist.includes(d.id));
+// ── Image resolver (same as destinations page) ─────────────
+const IMG_BASE = '../../../../public/assets/images/';
+const IMG_MAP = {
+    'hunza.jpg':'hunza-valley.jpg','murree.jpg':'murree.jpeg','swat.jpg':'swat.jpg',
+    'skardu.jpg':'skardu.jpeg','naran.jpg':'naran kaghan.jpg',
+    'lahore.jpg':'lahore.jpg','islamabad.jpg':'islamabad.jpeg','islamabad.jpeg':'islamabad.jpeg',
+    'fairy-meadows.jpg':'fairyMeadows.jpeg','fairyMeadows.jpeg':'fairyMeadows.jpeg',
+    'mohenjo-daro.jpg':'mohenjodaro.jpeg','mohenjodaro.jpeg':'mohenjodaro.jpeg',
+    'cholistan.jpg':'cholistanDesert.jpeg','cholistanDesert.jpeg':'cholistanDesert.jpeg',
+};
+function resolveImg(url) {
+    if (!url) return IMG_BASE + 'hunza-valley.jpg';
+    if (IMG_MAP[url]) return IMG_BASE + IMG_MAP[url];
+    if (url.startsWith('http') || url.startsWith('/') || url.startsWith('../')) return url;
+    return IMG_BASE + url;
+}
+
+// ── Render ─────────────────────────────────────────────────
+function getSorted() {
+    const items = allDests.filter(d => wishlist.includes(d.id));
     const sort = document.getElementById('sortSelect').value;
-    if(sort==='rating') return [...items].sort((a,b)=>b.rating-a.rating);
-    if(sort==='name') return [...items].sort((a,b)=>a.name.localeCompare(b.name));
+    if (sort === 'rating') return [...items].sort((a,b) => (b.averageRating||0) - (a.averageRating||0));
+    if (sort === 'name')   return [...items].sort((a,b) => a.name.localeCompare(b.name));
     return items;
 }
 
-function renderStats(){
-    const items = ALL_DESTS.filter(d=>wishlist.includes(d.id));
-    const avgRating = items.length ? (items.reduce((s,d)=>s+d.rating,0)/items.length).toFixed(1) : '—';
-    document.getElementById('wishStats').innerHTML=`
+function renderStats() {
+    const items = allDests.filter(d => wishlist.includes(d.id));
+    const avgRating = items.length ? (items.reduce((s,d) => s + (d.averageRating||0), 0) / items.length).toFixed(1) : '—';
+    const regions = [...new Set(items.map(d => d.city))].length;
+    document.getElementById('wishStats').innerHTML = `
     <div class="wstat"><div class="wstat-num">${items.length}</div><div class="wstat-lbl">Saved</div></div>
     <div class="wstat"><div class="wstat-num">${avgRating}</div><div class="wstat-lbl">Avg Rating</div></div>
-    <div class="wstat"><div class="wstat-num">${items.filter(d=>d.budget==='Budget').length}</div><div class="wstat-lbl">Budget Friendly</div></div>
-    <div class="wstat"><div class="wstat-num">${[...new Set(items.map(d=>d.region))].length}</div><div class="wstat-lbl">Regions</div></div>`;
+    <div class="wstat"><div class="wstat-num">${regions}</div><div class="wstat-lbl">Regions</div></div>`;
 }
 
-function render(){
+function render() {
     renderStats();
     const items = getSorted();
     const g = document.getElementById('wishGrid');
-    if(!items.length){
-        g.innerHTML=`<div class="wish-empty-state">
+    if (!items.length) {
+        g.innerHTML = `<div class="wish-empty-state">
             <div style="font-size:52px">🤍</div>
             <h3>Your wishlist is empty</h3>
             <p>Start exploring Pakistan's destinations and save your favourites!</p>
@@ -173,24 +190,20 @@ function render(){
         </div>`;
         return;
     }
-    g.innerHTML=items.map(d=>`
+    g.innerHTML = items.map(d => `
     <div class="wish-full-card">
         <div class="wfc-img">
-            <img src="${d.img}" alt="${d.name}" loading="lazy">
+            <img src="${resolveImg(d.imageUrl)}" alt="${d.name}" loading="lazy"
+                 onerror="this.src='${IMG_BASE}hunza-valley.jpg'">
             <div class="wfc-img-overlay"></div>
         </div>
         <div class="wfc-body">
             <div class="wfc-name">${d.name}</div>
-            <div class="wfc-region">📍 ${d.region}</div>
-            <div class="wfc-rating"><span class="stars">${starStr(d.rating)}</span> ${d.rating} (${d.reviews})</div>
-            <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-                ${d.tags.map(t=>`<span class="tag">${t}</span>`).join('')}
-                <span class="badge badge-accent" style="font-size:10px">${d.budget}</span>
-            </div>
-            <div class="wfc-desc">${d.desc}</div>
+            <div class="wfc-region">📍 ${d.city || 'Pakistan'}</div>
+            <div class="wfc-rating"><span class="stars">${starStr(d.averageRating||0)}</span> ${d.averageRating ? Number(d.averageRating).toFixed(1) : '–'} (${d.totalReviews||0} reviews)</div>
+            <div class="wfc-desc">${d.description || ''}</div>
             <div class="wfc-actions">
                 <a href="destination-detail.html?id=${d.id}" class="btn btn-primary btn-sm" style="flex:1;justify-content:center">View Details</a>
-                <a href="trip-cost.html?dest=${d.id}" class="btn btn-ghost btn-sm">💰</a>
                 <a href="hotels.html?dest=${d.id}" class="btn btn-ghost btn-sm">🏨</a>
             </div>
         </div>
@@ -198,25 +211,57 @@ function render(){
     </div>`).join('');
 }
 
-function removeItem(id){
-    wishlist=wishlist.filter(x=>x!==id); save(); render();
-    showToast('🗑️','Removed from wishlist');
+function removeItem(id) {
+    wishlist = wishlist.filter(x => x !== id); save(); render();
+    showToast('🗑️', 'Removed from wishlist');
 }
-function clearAll(){
-    if(!wishlist.length) return;
-    wishlist=[]; save(); render();
-    showToast('🗑️','Wishlist cleared');
+function clearAll() {
+    if (!wishlist.length) return;
+    wishlist = []; save(); render();
+    showToast('🗑️', 'Wishlist cleared');
 }
 
-const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
-const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-document.getElementById('sidebarInitials').textContent=ini; document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq'; document.getElementById('topbarInitials').textContent=ini;
-const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
-document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
-overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
-function showToast(icon,msg,dur=2800){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+// ── Fetch all destinations from API ───────────────────────
+async function loadDests() {
+    const g = document.getElementById('wishGrid');
+    g.innerHTML = `<div class="wish-empty-state"><div style="font-size:36px;animation:spin 1s linear infinite">⏳</div><p>Loading…</p></div>`;
+    try {
+        const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH, {
+            headers: { 'Authorization': 'Bearer ' + TOKEN }
+        });
+        if (!res.ok) { render(); return; }
+        allDests = await res.json();
+    } catch (e) {
+        // backend unreachable — show empty state
+    }
+    render();
+}
 
-render();
+// ── User profile ──────────────────────────────────────────
+const user = JSON.parse(localStorage.getItem('tripify_user') || '{}');
+const ini = (user.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+document.getElementById('sidebarInitials').textContent = ini;
+document.getElementById('sidebarName').textContent = user.fullName || 'Tourist';
+document.getElementById('topbarInitials').textContent = ini;
+
+// ── Sidebar toggle ─────────────────────────────────────────
+const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
+overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+
+// ── Sort change ────────────────────────────────────────────
+document.getElementById('sortSelect').addEventListener('change', () => render());
+
+// ── Toast ─────────────────────────────────────────────────
+function showToast(icon, msg, dur=2800) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className = 'toast';
+    t.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
+}
+
+loadDests();
 </script>
 </body>
 </html>

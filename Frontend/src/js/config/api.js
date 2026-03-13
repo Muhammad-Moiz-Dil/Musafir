@@ -17,4 +17,7 @@ const ENDPOINTS = {
         PREFERENCES:      `${API_CONFIG.BASE_URL}/users/preferences`,
         DELETE_ACCOUNT:   `${API_CONFIG.BASE_URL}/users/account`,
     },
+    DESTINATIONS: {
+        SEARCH: `${API_CONFIG.BASE_URL}/destinations/search`,
+    },
 };

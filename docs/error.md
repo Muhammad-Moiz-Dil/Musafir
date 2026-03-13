@@ -1,185 +1,46 @@
-# error.md — Tripify Error & Issue Log
+# Error Log
 
-This file tracks known errors, bugs, and issues found during development.
-**Before generating any new code, always review this file first.**
+## BUG-001 — Dashboard profile not displayed after login
+**Date:** 2026-03-13
+**File:** `Frontend/src/html/pages/user/dashboard.html`
+**Status:** Fixed
 
----
+### Root Cause
+1. `dashboard.html` did not load `api.js` or `authService.js`, so `ENDPOINTS` was undefined and no API call was possible.
+2. No auth guard — the dashboard was accessible without a valid session, showing placeholder data ("Traveller"/"AT").
+3. No `GET /api/users/profile` call — the dashboard only read from `localStorage`, which after login only contains `{ id, email, fullName, userType }`. If `localStorage` was stale, cleared, or missing, the profile showed placeholder values.
 
-## Format
-Each entry follows:
-```
-### [ERROR-XXX] Short Title
-- **File**: path/to/file
-- **Type**: Bug | Schema | Logic | Frontend | Backend
-- **Status**: Open | Fixed | Wont-Fix
-- **Description**: What the problem is
-- **Fix Applied**: What was done to resolve it (if Fixed)
-```
+### Fix Applied
+- Added `<script src="../../../js/config/api.js"></script>` and `authService.js` before the inline script.
+- Added auth guard: if no token → redirect to `../auth/login.html`.
+- Added `applyUserProfile(u)` function to update welcome name, sidebar name, and avatar initials.
+- Shows localStorage data immediately (instant render), then calls `GET /api/users/profile` to fetch fresh data and updates `localStorage` + UI.
+- On 401 → calls `AuthService.logout()`. On network error → silently falls back to localStorage data.
 
----
+## BUG-002 — Profile avatar upload broken (404 on served image)
+**Date:** 2026-03-13
+**Files:** `Backend/main/resources/application.properties`, `Backend/main/java/com/config/WebConfig.java` (new)
+**Status:** Fixed
 
-## Schema Issues
+### Root Cause
+`application.properties` had `spring.web.resources.static-locations=...,file:uploads/` which maps the *contents* of the `uploads/` directory to the URL root. So a file saved at `uploads/avatars/pic.jpg` was accessible at `/avatars/pic.jpg`, but `ProfileController` generated the URL as `/uploads/avatars/pic.jpg` → 404.
 
-### [SCHEMA-001] No Trip/TripPlan table
-- **File**: database/TripifyDB.sql
-- **Type**: Schema
-- **Status**: Fixed
-- **Fix Applied**: Added `Trips` table (user-owned trip plans with status, budget, dates) and `TripDestinations` table (ordered multi-destination stops with optional hotel selection per stop).
+### Fix Applied
+- Removed `file:uploads/` from `spring.web.resources.static-locations`.
+- Added `WebConfig.java` with a resource handler: `/uploads/**` → `file:uploads/`, so `/uploads/avatars/pic.jpg` correctly serves `uploads/avatars/pic.jpg`.
 
-### [SCHEMA-002] Reviews only linked to Destinations, not Hotels
-- **File**: database/TripifyDB.sql
-- **Type**: Schema
-- **Status**: Fixed
-- **Fix Applied**: Added `HotelReviews` table with FK to `Hotels`, optional FK to `Bookings`, unique constraint per user/hotel. Also added `average_rating` and `total_reviews` columns to the `Hotels` table.
+## BUG-003 — Wishlist/likes page shows nothing
+**Date:** 2026-03-13
+**File:** `Frontend/src/html/pages/user/wishlist.html`
+**Status:** Fixed
 
-### [SCHEMA-003] Bookings missing payment fields
-- **File**: database/TripifyDB.sql
-- **Type**: Schema
-- **Status**: Fixed
-- **Fix Applied**: Added `payment_status` (Unpaid/Paid/Refunded), `payment_method`, and `payment_reference` columns to `Bookings`. Added index on `payment_status`.
+### Root Cause
+1. Wishlist page used hardcoded `ALL_DESTS` array (only 5 destinations, IDs 1–5). Any destination liked from the destinations page with an ID not in the hardcoded list would be silently ignored.
+2. Wrong localStorage key: `localStorage.getItem('user')` instead of `localStorage.getItem('tripify_user')` — user profile (name/initials) never loaded.
+3. No auth guard and no `api.js` loaded.
 
-### [SCHEMA-004] FlaggedContent — flagged_by implies Admin only
-- **File**: database/TripifyDB.sql
-- **Type**: Schema
-- **Status**: Fixed
-- **Fix Applied**: Renamed `flagged_by` → `reported_by` (any user can report). Added `reviewed_by` column (FK to Users, Admin who reviewed the flag).
-
-### [SCHEMA-005] Souvenirs has no availability/stock field
-- **File**: database/TripifyDB.sql
-- **Type**: Schema
-- **Status**: Fixed
-- **Fix Applied**: Added `is_active BIT DEFAULT 1` to `Souvenirs` table.
-
-### [SCHEMA-006] Non-standard pom.xml location
-- **File**: Backend/src/pom.xml → Backend/pom.xml
-- **Type**: Backend
-- **Status**: Fixed
-- **Fix Applied**: Created a full Spring Boot 3.2.3 `pom.xml` at `Backend/pom.xml` (correct Maven root). Deleted `Backend/src/pom.xml` and the empty `Backend/src/` directory. Dependencies included: Spring Web, Data JPA, Security, Validation, MSSQL JDBC, JJWT (0.11.5), Lombok.
-
-### [SCHEMA-007] exception handling folder has a space in the name
-- **File**: Backend/main/java/com/exception handling/
-- **Type**: Backend
-- **Status**: Fixed
-- **Fix Applied**: Renamed folder to `Backend/main/java/com/exceptionhandling/` (valid Java package name).
-
----
-
-## Active Bugs
-
-### [BUG-008] Full name allows numbers — no alpha-only validation
-- **File**: `Frontend/src/js/utils/validation.js`, `Backend/main/java/com/controller/AuthController.java`
-- **Type**: Frontend + Backend
-- **Status**: Fixed
-- **Description**: Full name field accepted numbers and special characters like `Ali123` or `Ali@#`. No validation existed to enforce letters-only input.
-- **Fix Applied**: Added `Validator.name()` in validation.js with regex `^[a-zA-Z\s.\-']+$`. Applied in `validateFullName()` in both register.html and hm-register.html. Added matching `@Pattern` on backend DTO.
-
-### [BUG-006] Phone number format mismatch — frontend vs backend
-- **File**: `Frontend/src/html/pages/auth/register.html`, `hm-register.html`
-- **Type**: Frontend / Backend
-- **Status**: Fixed
-- **Description**: Frontend auto-formats phone to `0300-1234567` (with hyphen) but backend regex `^(\\+92|0092|0)?3[0-9]{9}$` does not allow hyphens. This caused a 422 validation error on every registration with a phone number.
-- **Fix Applied**: Strip hyphens before sending: `phoneInput.value.trim().replace(/-/g, '')` in both register.html and hm-register.html.
-
-### [BUG-007] Phone field error not displayed — field name mismatch
-- **File**: `Frontend/src/html/pages/auth/register.html`, `hm-register.html`
-- **Type**: Frontend
-- **Status**: Fixed
-- **Description**: Backend returns field name `phoneNumber` in 422 errors but HTML error element ID is `phoneError`. Frontend was looking for `phoneNumberError` which doesn't exist so error was never shown.
-- **Fix Applied**: Added `fieldMap = { phoneNumber: 'phone' }` to remap backend field names to HTML element IDs before calling `showError()`.
-
-### [BUG-005] "Failed to fetch" on registration form submit
-- **File**: `Frontend/src/html/pages/auth/register.html`, `hm-register.html`
-- **Type**: Frontend / Backend
-- **Status**: Open
-- **Description**: When the registration form is submitted, the browser shows "Failed to fetch". This means the frontend JS called `http://localhost:8080/api/auth/register` but got no response from the server.
-- **Root Cause**: Spring Boot backend is not running when the form is submitted.
-- **Fix**: Always start the backend first (VS Code Spring Boot Dashboard → ▶ play button) before opening the frontend. Confirm backend is running by checking `Started TripifyApplication` in terminal.
-
----
-
-## Fixed Bugs
-
-### [BUG-001] HotelReviews cascade cycle — SQL Server Msg 1785
-- **File**: `database/TripifyDB.sql`
-- **Type**: Schema
-- **Status**: Fixed
-- **Description**: SQL Server rejected `HotelReviews` table creation because two cascade paths existed from `Users` to `HotelReviews`: (1) direct via `user_id` ON DELETE CASCADE, and (2) indirect via `Users → Bookings (CASCADE) → HotelReviews (SET NULL on booking_id)`. This also caused all tables defined after `HotelReviews` in the same batch (tables 8–17) to never be created, and their INSERTs to fail with "Invalid object name".
-- **Fix Applied**: Changed `HotelReviews.booking_id` FK to `ON DELETE NO ACTION`. Changed `HotelReviews.hotel_id` FK to `ON DELETE NO ACTION` (explicit, to avoid any future ambiguity).
-
-## Completed Use Cases
-### UC-02 — User Authentication (Login)
-- **Frontend**: `login.html` (Tourist/HotelManager), `admin-login.html` (Admin)
-- **JS**: `authService.js` → `login()`, `adminLogin()`; `api.js` → `ENDPOINTS.AUTH.LOGIN`, `ENDPOINTS.AUTH.ADMIN_LOGIN`
-- **Backend**: `POST /api/auth/login`, `POST /api/auth/admin/login` in `AuthController`
-- **Service**: `UserService.login()`, `UserService.adminLogin()`
-- **JWT**: `JwtUtil.java` (generate/validate tokens), `JwtFilter.java` (intercept requests), `UserDetailsServiceImpl.java`
-- **Config**: `SecurityConfig.java` updated with JWT filter + AuthenticationProvider
-- **Responses**: 200 + token on success, 401 on wrong credentials, 403 on wrong role
-
-### UC-01 — Create User Account
-- **Frontend**: `Frontend/src/html/pages/auth/register.html`
-- **Styles**: `Frontend/src/css/pages/auth.css`, `common/variables.css`, `common/reset.css`
-- **JS**: `js/config/api.js`, `js/utils/validation.js`, `js/services/authService.js`
-- **Backend**: `AuthController` → `UserService` → `UserRepository` → `User` (entity)
-- **Config**: `SecurityConfig.java`, `GlobalExceptionHandler.java`, `application.properties`
-- **API**: `POST /api/auth/register` — returns 201 on success, 409 on duplicate email, 422 on field errors
-
-### UC-04 — Update Personal Profile
-- **Frontend**: `Frontend/src/html/pages/user/profile.html` (full rewrite — 4 tabs: Personal Info, Preferences, Security, Account)
-- **JS**: `js/config/api.js` updated with `USER.PROFILE`, `USER.UPLOAD_AVATAR`, `USER.CHANGE_PASSWORD`, `USER.PREFERENCES`
-- **Backend files created**:
-  - `Backend/main/java/com/model/UserPreferences.java` — JPA entity for `UserPreferences` table
-  - `Backend/main/java/com/repository/UserPreferencesRepository.java` — `findByUserId()`
-  - `Backend/main/java/com/service/ProfileService.java` — `getProfile`, `updateProfile`, `changePassword`, `getPreferences`, `savePreferences`, `saveAvatarPath`
-  - `Backend/main/java/com/controller/ProfileController.java` — 6 endpoints under `/api/users`
-- **Backend files updated**:
-  - `SecurityConfig.java` — added `.requestMatchers("/uploads/**").permitAll()`
-  - `application.properties` — added multipart size limits and `file:uploads/` static location
-- **Database**: `database/TripifyDB_MySQL.sql` — added `UserPreferences` table (preference_id, user_id UNIQUE FK, age_group, travel_preferences JSON, updated_at)
-- **API endpoints**:
-  - `GET  /api/users/profile` — fetch full profile (name, email, phone, cnic, address, memberSince, profilePicture)
-  - `PUT  /api/users/profile` — update name/phone/cnic/address with field-level 422 validation
-  - `POST /api/users/profile/avatar` — multipart JPG/PNG upload (max 2MB), saved to `uploads/avatars/`
-  - `PUT  /api/users/password` — change password (verifies old, BCrypt encodes new)
-  - `GET  /api/users/preferences` — get or auto-create age group + travel preferences
-  - `PUT  /api/users/preferences` — save age group and JSON travel preferences array
-- **Features**: auth guard, localStorage cache + API merge, CNIC auto-format, age-group chip presets, avatar cache-busting, per-field error display, password show/hide toggle, success toast system
-
----
-
-### [BUG-002] MySQL password missing in application.properties
-- **File**: `Backend/main/resources/application.properties`
-- **Type**: Backend / Config
-- **Status**: Fixed
-- **Description**: App crashed with `Access denied for user 'root'@'localhost' (using password: NO)` because `spring.datasource.password=` was empty but MySQL root had a password set.
-- **Fix Applied**: Updated `spring.datasource.password=admin123` in `application.properties`.
-
-### [BUG-003] mvn spring-boot:run from wrong directory
-- **File**: Terminal / project root
-- **Type**: Backend
-- **Status**: Fixed
-- **Description**: Running `mvn spring-boot:run` from `Tripify/` root caused `No plugin found for prefix 'spring-boot'`. The `pom.xml` is inside `Backend/` not the root.
-- **Fix Applied**: Always run Maven from `Tripify/Backend/` directory.
-
-### [BUG-004] Port 8080 already in use
-- **File**: Terminal
-- **Type**: Backend
-- **Status**: Fixed
-- **Description**: VS Code Spring Boot Dashboard failed to start with `Port 8080 was already in use` because a previous `mvn spring-boot:run` process was still running in background.
-- **Fix Applied**: Kill the existing process first: `netstat -ano | findstr :8080` then `taskkill /PID <PID> /F`, then restart.
-
----
-
-### [BUG-009] Admin password hash in SQL was invalid — login always 401
-- **File**: `database/TripifyDB_MySQL.sql`
-- **Type**: Schema / Backend
-- **Status**: Fixed
-- **Description**: Two bugs combined: (1) The original seeded hash was a fake placeholder (`Z5Z5Z5...`) that never matched any real password. (2) A second attempt used a hash recalled from memory which was also not a valid BCrypt digest for the intended password. BCrypt hashes must be generated by running the actual encoder — they cannot be hand-written or recalled from memory because they contain a random salt. Additionally, editing the SQL file does NOT update the live MySQL database — the UPDATE must be run directly against MySQL.
-- **Fix Applied**: Used Maven classpath + `java -cp` to run Spring's `BCryptPasswordEncoder` and generate a real hash for `Admin@123`. SQL file updated with this hash. User must run the UPDATE query directly on MySQL: `UPDATE Users SET password_hash='$2a$10$UBSS3mzzbjAmJvwSRZTaKOniKif8HJ/.plSnztlOXtD81TYJmV5I6' WHERE email='admin@tripify.com';`
-- **Lesson**: Never hand-write BCrypt hashes. Always generate via `new BCryptPasswordEncoder().encode(password)` and run DB updates directly — not by re-running the full SQL seed file.
-
----
-
-## Fixed Issues
-SCHEMA-001 through SCHEMA-007 — all fixed at project setup stage.
-BUG-002, BUG-003, BUG-004 — fixed during initial MySQL + backend setup.
+### Fix Applied
+- Added `api.js` script and auth guard.
+- Replaced hardcoded `ALL_DESTS` with a live `GET /api/destinations/search` API fetch (same endpoint as destinations page). Liked items are now correctly resolved from real DB data.
+- Fixed localStorage key to `'tripify_user'`.
+- Added same image resolver (`IMG_MAP`) as destinations page so images display correctly.

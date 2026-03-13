@@ -32,6 +32,9 @@
 .dest-full-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 18px; }
 .no-results { grid-column:1/-1; text-align:center; padding: 48px; color: var(--t3); }
 .no-results span { font-size: 40px; display: block; margin-bottom: 10px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.search-error { color: #ef4444; font-size: 13px; margin-top: 6px; min-height: 18px; display: block; }
+.search-bar input.is-error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.1); }
 </style>
 </head>
 <body>
@@ -125,29 +128,13 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="destSearch" placeholder="Search by name, region, activity…">
         </div>
+        <div class="search-error" id="searchError"></div>
         <div class="filter-bar">
             <button class="filter-pill active" data-filter="all">All</button>
             <button class="filter-pill" data-filter="mountain">🏔️ Mountain</button>
             <button class="filter-pill" data-filter="valley">🌿 Valley</button>
             <button class="filter-pill" data-filter="adventure">⚡ Adventure</button>
             <button class="filter-pill" data-filter="family">👨‍👩‍👧 Family</button>
-            <div class="filter-select-wrap">
-                <select id="seasonFilter">
-                    <option value="">🌤️ All Seasons</option>
-                    <option value="spring">🌸 Spring (Apr–Jun)</option>
-                    <option value="summer">☀️ Summer (Jul–Sep)</option>
-                    <option value="autumn">🍂 Autumn (Oct–Nov)</option>
-                    <option value="winter">❄️ Winter (Dec–Mar)</option>
-                </select>
-            </div>
-            <div class="filter-select-wrap">
-                <select id="budgetFilter">
-                    <option value="">💰 All Budgets</option>
-                    <option value="budget">💵 Budget</option>
-                    <option value="moderate">💰 Moderate</option>
-                    <option value="premium">💎 Premium</option>
-                </select>
-            </div>
             <div class="filter-select-wrap">
                 <select id="ratingFilter">
                     <option value="">⭐ Any Rating</option>
@@ -166,100 +153,283 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="../../../js/config/api.js"></script>
 <script>
-const DESTS = [
-    { id:1, name:'Hunza Valley',  region:'Gilgit-Baltistan', img:'../../../../public/assets/images/hunza-valley.jpg', rating:4.8, reviews:124, tags:['mountain','adventure','trekking'], seasons:['spring','summer'], budget:'moderate', badge:'⭐ Most Popular', desc:'A breathtaking valley nestled between Karakoram peaks, famous for cherry blossoms, ancient forts, and stunning lake views.' },
-    { id:2, name:'Murree',        region:'Punjab',           img:'../../../../public/assets/images/murree.jpeg',       rating:4.5, reviews:98,  tags:['family','hill station'],          seasons:['spring','summer','autumn'], budget:'budget', badge:null, desc:'Pakistan\'s beloved hill station offering cool mountain air, colonial-era buildings, and scenic pine forests.' },
-    { id:3, name:'Swat Valley',   region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/swat.jpg',       rating:4.6, reviews:110, tags:['valley','scenic','family'],       seasons:['spring','summer'],       budget:'budget', badge:'🌿 Scenic', desc:'The "Switzerland of Pakistan" — lush green valleys, clear rivers, ancient Buddhist ruins and warm hospitality.' },
-    { id:4, name:'Skardu',        region:'Gilgit-Baltistan', img:'../../../../public/assets/images/skardu.jpeg',      rating:4.7, reviews:87,  tags:['mountain','adventure'],           seasons:['summer','autumn'],       budget:'moderate', badge:'🏔️ K2 Gateway', desc:'Gateway to the world\'s highest peaks — K2, Broad Peak and more. Cold deserts, turquoise lakes and rugged terrain.' },
-    { id:5, name:'Naran Kaghan',  region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/naran kaghan.jpg', rating:4.4, reviews:76, tags:['valley','nature','adventure'], seasons:['summer'],              budget:'budget', badge:null, desc:'Enchanting high-altitude valley with crystal-clear Saif-ul-Malook lake, lush meadows and snow-capped peaks.' },
-];
+// ── Auth guard ────────────────────────────────────────
+const TOKEN = localStorage.getItem('tripify_token');
+const USER  = JSON.parse(localStorage.getItem('tripify_user') || '{"fullName":"Tourist"}');
+if (!TOKEN) { window.location.href = '../auth/login.html'; }
 
-let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[1,4]');
+// ── State ─────────────────────────────────────────────
+let allResults  = [];
+let activeTag   = 'all';
+let minRating   = 0;
+let isLoading   = false;
+let debounceTimer;
+
+// ── Tag keyword map for local client-side filtering ───
+const TAG_KEYWORDS = {
+    mountain:  ['mountain', 'peak', 'glacier', 'karakoram', 'k2', 'himalaya'],
+    valley:    ['valley', 'lush', 'green', 'river', 'kaghan', 'swat'],
+    adventure: ['adventure', 'trek', 'trekking', 'climbing', 'hiking', 'extreme'],
+    family:    ['family', 'hill station', 'resort', 'scenic', 'pleasant', 'murree']
+};
+
+// ── Wishlist (localStorage until UC-9 is implemented) ─
+let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[]');
 function saveWish() { localStorage.setItem('tripify_wishlist', JSON.stringify(wishlist)); }
-function starStr(r) { return '★'.repeat(Math.floor(r)) + (r%1>=0.5?'½':'') + '☆'.repeat(5-Math.floor(r)-(r%1>=0.5?1:0)); }
 
-let activeTag = 'all', searchQ = '', season = '', budget = '', minRating = 0;
+// ── Image resolver — maps DB filenames to local assets ─
+const IMG_BASE = '../../../../public/assets/images/';
+const IMG_MAP = {
+    // first 5 — DB filenames differ from actual files
+    'hunza.jpg':            IMG_BASE + 'hunza-valley.jpg',
+    'murree.jpg':           IMG_BASE + 'murree.jpeg',
+    'swat.jpg':             IMG_BASE + 'swat.jpg',
+    'skardu.jpg':           IMG_BASE + 'skardu.jpeg',
+    'naran.jpg':            IMG_BASE + 'naran kaghan.jpg',
+    // new destinations — both pre-UPDATE and post-UPDATE DB values covered
+    'lahore.jpg':           IMG_BASE + 'lahore.jpg',
+    'islamabad.jpg':        IMG_BASE + 'islamabad.jpeg',
+    'islamabad.jpeg':       IMG_BASE + 'islamabad.jpeg',
+    'fairy-meadows.jpg':    IMG_BASE + 'fairyMeadows.jpeg',
+    'fairyMeadows.jpeg':    IMG_BASE + 'fairyMeadows.jpeg',
+    'mohenjo-daro.jpg':     IMG_BASE + 'mohenjodaro.jpeg',
+    'mohenjodaro.jpeg':     IMG_BASE + 'mohenjodaro.jpeg',
+    'cholistan.jpg':        IMG_BASE + 'cholistanDesert.jpeg',
+    'cholistanDesert.jpeg': IMG_BASE + 'cholistanDesert.jpeg',
+};
+const IMG_FALLBACK = IMG_BASE + 'hunza-valley.jpg';
 
-function filter() {
-    return DESTS.filter(d => {
-        const matchTag    = activeTag === 'all' || d.tags.includes(activeTag);
-        const matchSearch = !searchQ || d.name.toLowerCase().includes(searchQ) || d.region.toLowerCase().includes(searchQ) || d.tags.some(t=>t.includes(searchQ));
-        const matchSeason = !season  || d.seasons.includes(season);
-        const matchBudget = !budget  || d.budget === budget;
-        const matchRating = d.rating >= minRating;
-        return matchTag && matchSearch && matchSeason && matchBudget && matchRating;
-    });
+function resolveImage(url) {
+    if (!url) return IMG_FALLBACK;
+    if (IMG_MAP[url]) return IMG_MAP[url];
+    if (url.startsWith('http') || url.startsWith('/') || url.startsWith('../')) return url;
+    // try direct path as last resort (for any future destinations admin adds)
+    return IMG_BASE + url;
 }
 
-function render() {
-    const items = filter();
-    const g = document.getElementById('destGrid');
-    document.getElementById('resultsCount').textContent = `${items.length} destination${items.length!==1?'s':''} found`;
-    if (!items.length) {
-        g.innerHTML = `<div class="no-results"><span>🔍</span><p>No destinations match your filters.<br>Try adjusting your search.</p></div>`;
-        return;
-    }
-    g.innerHTML = items.map(d => `
-    <div class="dest-full-card" onclick="location.href='destination-detail.html?id=${d.id}'">
-        <div class="dest-full-img">
-            <img src="${d.img}" alt="${d.name}" loading="lazy">
-            <div class="dest-card-img-overlay"></div>
-            ${d.badge?`<span class="dc-badge">${d.badge}</span>`:''}
-            <button class="dc-wish ${wishlist.includes(d.id)?'active':''}" onclick="toggleWish(event,${d.id})">${wishlist.includes(d.id)?'❤️':'🤍'}</button>
-        </div>
-        <div class="dest-full-body">
-            <div class="dest-full-name">${d.name}</div>
-            <div class="dest-full-region">📍 ${d.region}</div>
-            <div class="dc-rating"><span class="stars">${starStr(d.rating)}</span> ${d.rating} (${d.reviews} reviews)</div>
-            <div class="dest-full-desc">${d.desc}</div>
-            <div class="dest-full-footer">
-                <div class="dc-tags">${d.tags.slice(0,2).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
-                <span class="btn btn-sm btn-outline-accent">View Details</span>
-            </div>
-        </div>
-    </div>`).join('');
+// ── DOM refs ──────────────────────────────────────────
+const grid        = document.getElementById('destGrid');
+const searchInput = document.getElementById('destSearch');
+const errorEl     = document.getElementById('searchError');
+const countEl     = document.getElementById('resultsCount');
+
+// ── Helpers ───────────────────────────────────────────
+function ratingToStars(r) {
+    const full = Math.floor(r);
+    const half = r % 1 >= 0.5 ? 1 : 0;
+    const empty = 5 - full - half;
+    return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
+}
+
+function clearError() {
+    errorEl.textContent = '';
+    searchInput.classList.remove('is-error');
+}
+
+function showInputError(msg) {
+    errorEl.textContent = msg;
+    searchInput.classList.add('is-error');
+}
+
+// ── Local filter + render ─────────────────────────────
+function applyLocalFilters(items) {
+    return items.filter(d => {
+        const text = (d.name + ' ' + d.city + ' ' + d.description).toLowerCase();
+        const matchTag = activeTag === 'all'
+            || (TAG_KEYWORDS[activeTag] || [activeTag]).some(kw => text.includes(kw));
+        const matchRating = !minRating || (d.averageRating >= minRating);
+        return matchTag && matchRating;
+    });
 }
 
 function toggleWish(e, id) {
     e.stopPropagation();
-    if (wishlist.includes(id)) { wishlist=wishlist.filter(x=>x!==id); showToast('🤍','Removed from wishlist'); }
-    else { wishlist.push(id); showToast('❤️','Added to wishlist!'); }
-    saveWish(); render();
+    if (wishlist.includes(id)) {
+        wishlist = wishlist.filter(x => x !== id);
+        showToast('🤍', 'Removed from wishlist');
+    } else {
+        wishlist.push(id);
+        showToast('❤️', 'Added to wishlist!');
+    }
+    saveWish();
+    renderResults(allResults);
 }
+
+function renderCard(d) {
+    const rating  = d.averageRating ? Number(d.averageRating).toFixed(1) : '–';
+    const reviews = d.totalReviews  || 0;
+    const stars   = ratingToStars(d.averageRating || 0);
+    const img     = resolveImage(d.imageUrl);
+    const inWish  = wishlist.includes(d.id);
+    return `
+    <div class="dest-full-card" onclick="location.href='destination-detail.html?id=${d.id}'">
+        <div class="dest-full-img">
+            <img src="${img}" alt="${d.name}" loading="lazy"
+                 onerror="this.src='../../../../public/assets/images/hunza-valley.jpg'">
+            <div class="dest-card-img-overlay"></div>
+            <button class="dc-wish ${inWish ? 'active' : ''}"
+                    onclick="toggleWish(event,${d.id})">${inWish ? '❤️' : '🤍'}</button>
+        </div>
+        <div class="dest-full-body">
+            <div class="dest-full-name">${d.name}</div>
+            <div class="dest-full-region">📍 ${d.city || 'Pakistan'}</div>
+            <div class="dc-rating"><span class="stars">${stars}</span> ${rating} (${reviews} reviews)</div>
+            <div class="dest-full-desc">${d.description || ''}</div>
+            <div class="dest-full-footer">
+                <span class="btn btn-sm btn-outline-accent">View Details →</span>
+            </div>
+        </div>
+    </div>`;
+}
+
+function renderResults(items) {
+    const filtered = applyLocalFilters(items);
+    countEl.textContent = `${filtered.length} destination${filtered.length !== 1 ? 's' : ''} found`;
+    if (!filtered.length) {
+        grid.innerHTML = `<div class="no-results"><span>🔍</span><p>No destinations match your filters.<br>Try adjusting your search or filters.</p></div>`;
+        return;
+    }
+    grid.innerHTML = filtered.map(d => renderCard(d)).join('');
+}
+
+function showGridMsg(icon, msg) {
+    grid.innerHTML = `<div class="no-results"><span>${icon}</span><p>${msg}</p></div>`;
+    countEl.textContent = '';
+}
+
+function showLoading() {
+    grid.innerHTML = `<div class="no-results"><span style="display:inline-block;animation:spin 1s linear infinite">⏳</span><p>Searching destinations…</p></div>`;
+    countEl.textContent = '';
+}
+
+// ── API search ────────────────────────────────────────
+async function doSearch(rawQ) {
+    if (isLoading) return;
+    const q = rawQ.trim();
+
+    clearError();
+
+    // Client-side special-char validation (mirrors backend rule)
+    if (q && !/^[a-zA-Z0-9 ]+$/.test(q)) {
+        showInputError('Please use letters and numbers only');
+        allResults = [];
+        grid.innerHTML = '';
+        countEl.textContent = '';
+        return;
+    }
+
+    isLoading = true;
+    showLoading();
+
+    try {
+        const url = ENDPOINTS.DESTINATIONS.SEARCH + (q ? `?q=${encodeURIComponent(q)}` : '');
+        const res = await fetch(url, {
+            headers: { 'Authorization': 'Bearer ' + TOKEN }
+        });
+
+        if (res.status === 401) {
+            showGridMsg('🔒', 'Please Login/Sign-up to search for the destination');
+            allResults = [];
+            return;
+        }
+
+        const data = await res.json();
+
+        if (res.status === 400) {
+            showInputError(data.message || 'Please use letters and numbers only');
+            allResults = [];
+            grid.innerHTML = '';
+            countEl.textContent = '';
+            return;
+        }
+
+        if (res.status === 404) {
+            showGridMsg('🔍', data.message || 'No destinations found for this search');
+            allResults = [];
+            return;
+        }
+
+        if (!res.ok) {
+            showGridMsg('❌', data.message || 'Something went wrong. Please try again.');
+            allResults = [];
+            return;
+        }
+
+        allResults = data;
+        renderResults(allResults);
+
+    } catch (e) {
+        showGridMsg('📶', 'Network error. Please check your connection and that the server is running.');
+        allResults = [];
+    } finally {
+        isLoading = false;
+    }
+}
+
+// ── Event listeners ───────────────────────────────────
+searchInput.addEventListener('input', e => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => doSearch(e.target.value), 400);
+});
+
+document.getElementById('topSearch').addEventListener('input', e => {
+    searchInput.value = e.target.value;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => doSearch(e.target.value), 400);
+});
 
 document.querySelectorAll('.filter-pill').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        activeTag = btn.dataset.filter; render();
+        activeTag = btn.dataset.filter;
+        if (allResults.length) renderResults(allResults);
     });
 });
-document.getElementById('destSearch').addEventListener('input', e => { searchQ=e.target.value.toLowerCase().trim(); render(); });
-document.getElementById('topSearch').addEventListener('input', e => { document.getElementById('destSearch').value=e.target.value; searchQ=e.target.value.toLowerCase().trim(); render(); });
-document.getElementById('seasonFilter').addEventListener('change', e => { season=e.target.value; render(); });
-document.getElementById('budgetFilter').addEventListener('change', e => { budget=e.target.value; render(); });
-document.getElementById('ratingFilter').addEventListener('change', e => { minRating=parseFloat(e.target.value)||0; render(); });
 
-// URL query
+document.getElementById('ratingFilter').addEventListener('change', e => {
+    minRating = parseFloat(e.target.value) || 0;
+    if (allResults.length) renderResults(allResults);
+});
+
+// ── URL param support ─────────────────────────────────
 const qp = new URLSearchParams(location.search);
-if (qp.get('q')) { document.getElementById('destSearch').value=qp.get('q'); searchQ=qp.get('q').toLowerCase(); }
+if (qp.get('q')) {
+    searchInput.value = qp.get('q');
+    doSearch(qp.get('q'));
+} else {
+    doSearch('');
+}
 
-// User
-const user = JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
-const ini = (user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+// ── User info ─────────────────────────────────────────
+const ini = (USER.fullName || 'AT').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 document.getElementById('sidebarInitials').textContent = ini;
-document.getElementById('sidebarName').textContent = user.fullName||'Ahmed Tariq';
-document.getElementById('topbarInitials').textContent = ini;
+document.getElementById('sidebarName').textContent     = USER.fullName || 'Tourist';
+document.getElementById('topbarInitials').textContent  = ini;
 
-// Sidebar
-const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay');
-document.getElementById('menuToggle').addEventListener('click',()=>{ sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
-overlay.addEventListener('click',()=>{ sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+// ── Sidebar toggle ────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+});
+overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+});
 
-function showToast(icon,msg,dur=2800){ const c=document.getElementById('toastContainer'); const t=document.createElement('div'); t.className='toast'; t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`; c.appendChild(t); setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),300); },dur); }
-
-render();
+// ── Toast ─────────────────────────────────────────────
+function showToast(icon, msg, dur = 2800) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
+}
 </script>
 </body>
 </html>

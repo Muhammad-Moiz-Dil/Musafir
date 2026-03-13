@@ -624,9 +624,19 @@ function populateUI(u) {
     var ini = initials(u.fullName);
 
     // Sidebar / topbar
-    document.getElementById('sidebarName').textContent   = u.fullName || '—';
-    document.getElementById('sidebarAvatar').textContent = ini;
-    document.getElementById('topbarAvatar').textContent  = ini;
+    document.getElementById('sidebarName').textContent = u.fullName || '—';
+
+    var sidebarAvatar = document.getElementById('sidebarAvatar');
+    var topbarAvatar  = document.getElementById('topbarAvatar');
+
+    if (u.profilePicture && u.profilePicture !== '') {
+        var imgTag = '<img src="http://localhost:8080' + u.profilePicture + '?t=' + Date.now() + '" alt="Avatar" onerror="this.parentElement.textContent=\'' + ini + '\'">';
+        sidebarAvatar.innerHTML = imgTag;
+        topbarAvatar.innerHTML  = imgTag;
+    } else {
+        sidebarAvatar.textContent = ini;
+        topbarAvatar.textContent  = ini;
+    }
 
     // Profile card
     document.getElementById('profileName').textContent  = u.fullName || '—';

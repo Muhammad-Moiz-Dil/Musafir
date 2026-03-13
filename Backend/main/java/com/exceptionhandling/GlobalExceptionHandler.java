@@ -34,6 +34,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleGeneral(Exception ex) {
+        ex.printStackTrace();   // visible in the Spring Boot console
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "message", "An unexpected error occurred. Please try again."
         ));

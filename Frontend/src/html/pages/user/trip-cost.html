@@ -293,11 +293,19 @@ function calculate(){
 }
 
 // User
-const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
-const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-document.getElementById('sidebarInitials').textContent=ini;
-document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq';
-document.getElementById('topbarInitials').textContent=ini;
+const tripToken=localStorage.getItem('tripify_token');
+if(!tripToken){window.location.href='../auth/login.html';}
+const user=JSON.parse(localStorage.getItem('tripify_user')||'{}');
+function applyUserProfile(u){
+    const ini=(u.fullName||'T').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarName').textContent=u.fullName||'Tourist';
+    const sa=document.getElementById('sidebarInitials'),ta=document.getElementById('topbarInitials');
+    if(u.profilePicture&&u.profilePicture!==''){
+        const img='<img src="http://localhost:8080'+u.profilePicture+'?t='+Date.now()+'" alt="Avatar" onerror="this.parentElement.textContent=\''+ini+'\'">';
+        sa.innerHTML=img; ta.innerHTML=img;
+    } else { sa.textContent=ini; ta.textContent=ini; }
+}
+applyUserProfile(user);
 const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
 document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
 overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});

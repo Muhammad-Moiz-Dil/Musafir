@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -19,6 +20,25 @@ public class DestinationController {
 
     public DestinationController(DestinationRepository destinationRepo) {
         this.destinationRepo = destinationRepo;
+    }
+
+    /** GET /api/destinations/{id} */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable Integer id) {
+        Optional<Destination> opt = destinationRepo.findById(id);
+        if (opt.isEmpty() || !Boolean.TRUE.equals(opt.get().getIsActive())) {
+            return ResponseEntity.status(404).body(Map.of("message", "Destination not found"));
+        }
+        Destination d = opt.get();
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id",            d.getDestinationId());
+        m.put("name",          d.getName());
+        m.put("city",          d.getCity()          != null ? d.getCity()          : "");
+        m.put("description",   d.getDescription()   != null ? d.getDescription()   : "");
+        m.put("imageUrl",      d.getImageUrl()      != null ? d.getImageUrl()      : "");
+        m.put("averageRating", d.getAverageRating() != null ? d.getAverageRating().doubleValue() : 0.0);
+        m.put("totalReviews",  d.getTotalReviews()  != null ? d.getTotalReviews()  : 0);
+        return ResponseEntity.ok(m);
     }
 
     /** GET /api/destinations/search?q=... */

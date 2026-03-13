@@ -11,58 +11,21 @@
 <style>
 .route-layout { display:grid; grid-template-columns:340px 1fr; gap:22px; }
 
-/* Map placeholder */
-.map-wrap {
+/* Map */
+#map {
+    width:100%; height:480px;
+    border-radius:var(--r-xl); overflow:hidden;
+    border:1px solid var(--border);
+}
+.map-placeholder {
+    width:100%; height:480px;
     background:linear-gradient(160deg,#0a1a2a 0%,#0d2238 100%);
     border:1px solid var(--border); border-radius:var(--r-xl);
-    overflow:hidden; position:relative; min-height:480px;
     display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:12px; color:var(--t2);
 }
-.map-grid {
-    position:absolute; inset:0; pointer-events:none;
-    background-image:
-        linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);
-    background-size:40px 40px;
-}
-.map-overlay-card {
-    position:absolute; bottom:16px; right:16px;
-    background:rgba(7,14,23,0.88); backdrop-filter:blur(12px);
-    border:1px solid var(--border); border-radius:var(--r);
-    padding:14px 16px; min-width:180px;
-}
-.map-overlay-card h4 { font-size:12px; color:var(--t3); margin-bottom:8px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
-.map-stat { display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:5px; }
-.map-stat-val { font-weight:700; color:var(--accent); }
-.map-placeholder-text { text-align:center; z-index:1; }
-.map-placeholder-text span { font-size:50px; display:block; margin-bottom:14px; }
-.map-placeholder-text h3 { font-size:18px; font-weight:700; color:var(--white); margin-bottom:6px; }
-.map-placeholder-text p { font-size:13px; color:var(--t2); max-width:260px; line-height:1.6; }
-
-/* SVG map illustration */
-.pak-map { width:280px; height:280px; opacity:0.15; position:absolute; }
-
-/* Route dots */
-.route-stop {
-    display:flex; align-items:flex-start; gap:12px; padding:12px 0;
-    border-bottom:1px solid var(--border); position:relative;
-}
-.route-stop:last-child { border-bottom:none; }
-.route-dot {
-    width:28px; height:28px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    font-size:12px; font-weight:700; flex-shrink:0; margin-top:2px;
-}
-.route-dot.origin { background:rgba(34,197,94,0.2); border:2px solid #22c55e; color:#22c55e; }
-.route-dot.stop   { background:rgba(245,166,35,0.2); border:2px solid var(--accent); color:var(--accent); }
-.route-dot.dest   { background:rgba(239,68,68,0.2);  border:2px solid #ef4444; color:#ef4444; }
-.route-connector {
-    position:absolute; left:13px; top:40px; width:2px; height:calc(100% - 28px);
-    background:linear-gradient(to bottom,rgba(255,255,255,0.1),rgba(255,255,255,0.04));
-}
-.stop-name { font-size:13.5px; font-weight:600; color:var(--white); }
-.stop-dist { font-size:11.5px; color:var(--t2); margin-top:2px; }
-.stop-time { font-size:11px; color:var(--t3); }
+.map-placeholder span { font-size:48px; }
+.map-placeholder p { font-size:13px; text-align:center; line-height:1.6; }
 
 /* Input panel */
 .route-input-panel {
@@ -91,21 +54,91 @@
 }
 .swap-btn:hover { background:rgba(245,166,35,0.25); transform:rotate(180deg); }
 
-/* Route suggestion cards */
+/* Travel mode tabs */
+.mode-tabs { display:flex; gap:6px; margin-bottom:12px; }
+.mode-tab {
+    flex:1; padding:7px 0; font-size:12px; font-weight:600;
+    border:1px solid var(--border); border-radius:var(--r-sm);
+    background:var(--surface-2); color:var(--t2);
+    cursor:pointer; transition:var(--ease); text-align:center;
+}
+.mode-tab.active { border-color:rgba(245,166,35,0.4); background:var(--accent-glow); color:var(--accent); }
+
+/* Route summary card */
+.route-summary {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-xl); padding:18px; margin-top:14px;
+    display:none;
+}
+.summary-row { display:flex; gap:14px; margin-bottom:14px; }
+.summary-stat {
+    flex:1; background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--r); padding:12px; text-align:center;
+}
+.summary-stat-val { font-size:18px; font-weight:700; color:var(--accent); }
+.summary-stat-lbl { font-size:11px; color:var(--t3); margin-top:3px; }
+
+/* Alternatives */
+.alt-route {
+    background:var(--surface-2); border:1px solid var(--border);
+    border-radius:var(--r); padding:12px 14px; cursor:pointer;
+    transition:var(--ease); margin-bottom:8px;
+    display:flex; align-items:center; justify-content:space-between;
+}
+.alt-route:hover { border-color:var(--border-hover); }
+.alt-route.active { border-color:rgba(245,166,35,0.4); background:var(--accent-glow); }
+.alt-label { font-size:13px; font-weight:600; color:var(--white); }
+.alt-detail { font-size:11.5px; color:var(--t2); margin-top:2px; }
+.alt-badge { font-size:11px; padding:3px 8px; border-radius:20px; font-weight:600; }
+.alt-badge.best { background:rgba(34,197,94,0.15); color:#22c55e; border:1px solid rgba(34,197,94,0.3); }
+.alt-badge.alt  { background:rgba(245,166,35,0.12); color:var(--accent); border:1px solid rgba(245,166,35,0.25); }
+
+/* Steps */
+.steps-wrap { margin-top:16px; display:none; }
+.step-item {
+    display:flex; gap:10px; padding:10px 0;
+    border-bottom:1px solid var(--border); font-size:12.5px;
+}
+.step-item:last-child { border-bottom:none; }
+.step-num {
+    width:22px; height:22px; border-radius:50%; flex-shrink:0;
+    background:var(--accent-glow); border:1px solid rgba(245,166,35,0.3);
+    color:var(--accent); font-size:10px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+}
+.step-text { color:var(--t1); line-height:1.5; }
+.step-dist { color:var(--t3); font-size:11px; margin-top:2px; }
+
+/* Popular routes */
 .route-suggestion {
     background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--r); padding:14px 16px; cursor:pointer;
-    transition:var(--ease); margin-bottom:10px;
+    border-radius:var(--r); padding:13px 15px; cursor:pointer;
+    transition:var(--ease); margin-bottom:9px;
     display:flex; align-items:center; gap:12px;
 }
 .route-suggestion:hover { border-color:var(--border-hover); background:var(--surface-2); }
 .route-suggestion.selected { border-color:rgba(245,166,35,0.4); background:var(--accent-glow); }
 .rs-icon { font-size:22px; }
-.rs-name { font-size:13.5px; font-weight:700; color:var(--white); }
-.rs-detail { font-size:12px; color:var(--t2); }
+.rs-name { font-size:13px; font-weight:700; color:var(--white); }
+.rs-detail { font-size:11.5px; color:var(--t2); }
 .rs-stats { margin-left:auto; text-align:right; }
-.rs-dist { font-size:14px; font-weight:700; color:var(--accent); }
+.rs-dist { font-size:13px; font-weight:700; color:var(--accent); }
 .rs-time { font-size:11px; color:var(--t3); }
+
+/* Loading spinner */
+.map-loading {
+    width:100%; height:480px;
+    background:linear-gradient(160deg,#0a1a2a 0%,#0d2238 100%);
+    border:1px solid var(--border); border-radius:var(--r-xl);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column; gap:16px;
+}
+.spinner {
+    width:36px; height:36px; border:3px solid rgba(245,166,35,0.15);
+    border-top:3px solid var(--accent); border-radius:50%;
+    animation:spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
 
 @media (max-width:900px) { .route-layout { grid-template-columns:1fr; } }
 </style>
@@ -120,11 +153,13 @@
         <span class="nav-section-label">Main</span>
         <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
         <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="my-trips.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span><span>My Trips</span></a>
         <a href="trip-cost.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
         <a href="route-finder.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
         <span class="nav-section-label">Discover</span>
         <a href="hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
         <a href="wishlist.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
+        <a href="travel-guidelines.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span>Travel Guidelines</span></a>
         <div class="nav-divider"></div>
         <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
         <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
@@ -162,81 +197,97 @@
     </div>
 
     <div class="route-layout">
-        <!-- Left: Inputs + Route Details -->
+
+        <!-- ── Left Panel ── -->
         <div>
             <div class="route-input-panel">
                 <h3 style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:14px">📍 Plan Your Route</h3>
+
+                <!-- Travel mode tabs -->
+                <div class="mode-tabs" id="modeTabs">
+                    <div class="mode-tab active" data-mode="DRIVING"   onclick="setMode('DRIVING')">🚗 Drive</div>
+                    <div class="mode-tab"         data-mode="WALKING"   onclick="setMode('WALKING')">🚶 Walk</div>
+                    <div class="mode-tab"         data-mode="TRANSIT"   onclick="setMode('TRANSIT')">🚌 Transit</div>
+                </div>
+
+                <!-- Origin -->
                 <div class="location-input-wrap">
                     <span class="loc-icon">🟢</span>
-                    <input type="text" id="originInput" placeholder="From — e.g. Islamabad" value="Islamabad">
+                    <input type="text" id="originInput" placeholder="From — e.g. Islamabad" autocomplete="off">
                 </div>
-                <button class="swap-btn" onclick="swapLocations()" title="Swap">⇅</button>
+
+                <button class="swap-btn" onclick="swapLocations()" title="Swap origin & destination">⇅</button>
+
+                <!-- Destination -->
                 <div class="location-input-wrap">
                     <span class="loc-icon">🔴</span>
-                    <input type="text" id="destInput" placeholder="To — e.g. Hunza Valley" value="Hunza Valley">
+                    <input type="text" id="destInput" placeholder="To — e.g. Hunza Valley" autocomplete="off">
                 </div>
-                <div style="display:flex;gap:8px;margin-top:12px">
-                    <select class="form-select" id="viaSelect" style="flex:1">
-                        <option value="">No Stopover</option>
-                        <option>Abbottabad</option>
-                        <option>Mansehra</option>
-                        <option>Besham</option>
-                        <option>Chilas</option>
-                        <option>Gilgit</option>
-                    </select>
-                    <button class="btn btn-primary" onclick="findRoute()" style="white-space:nowrap">Find Route</button>
+
+                <!-- Stopover -->
+                <div class="location-input-wrap" style="margin-top:8px">
+                    <span class="loc-icon">🟡</span>
+                    <input type="text" id="waypointInput" placeholder="Stopover (optional) — e.g. Gilgit" autocomplete="off">
                 </div>
+
+                <button class="btn btn-primary" onclick="findRoute()" style="width:100%;margin-top:12px;justify-content:center">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                    Find Route
+                </button>
             </div>
 
-            <!-- Popular routes -->
-            <div style="font-size:12px;color:var(--t3);margin-bottom:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Popular Routes</div>
+            <!-- Route Alternatives (shown after search) -->
+            <div id="alternativesWrap" style="display:none">
+                <div style="font-size:12px;color:var(--t3);margin-bottom:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Route Options</div>
+                <div id="alternativesList"></div>
+            </div>
+
+            <!-- Popular Routes -->
+            <div style="font-size:12px;color:var(--t3);margin-bottom:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Popular Routes</div>
             <div id="popularRoutes"></div>
         </div>
 
-        <!-- Right: Map + Route Steps -->
+        <!-- ── Right Panel ── -->
         <div>
-            <div class="map-wrap" id="mapWrap">
-                <div class="map-grid"></div>
-                <!-- Pakistan outline SVG placeholder -->
-                <svg class="pak-map" viewBox="0 0 300 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M80 20 L100 15 L140 25 L170 20 L200 40 L220 60 L210 80 L230 100 L250 110 L260 140 L240 160 L230 190 L200 210 L180 230 L160 250 L140 260 L120 240 L100 220 L80 200 L60 180 L50 160 L40 140 L50 110 L60 90 L70 60 Z" stroke="rgba(245,166,35,0.4)" stroke-width="2" fill="rgba(245,166,35,0.05)"/>
-                    <circle cx="130" cy="160" r="4" fill="#22c55e"/>
-                    <circle cx="100" cy="70" r="4" fill="#f5a623"/>
-                    <circle cx="170" cy="80" r="4" fill="#f5a623"/>
-                    <circle cx="200" cy="90" r="4" fill="#f5a623"/>
-                    <circle cx="160" cy="105" r="4" fill="#f5a623"/>
-                    <line x1="130" y1="160" x2="100" y2="70" stroke="rgba(245,166,35,0.3)" stroke-width="1.5" stroke-dasharray="5,3"/>
-                    <text x="125" y="165" font-size="9" fill="rgba(255,255,255,0.5)">Islamabad</text>
-                    <text x="90"  y="65"  font-size="9" fill="rgba(255,255,255,0.5)">Hunza</text>
-                    <text x="162" y="76"  font-size="9" fill="rgba(255,255,255,0.5)">Skardu</text>
-                    <text x="192" y="86"  font-size="9" fill="rgba(255,255,255,0.5)">Swat</text>
-                    <text x="150" y="101" font-size="9" fill="rgba(255,255,255,0.5)">Naran</text>
-                </svg>
-                <div class="map-placeholder-text">
+            <!-- Map -->
+            <div id="mapContainer">
+                <div class="map-placeholder" id="mapPlaceholder">
                     <span>🗺️</span>
-                    <h3>Interactive Map</h3>
-                    <p>Google Maps integration coming soon.<br>Select a route to see the path &amp; stops.</p>
+                    <p>Enter origin &amp; destination<br>then click <strong style="color:var(--accent)">Find Route</strong></p>
                 </div>
-                <div class="map-overlay-card" id="mapStats" style="display:none">
-                    <h4>Route Summary</h4>
-                    <div class="map-stat"><span>Distance</span><span class="map-stat-val" id="statDist">—</span></div>
-                    <div class="map-stat"><span>Drive Time</span><span class="map-stat-val" id="statTime">—</span></div>
-                    <div class="map-stat"><span>Road Type</span><span class="map-stat-val" id="statRoad">—</span></div>
+                <div id="map" style="display:none"></div>
+            </div>
+
+            <!-- Route Summary -->
+            <div class="route-summary" id="routeSummary">
+                <div class="summary-row">
+                    <div class="summary-stat">
+                        <div class="summary-stat-val" id="statDist">—</div>
+                        <div class="summary-stat-lbl">Total Distance</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-val" id="statTime">—</div>
+                        <div class="summary-stat-lbl">Est. Duration</div>
+                    </div>
+                    <div class="summary-stat">
+                        <div class="summary-stat-val" id="statMode">—</div>
+                        <div class="summary-stat-lbl">Travel Mode</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px">
+                    <a href="trip-cost.html" class="btn btn-primary btn-sm">💰 Estimate Cost</a>
+                    <a href="hotels.html" class="btn btn-ghost btn-sm">🏨 Find Hotels</a>
+                    <button class="btn btn-ghost btn-sm" onclick="toggleSteps()">📋 Turn-by-Turn</button>
                 </div>
             </div>
 
-            <!-- Route Steps -->
-            <div id="routeSteps" style="margin-top:16px;display:none">
-                <div class="card card-body">
-                    <h3 style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:14px">📌 Route Waypoints</h3>
-                    <div id="stepsContainer"></div>
-                    <div style="display:flex;gap:10px;margin-top:14px">
-                        <a href="trip-cost.html" class="btn btn-primary btn-sm">💰 Estimate Cost</a>
-                        <a href="hotels.html" class="btn btn-ghost btn-sm">🏨 Find Hotels</a>
-                    </div>
-                </div>
+            <!-- Turn-by-turn steps -->
+            <div class="steps-wrap card card-body" id="stepsWrap" style="display:none;margin-top:14px">
+                <h3 style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:14px">📌 Turn-by-Turn Directions</h3>
+                <div id="stepsContainer"></div>
             </div>
         </div>
+
     </div>
 </div>
 </div>
@@ -244,90 +295,271 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-const ROUTES = [
-    { icon:'🏔️', from:'Islamabad', to:'Hunza Valley', dist:'500 km', time:'~10 hrs', road:'KKH (N-35)', via:['Abbottabad','Besham','Chilas','Gilgit'], stops:[{type:'origin',name:'Islamabad'},{type:'stop',name:'Abbottabad',dist:'100 km from start',time:'1.5 hrs'},{type:'stop',name:'Besham',dist:'220 km from start',time:'3.5 hrs'},{type:'stop',name:'Chilas',dist:'380 km from start',time:'6 hrs'},{type:'stop',name:'Gilgit',dist:'460 km from start',time:'8 hrs'},{type:'dest',name:'Hunza Valley',dist:'500 km from start',time:'10 hrs'}] },
-    { icon:'🌲', from:'Islamabad', to:'Murree',         dist:'50 km',  time:'~1.5 hrs', road:'M-2 / GT Road', via:[], stops:[{type:'origin',name:'Islamabad'},{type:'stop',name:'Rawalpindi',dist:'15 km from start',time:'25 min'},{type:'dest',name:'Murree',dist:'50 km from start',time:'1.5 hrs'}] },
-    { icon:'🌿', from:'Lahore',    to:'Swat Valley',    dist:'340 km', time:'~6 hrs',  road:'M-1 / N-95',  via:['Islamabad','Nowshera'], stops:[{type:'origin',name:'Lahore'},{type:'stop',name:'Islamabad',dist:'310 km from start',time:'3 hrs'},{type:'stop',name:'Nowshera',dist:'270 km from Lahore',time:'4.5 hrs'},{type:'dest',name:'Swat Valley',dist:'340 km from start',time:'6 hrs'}] },
-    { icon:'🏔️', from:'Islamabad', to:'Skardu',         dist:'620 km', time:'~12 hrs', road:'KKH + N-35',  via:['Abbottabad','Gilgit'], stops:[{type:'origin',name:'Islamabad'},{type:'stop',name:'Abbottabad',dist:'100 km from start',time:'1.5 hrs'},{type:'stop',name:'Gilgit',dist:'460 km from start',time:'8 hrs'},{type:'dest',name:'Skardu',dist:'620 km from start',time:'12 hrs'}] },
-    { icon:'🌊', from:'Islamabad', to:'Naran Kaghan',   dist:'250 km', time:'~5 hrs',  road:'N-15 / Kaghan Rd', via:['Mansehra','Balakot'], stops:[{type:'origin',name:'Islamabad'},{type:'stop',name:'Mansehra',dist:'120 km from start',time:'2 hrs'},{type:'stop',name:'Balakot',dist:'170 km from start',time:'3 hrs'},{type:'dest',name:'Naran',dist:'250 km from start',time:'5 hrs'}] },
+// ── Auth guard ──
+const tripToken = localStorage.getItem('tripify_token');
+if (!tripToken) { window.location.href = '../auth/login.html'; }
+const user = JSON.parse(localStorage.getItem('tripify_user') || '{}');
+(function applyUserProfile(u) {
+    const ini = (u.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarName').textContent = u.fullName || 'Tourist';
+    const sa = document.getElementById('sidebarInitials'), ta = document.getElementById('topbarInitials');
+    if (u.profilePicture && u.profilePicture !== '') {
+        const img = '<img src="http://localhost:8080' + u.profilePicture + '?t=' + Date.now() + '" alt="Avatar" onerror="this.parentElement.textContent=\'' + ini + '\'">';
+        sa.innerHTML = img; ta.innerHTML = img;
+    } else { sa.textContent = ini; ta.textContent = ini; }
+})(user);
+const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
+overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+
+function showToast(icon, msg, dur = 2800) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className = 'toast';
+    t.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + msg + '</span>';
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
+}
+
+// ── Popular routes (used as quick-fill shortcuts) ──
+const POPULAR = [
+    { icon:'🏔️', from:'Islamabad, Pakistan', to:'Hunza Valley, Gilgit-Baltistan, Pakistan', label:'Islamabad → Hunza Valley' },
+    { icon:'🌲', from:'Islamabad, Pakistan', to:'Murree, Punjab, Pakistan',                   label:'Islamabad → Murree' },
+    { icon:'🌿', from:'Lahore, Pakistan',    to:'Swat Valley, Khyber Pakhtunkhwa, Pakistan',  label:'Lahore → Swat Valley' },
+    { icon:'🏔️', from:'Islamabad, Pakistan', to:'Skardu, Gilgit-Baltistan, Pakistan',         label:'Islamabad → Skardu' },
+    { icon:'🌊', from:'Islamabad, Pakistan', to:'Naran, Khyber Pakhtunkhwa, Pakistan',        label:'Islamabad → Naran Kaghan' },
+    { icon:'🕌', from:'Lahore, Pakistan',    to:'Karachi, Sindh, Pakistan',                   label:'Lahore → Karachi' },
 ];
 
-let selectedRoute = null;
+let selectedPopular = null;
 
-function renderPopularRoutes(){
-    document.getElementById('popularRoutes').innerHTML = ROUTES.map((r,i)=>`
-    <div class="route-suggestion ${selectedRoute===i?'selected':''}" onclick="selectRoute(${i})">
+function renderPopularRoutes() {
+    document.getElementById('popularRoutes').innerHTML = POPULAR.map((r, i) => `
+    <div class="route-suggestion ${selectedPopular === i ? 'selected' : ''}" onclick="quickFill(${i})">
         <span class="rs-icon">${r.icon}</span>
         <div>
-            <div class="rs-name">${r.from} → ${r.to}</div>
-            <div class="rs-detail">Via ${r.road}</div>
-        </div>
-        <div class="rs-stats">
-            <div class="rs-dist">${r.dist}</div>
-            <div class="rs-time">${r.time}</div>
+            <div class="rs-name">${r.label}</div>
+            <div class="rs-detail">Tap to autofill &amp; search</div>
         </div>
     </div>`).join('');
 }
 
-function selectRoute(i){
-    selectedRoute=i; const r=ROUTES[i];
-    document.getElementById('originInput').value=r.from;
-    document.getElementById('destInput').value=r.to;
-    document.getElementById('statDist').textContent=r.dist;
-    document.getElementById('statTime').textContent=r.time;
-    document.getElementById('statRoad').textContent=r.road;
-    document.getElementById('mapStats').style.display='block';
-    document.getElementById('routeSteps').style.display='block';
-    document.getElementById('stepsContainer').innerHTML=r.stops.map((s,idx)=>`
-    <div class="route-stop">
-        ${idx<r.stops.length-1?'<div class="route-connector"></div>':''}
-        <div class="route-dot ${s.type}">${idx+1}</div>
-        <div>
-            <div class="stop-name">${s.name}</div>
-            ${s.dist?`<div class="stop-dist">📏 ${s.dist}</div>`:''}
-            ${s.time?`<div class="stop-time">⏱️ ${s.time} total</div>`:''}
-        </div>
-    </div>`).join('');
+function quickFill(i) {
+    selectedPopular = i;
     renderPopularRoutes();
-    showToast('🗺️',`Route loaded: ${r.from} → ${r.to}`);
+    document.getElementById('originInput').value = POPULAR[i].from;
+    document.getElementById('destInput').value   = POPULAR[i].to;
+    document.getElementById('waypointInput').value = '';
+    findRoute();
 }
 
-function swapLocations(){
-    const a=document.getElementById('originInput'),b=document.getElementById('destInput');
-    [a.value,b.value]=[b.value,a.value];
+// ── Travel mode ──
+let travelMode = 'DRIVING';
+function setMode(m) {
+    travelMode = m;
+    document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
+    document.querySelector('[data-mode="' + m + '"]').classList.add('active');
 }
 
-function findRoute(){
-    const from=document.getElementById('originInput').value.trim();
-    const to=document.getElementById('destInput').value.trim();
-    if(!from||!to){ showToast('⚠️','Please enter origin and destination'); return; }
-    const idx=ROUTES.findIndex(r=>r.from.toLowerCase()===from.toLowerCase()&&r.to.toLowerCase().includes(to.toLowerCase().split(' ')[0]));
-    if(idx>=0) selectRoute(idx);
-    else showToast('🔍',`Showing closest match for ${from} → ${to}`);
+function swapLocations() {
+    const a = document.getElementById('originInput'), b = document.getElementById('destInput');
+    [a.value, b.value] = [b.value, a.value];
 }
 
-// User + sidebar
-const tripToken=localStorage.getItem('tripify_token');
-if(!tripToken){window.location.href='../auth/login.html';}
-const user=JSON.parse(localStorage.getItem('tripify_user')||'{}');
-function applyUserProfile(u){
-    const ini=(u.fullName||'T').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-    document.getElementById('sidebarName').textContent=u.fullName||'Tourist';
-    const sa=document.getElementById('sidebarInitials'),ta=document.getElementById('topbarInitials');
-    if(u.profilePicture&&u.profilePicture!==''){
-        const img='<img src="http://localhost:8080'+u.profilePicture+'?t='+Date.now()+'" alt="Avatar" onerror="this.parentElement.textContent=\''+ini+'\'">';
-        sa.innerHTML=img; ta.innerHTML=img;
-    } else { sa.textContent=ini; ta.textContent=ini; }
-}
-applyUserProfile(user);
-const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
-document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
-overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
-function showToast(icon,msg,dur=2800){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+// ── Google Maps globals ──
+let map, directionsService, directionsRenderer, allRoutes = [], activeRouteIdx = 0;
 
+function initMap() {
+    // Dark map style to match the dashboard theme
+    const darkStyle = [
+        { elementType:'geometry', stylers:[{ color:'#0d1b2a' }] },
+        { elementType:'labels.text.fill', stylers:[{ color:'#8a9bb0' }] },
+        { elementType:'labels.text.stroke', stylers:[{ color:'#0d1b2a' }] },
+        { featureType:'road', elementType:'geometry', stylers:[{ color:'#1c3048' }] },
+        { featureType:'road', elementType:'geometry.stroke', stylers:[{ color:'#0f2236' }] },
+        { featureType:'road.highway', elementType:'geometry', stylers:[{ color:'#1e4a6e' }] },
+        { featureType:'road.highway', elementType:'labels.text.fill', stylers:[{ color:'#f5a623' }] },
+        { featureType:'water', elementType:'geometry', stylers:[{ color:'#06111e' }] },
+        { featureType:'water', elementType:'labels.text.fill', stylers:[{ color:'#4a6480' }] },
+        { featureType:'poi', stylers:[{ visibility:'off' }] },
+        { featureType:'administrative.country', elementType:'geometry.stroke', stylers:[{ color:'#2a4a6a' }] },
+        { featureType:'landscape', elementType:'geometry', stylers:[{ color:'#0d1f30' }] },
+    ];
+
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 30.3753, lng: 69.3451 },
+        zoom: 6,
+        styles: darkStyle,
+        mapTypeControl: false,
+        streetViewControl: false,
+        fullscreenControl: true,
+        zoomControl: true,
+    });
+
+    directionsService  = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map,
+        suppressMarkers: false,
+        polylineOptions: { strokeColor: '#f5a623', strokeWeight: 5, strokeOpacity: 0.85 },
+    });
+}
+
+// ── Find Route ──
+function findRoute() {
+    const origin   = document.getElementById('originInput').value.trim();
+    const dest     = document.getElementById('destInput').value.trim();
+    const waypoint = document.getElementById('waypointInput').value.trim();
+
+    if (!origin || !dest) {
+        showToast('⚠️', 'Please enter both origin and destination');
+        return;
+    }
+
+    // Show loading state
+    document.getElementById('mapPlaceholder').style.display = 'none';
+    document.getElementById('map').style.display = 'block';
+    document.getElementById('map').innerHTML = '';
+
+    // Re-init map if first time or recreate
+    if (!map) { initMap(); }
+
+    // Show loading overlay
+    showToast('🗺️', 'Calculating route…', 2000);
+
+    const waypoints = waypoint ? [{ location: waypoint, stopover: true }] : [];
+
+    const request = {
+        origin: origin,
+        destination: dest,
+        waypoints: waypoints,
+        travelMode: google.maps.TravelMode[travelMode],
+        provideRouteAlternatives: true,
+        region: 'pk',
+    };
+
+    directionsService.route(request, (result, status) => {
+        if (status === 'OK') {
+            allRoutes = result.routes;
+            activeRouteIdx = 0;
+            renderRoute(result, 0);
+            renderAlternatives(result);
+            showToast('✅', 'Route found! ' + allRoutes.length + ' option' + (allRoutes.length > 1 ? 's' : '') + ' available');
+        } else {
+            handleDirectionsError(status, origin, dest);
+        }
+    });
+}
+
+function renderRoute(result, routeIdx) {
+    activeRouteIdx = routeIdx;
+    directionsRenderer.setDirections(result);
+    directionsRenderer.setRouteIndex(routeIdx);
+
+    const route = result.routes[routeIdx];
+    // Sum all legs (for multi-waypoint routes)
+    let totalDist = 0, totalDur = 0;
+    route.legs.forEach(leg => { totalDist += leg.distance.value; totalDur += leg.duration.value; });
+
+    const distText = totalDist >= 1000
+        ? (totalDist / 1000).toFixed(1) + ' km'
+        : totalDist + ' m';
+    const durText  = formatDuration(totalDur);
+
+    document.getElementById('statDist').textContent = distText;
+    document.getElementById('statTime').textContent = durText;
+    document.getElementById('statMode').textContent = { DRIVING:'🚗 Driving', WALKING:'🚶 Walking', TRANSIT:'🚌 Transit' }[travelMode] || travelMode;
+    document.getElementById('routeSummary').style.display = 'block';
+
+    // Build turn-by-turn steps
+    let stepsHtml = '';
+    let stepNum = 1;
+    route.legs.forEach((leg, li) => {
+        if (route.legs.length > 1) {
+            stepsHtml += '<div style="font-size:12px;color:var(--accent);font-weight:700;padding:8px 0 4px">Leg ' + (li+1) + ': ' + leg.start_address.split(',')[0] + ' → ' + leg.end_address.split(',')[0] + '</div>';
+        }
+        leg.steps.forEach(step => {
+            stepsHtml += '<div class="step-item"><div class="step-num">' + stepNum++ + '</div><div><div class="step-text">' + stripHtml(step.instructions) + '</div><div class="step-dist">' + step.distance.text + ' · ' + step.duration.text + '</div></div></div>';
+        });
+    });
+    document.getElementById('stepsContainer').innerHTML = stepsHtml;
+}
+
+function renderAlternatives(result) {
+    const wrap = document.getElementById('alternativesWrap');
+    const list = document.getElementById('alternativesList');
+    if (result.routes.length <= 1) { wrap.style.display = 'none'; return; }
+
+    wrap.style.display = 'block';
+    list.innerHTML = result.routes.map((route, i) => {
+        let totalDist = 0, totalDur = 0;
+        route.legs.forEach(leg => { totalDist += leg.distance.value; totalDur += leg.duration.value; });
+        const distText = totalDist >= 1000 ? (totalDist/1000).toFixed(1) + ' km' : totalDist + ' m';
+        const durText  = formatDuration(totalDur);
+        return '<div class="alt-route ' + (i === 0 ? 'active' : '') + '" id="alt-' + i + '" onclick="switchRoute(' + i + ')">' +
+            '<div><div class="alt-label">Route ' + (i+1) + (i===0?' (Fastest)':'') + '</div><div class="alt-detail">' + distText + ' · ' + durText + '</div></div>' +
+            '<span class="alt-badge ' + (i===0?'best':'alt') + '">' + (i===0?'Best':'Alt') + '</span>' +
+            '</div>';
+    }).join('');
+}
+
+function switchRoute(i) {
+    activeRouteIdx = i;
+    directionsRenderer.setRouteIndex(i);
+    // Update summary stats
+    const route = allRoutes[i];
+    let totalDist = 0, totalDur = 0;
+    route.legs.forEach(leg => { totalDist += leg.distance.value; totalDur += leg.duration.value; });
+    document.getElementById('statDist').textContent = totalDist >= 1000 ? (totalDist/1000).toFixed(1) + ' km' : totalDist + ' m';
+    document.getElementById('statTime').textContent = formatDuration(totalDur);
+    // Highlight active
+    document.querySelectorAll('.alt-route').forEach((el, idx) => el.classList.toggle('active', idx === i));
+    showToast('🗺️', 'Switched to Route ' + (i+1));
+}
+
+function toggleSteps() {
+    const w = document.getElementById('stepsWrap');
+    w.style.display = w.style.display === 'none' ? 'block' : 'none';
+}
+
+// ── Helpers ──
+function formatDuration(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.round((seconds % 3600) / 60);
+    if (h === 0) return m + ' min';
+    return h + ' hr ' + (m > 0 ? m + ' min' : '');
+}
+
+function stripHtml(html) {
+    const tmp = document.createElement('div'); tmp.innerHTML = html; return tmp.textContent || tmp.innerText || '';
+}
+
+function handleDirectionsError(status, origin, dest) {
+    const msgs = {
+        'NOT_FOUND':           'Could not find "' + origin + '" or "' + dest + '". Try being more specific (add ", Pakistan").',
+        'ZERO_RESULTS':        'No route found between these locations for this travel mode.',
+        'MAX_WAYPOINTS_EXCEEDED': 'Too many stopovers. Please reduce the number of waypoints.',
+        'INVALID_REQUEST':     'Invalid request. Please check your inputs.',
+        'REQUEST_DENIED':      'Maps API request denied. Check API key configuration.',
+        'OVER_QUERY_LIMIT':    'Too many requests. Please wait a moment and try again.',
+        'UNKNOWN_ERROR':       'An unknown error occurred. Please try again.',
+    };
+    const msg = msgs[status] || 'Directions error: ' + status;
+    showToast('❌', msg, 4000);
+    // Restore placeholder if no map rendered yet
+    if (!directionsRenderer || activeRouteIdx === 0 && allRoutes.length === 0) {
+        document.getElementById('map').style.display = 'none';
+        document.getElementById('mapPlaceholder').style.display = 'flex';
+    }
+}
+
+// ── Init ──
 renderPopularRoutes();
-// Auto-select first route
-selectRoute(0);
 </script>
+
+<!-- Google Maps JavaScript API -->
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap&libraries=places"
+    async defer>
+</script>
+
 </body>
 </html>

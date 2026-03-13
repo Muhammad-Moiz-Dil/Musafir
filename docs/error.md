@@ -1,5 +1,32 @@
 # Error Log
 
+## Wishlist (Favorites) Implementation Notes
+**Date:** 2026-03-13
+**Files:** `Backend/.../FavoriteController.java`, `Frontend/.../wishlist.html`, `destinations.html`, `destination-detail.html`, `api.js`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/favorites/ids` returns just the ID list — used by destinations & detail pages to fill hearts on load without fetching full destination data twice.
+- `wishlist.html` now calls `GET /api/favorites` (full destination objects, newest first) — no longer reads from `localStorage`.
+- `destinations.html` and `destination-detail.html` heart buttons call `POST/DELETE /api/favorites/{id}` directly; localStorage wishlist keys removed entirely.
+- Double-submit prevented: toggle buttons are disabled during in-flight requests (`btn.disabled = true`).
+- 409 on `POST` is treated as success (already saved) — UI still updates correctly.
+- Clear All on wishlist fires all DELETEs in parallel via `Promise.all`.
+
+---
+
+## UC-07 Implementation Notes — Travel Guidelines
+**Date:** 2026-03-13
+**Files:** `Backend/.../TravelGuidelineController.java`, `Frontend/.../travel-guidelines.html`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/guidelines/destinations` reuses `DestinationRepository.findByIsActiveTrueOrderByNameAsc()` — no duplicate data layer.
+- `GET /api/guidelines/{destinationId}` returns 404 with `message: "no_guidelines"` when destination exists but has no rows in `TravelGuidelines` table — frontend detects this and shows the alternate-flow message.
+- Accordion cards group guidelines by `category` field; category meta (icon + label) is defined client-side so adding new DB categories works without frontend changes.
+- Nav item added to all 9 user pages between Wishlist and the `nav-divider`.
+- `?dest=<id>` query parameter supported — other pages can deep-link directly to a destination's guidelines.
+
 ## BUG-001 — Dashboard profile not displayed after login
 **Date:** 2026-03-13
 **File:** `Frontend/src/html/pages/user/dashboard.html`

@@ -19,5 +19,6 @@ const ENDPOINTS = {
     },
     DESTINATIONS: {
         SEARCH: `${API_CONFIG.BASE_URL}/destinations/search`,
+        BY_ID:  (id) => `${API_CONFIG.BASE_URL}/destinations/${id}`,
     },
 };

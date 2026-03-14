@@ -175,4 +175,15 @@ After merging friend's branch, `EmergencyInfo.java` used `@Table(name = "emergen
 Changed `@Table(name = "emergency_info")` → `@Table(name = "EmergencyInfo")` in `EmergencyInfo.java` to match the actual DB table name. No DB changes required.
 
 ### Rule
-All `@Table(name = ...)` annotations must exactly match the PascalCase table names in `TripifyDB_MySQL.sql` — **except** `travel_guidelines` (which has a lowercase table in DB per BUG-006 fix).
+All `@Table(name = ...)` annotations must exactly match the PascalCase table names in `TripifyDB_MySQL.sql`. The lowercase `travel_guidelines` / `emergency_info` tables from BUG-006 do NOT exist in this MySQL instance — always use PascalCase to match the actual DB.
+
+## BUG-008 — Backend fails to start: missing table [travel_guidelines] (post-merge)
+**Date:** 2026-03-14
+**File:** `Backend/main/java/com/model/TravelGuideline.java`
+**Status:** Fixed
+
+### Root Cause
+Same pattern as BUG-007. `TravelGuideline.java` had `@Table(name = "travel_guidelines")` but the DB only has `TravelGuidelines` (PascalCase). The lowercase table from BUG-006 was never created in this MySQL instance.
+
+### Fix Applied
+Changed `@Table(name = "travel_guidelines")` → `@Table(name = "TravelGuidelines")` to match the actual DB table.

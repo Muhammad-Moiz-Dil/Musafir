@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * Each row is one guideline (e.g. Visa, Safety, Culture) for a destination.
  */
 @Entity
-@Table(name = "travel_guidelines")
+@Table(name = "TravelGuidelines")
 public class TravelGuideline {
 
     @Id

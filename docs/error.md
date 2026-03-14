@@ -73,3 +73,24 @@
 - Replaced hardcoded `ALL_DESTS` with a live `GET /api/destinations/search` API fetch (same endpoint as destinations page). Liked items are now correctly resolved from real DB data.
 - Fixed localStorage key to `'tripify_user'`.
 - Added same image resolver (`IMG_MAP`) as destinations page so images display correctly.
+
+## BUG-004 — App fails to start: missing table `user_preferences`
+**Date:** 2026-03-14
+**File:** `database/TripifyDB_MySQL.sql`
+**Status:** Fixed
+
+### Root Cause
+Hibernate schema validation (`ddl-auto=validate`) checks every JPA entity against the actual database tables on startup. The `UserPreferences` entity maps to the `user_preferences` table, but that table was never created in the MySQL database — it was missing from the SQL schema file.
+
+### Fix Applied
+Manually ran the following in MySQL Workbench to create the missing table:
+```sql
+CREATE TABLE IF NOT EXISTS user_preferences (
+    preference_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    age_group VARCHAR(20) DEFAULT '18-25',
+    travel_preferences TEXT,
+    updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
+```

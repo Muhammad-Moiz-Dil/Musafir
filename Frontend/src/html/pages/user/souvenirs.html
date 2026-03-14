@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Local Souvenirs — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+/* ── Destination filter pills ── */
+.dest-filter-bar {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px;
+}
+.dest-pill {
+    padding: 7px 16px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--surface); color: var(--t2); font-size: 12.5px;
+    cursor: pointer; transition: var(--ease);
+}
+.dest-pill:hover { border-color: var(--border-hover); color: var(--white); }
+.dest-pill.active {
+    background: var(--accent); border-color: var(--accent);
+    color: #000; font-weight: 600;
+}
+
+/* ── Souvenir grid ── */
+.souv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 18px;
+}
+
+/* ── Souvenir card ── */
+.souv-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-lg); overflow: hidden;
+    transition: var(--ease); display: flex; flex-direction: column;
+}
+.souv-card:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+.souv-img {
+    height: 170px; overflow: hidden; position: relative;
+    background: var(--surface-2);
+}
+.souv-img img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.5s ease;
+}
+.souv-card:hover .souv-img img { transform: scale(1.06); }
+.souv-img-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px; color: var(--t3);
+}
+.souv-body { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.souv-name { font-size: 15px; font-weight: 700; color: var(--white); }
+.souv-vendor {
+    font-size: 11.5px; color: var(--t3);
+    display: flex; align-items: center; gap: 4px;
+}
+.souv-desc {
+    font-size: 12.5px; color: var(--t2); line-height: 1.6;
+    flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+.souv-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px solid var(--border);
+}
+.souv-price {
+    font-size: 17px; font-weight: 700; color: var(--accent);
+    font-family: var(--display);
+}
+.souv-dest-tag {
+    font-size: 11px; padding: 3px 9px;
+    background: rgba(255,255,255,0.06); border-radius: 999px;
+    color: var(--t2);
+}
+
+/* ── Empty / loading states ── */
+.souv-empty {
+    grid-column: 1/-1; text-align: center; padding: 60px 20px;
+    background: var(--surface); border: 1px dashed rgba(255,255,255,0.08);
+    border-radius: var(--r-xl);
+}
+.souv-empty span { font-size: 48px; display: block; margin-bottom: 14px; }
+.souv-empty p { font-size: 14px; color: var(--t2); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Modal overlay ── */
+.souv-modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+.souv-modal-overlay.open { opacity: 1; pointer-events: all; }
+
+/* ── Modal box ── */
+.souv-modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-xl); width: 100%; max-width: 560px;
+    overflow: hidden;
+    transform: translateY(24px) scale(0.97);
+    transition: transform 0.25s ease;
+    max-height: 90vh; display: flex; flex-direction: column;
+}
+.souv-modal-overlay.open .souv-modal { transform: translateY(0) scale(1); }
+
+.souv-modal-img {
+    width: 100%; height: 260px; object-fit: cover;
+    background: var(--surface-2); flex-shrink: 0;
+}
+.souv-modal-img-placeholder {
+    width: 100%; height: 260px; background: var(--surface-2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 72px; flex-shrink: 0;
+}
+.souv-modal-body {
+    padding: 22px 24px 24px; overflow-y: auto; flex: 1;
+}
+.souv-modal-header {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 12px; margin-bottom: 6px;
+}
+.souv-modal-name { font-size: 20px; font-weight: 700; color: var(--white); line-height: 1.3; }
+.souv-modal-close {
+    background: rgba(255,255,255,0.07); border: 1px solid var(--border);
+    border-radius: 50%; width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; color: var(--t2);
+    transition: var(--ease);
+}
+.souv-modal-close:hover { background: rgba(255,255,255,0.13); color: var(--white); }
+.souv-modal-meta {
+    display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 16px;
+}
+.souv-modal-tag {
+    font-size: 12px; padding: 4px 12px; border-radius: 999px;
+    background: rgba(255,255,255,0.06); color: var(--t2);
+}
+.souv-modal-desc {
+    font-size: 13.5px; color: var(--t2); line-height: 1.75;
+    margin-bottom: 20px;
+}
+.souv-modal-price-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-top: 16px; border-top: 1px solid var(--border);
+}
+.souv-modal-price { font-size: 22px; font-weight: 700; color: var(--accent); font-family: var(--display); }
+.souv-modal-vendor { font-size: 12.5px; color: var(--t3); }
+
+/* card cursor */
+.souv-card { cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+        <div class="logo-icon">✈</div>
+        <span class="logo-text">Tripify</span>
+    </div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+            <span>Dashboard</span>
+        </a>
+        <a href="destinations.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
+            <span>Explore</span>
+        </a>
+        <a href="trip-cost.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span>
+            <span>Trip Cost</span>
+        </a>
+        <a href="route-finder.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span>
+            <span>Route Finder</span>
+        </a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            <span>Hotels</span>
+        </a>
+        <a href="wishlist.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+            <span>Wishlist</span>
+        </a>
+        <a href="souvenirs.html" class="nav-item active">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
+            <span>Souvenirs</span>
+        </a>
+        <a href="seasonal-insights.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
+            <span>Seasonal</span>
+        </a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            <span>Emergency</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span>Profile</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarInitials">AT</div>
+            <div><div class="user-name" id="sidebarName">Ahmed Tariq</div><div class="user-role">Tourist</div></div>
+        </div>
+    </div>
+</aside>
+
+<!-- TOPBAR -->
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="topbar-title">Local Souvenirs</span>
+    <div class="topbar-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search souvenirs..." id="topSearch">
+    </div>
+    <div class="topbar-actions">
+        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
+    </div>
+</header>
+
+<div class="main-wrap">
+<div class="page-content page-enter">
+
+    <div class="page-header">
+        <span class="page-tag">Shop Local</span>
+        <div class="page-hdr-row">
+            <div>
+                <div class="page-title">Local <span>Souvenirs</span></div>
+                <div class="page-sub">Discover handcrafted goods and traditional items from across Pakistan</div>
+            </div>
+            <div id="countLabel" style="font-size:13px;color:var(--t2);"></div>
+        </div>
+    </div>
+
+    <!-- Destination filter pills -->
+    <div class="dest-filter-bar" id="destFilterBar">
+        <button class="dest-pill active" data-id="all">All Destinations</button>
+        <!-- populated dynamically -->
+    </div>
+
+    <!-- Souvenir grid -->
+    <div class="souv-grid" id="souvGrid"></div>
+
+</div>
+</div>
+
+<!-- SOUVENIR DETAIL MODAL -->
+<div class="souv-modal-overlay" id="souvModal" role="dialog" aria-modal="true">
+    <div class="souv-modal" id="souvModalBox">
+        <div id="souvModalImg"></div>
+        <div class="souv-modal-body">
+            <div class="souv-modal-header">
+                <div class="souv-modal-name" id="souvModalName"></div>
+                <button class="souv-modal-close" id="souvModalClose" aria-label="Close">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <div class="souv-modal-meta" id="souvModalMeta"></div>
+            <div class="souv-modal-desc" id="souvModalDesc"></div>
+            <div class="souv-modal-price-row">
+                <div class="souv-modal-price" id="souvModalPrice"></div>
+                <div class="souv-modal-vendor" id="souvModalVendor"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../../../js/config/api.js"></script>
+<script>
+// ── Auth guard ────────────────────────────────────────
+const TOKEN = localStorage.getItem('tripify_token');
+const USER  = JSON.parse(localStorage.getItem('tripify_user') || '{"fullName":"Tourist"}');
+if (!TOKEN) { window.location.href = '../auth/login.html'; }
+
+// ── State ─────────────────────────────────────────────
+let allSouvenirs  = [];   // full list from API
+let activeDestId  = 'all';
+let searchQuery   = '';
+
+// ── DOM refs ──────────────────────────────────────────
+const grid        = document.getElementById('souvGrid');
+const filterBar   = document.getElementById('destFilterBar');
+const countLabel  = document.getElementById('countLabel');
+
+// ── Render helpers ────────────────────────────────────
+function showLoading() {
+    grid.innerHTML = `<div class="souv-empty">
+        <span style="animation:spin 1s linear infinite">⏳</span>
+        <p>Loading souvenirs…</p>
+    </div>`;
+    countLabel.textContent = '';
+}
+
+function showEmpty(msg) {
+    grid.innerHTML = `<div class="souv-empty">
+        <span>🎁</span>
+        <p>${msg}</p>
+    </div>`;
+    countLabel.textContent = '';
+}
+
+function showError(msg) {
+    grid.innerHTML = `<div class="souv-empty">
+        <span>📶</span>
+        <p>${msg}</p>
+    </div>`;
+    countLabel.textContent = '';
+}
+
+function renderCard(s) {
+    const price = s.price != null ? `PKR ${Number(s.price).toLocaleString()}` : 'Price on request';
+    const imgHtml = s.imageUrl
+        ? `<img src="${s.imageUrl}" alt="${s.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'souv-img-placeholder\\'>🎁</div>'">`
+        : `<div class="souv-img-placeholder">🎁</div>`;
+
+    return `
+    <div class="souv-card" onclick="openModal(${s.id})">
+        <div class="souv-img">${imgHtml}</div>
+        <div class="souv-body">
+            <div class="souv-name">${s.name}</div>
+            ${s.vendorName ? `<div class="souv-vendor">🏪 ${s.vendorName}</div>` : ''}
+            ${s.description ? `<div class="souv-desc">${s.description}</div>` : ''}
+            <div class="souv-footer">
+                <div class="souv-price">${price}</div>
+                <span class="souv-dest-tag">📍 ${s.destinationName || 'Pakistan'}</span>
+            </div>
+        </div>
+    </div>`;
+}
+
+// ── Modal ──────────────────────────────────────────────
+const modalOverlay = document.getElementById('souvModal');
+
+function openModal(id) {
+    const s = allSouvenirs.find(x => x.id === id);
+    if (!s) return;
+
+    // Image
+    const imgEl = document.getElementById('souvModalImg');
+    imgEl.innerHTML = s.imageUrl
+        ? `<img class="souv-modal-img" src="${s.imageUrl}" alt="${s.name}" onerror="this.outerHTML='<div class=\\'souv-modal-img-placeholder\\'>🎁</div>'">`
+        : `<div class="souv-modal-img-placeholder">🎁</div>`;
+
+    // Text
+    document.getElementById('souvModalName').textContent  = s.name || '';
+    document.getElementById('souvModalDesc').textContent  = s.description || 'No description available.';
+    document.getElementById('souvModalPrice').textContent = s.price != null ? `PKR ${Number(s.price).toLocaleString()}` : 'Price on request';
+    document.getElementById('souvModalVendor').textContent = s.vendorName ? `🏪 ${s.vendorName}` : '';
+
+    // Meta tags
+    const meta = [];
+    if (s.destinationName) meta.push(`📍 ${s.destinationName}`);
+    document.getElementById('souvModalMeta').innerHTML = meta.map(t => `<span class="souv-modal-tag">${t}</span>`).join('');
+
+    modalOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    modalOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+document.getElementById('souvModalClose').addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function applyFilters() {
+    let items = allSouvenirs;
+
+    // Filter by destination
+    if (activeDestId !== 'all') {
+        items = items.filter(s => s.destinationId === parseInt(activeDestId));
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        items = items.filter(s =>
+            (s.name        || '').toLowerCase().includes(q) ||
+            (s.description || '').toLowerCase().includes(q) ||
+            (s.vendorName  || '').toLowerCase().includes(q)
+        );
+    }
+
+    return items;
+}
+
+function render() {
+    const items = applyFilters();
+
+    if (!items.length) {
+        const msg = searchQuery
+            ? `No souvenirs found matching "<strong>${searchQuery}</strong>".`
+            : 'No local souvenirs listed for this area yet.';
+        showEmpty(msg);
+        return;
+    }
+
+    countLabel.textContent = `${items.length} souvenir${items.length !== 1 ? 's' : ''} found`;
+    grid.innerHTML = items.map(renderCard).join('');
+}
+
+// ── Build destination filter pills ───────────────────
+function buildDestPills() {
+    const destMap = {};
+    allSouvenirs.forEach(s => {
+        if (s.destinationId && s.destinationName) {
+            destMap[s.destinationId] = s.destinationName;
+        }
+    });
+
+    const pills = Object.entries(destMap).map(([id, name]) =>
+        `<button class="dest-pill" data-id="${id}">${name}</button>`
+    ).join('');
+
+    filterBar.innerHTML = `<button class="dest-pill active" data-id="all">All Destinations</button>${pills}`;
+
+    filterBar.querySelectorAll('.dest-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterBar.querySelectorAll('.dest-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeDestId = btn.dataset.id;
+            render();
+        });
+    });
+}
+
+// ── Fetch all souvenirs ───────────────────────────────
+async function loadSouvenirs() {
+    showLoading();
+    try {
+        const res = await fetch(ENDPOINTS.SOUVENIRS.ALL, {
+            headers: { 'Authorization': 'Bearer ' + TOKEN }
+        });
+
+        if (res.status === 401) {
+            window.location.href = '../auth/login.html';
+            return;
+        }
+
+        const data = await res.json();
+
+        if (res.status === 404) {
+            showEmpty(data.message || 'No souvenirs available at the moment.');
+            return;
+        }
+
+        if (!res.ok) {
+            showError('Something went wrong. Please try again later.');
+            return;
+        }
+
+        allSouvenirs = data;
+        buildDestPills();
+        render();
+
+    } catch (e) {
+        showError('Network error. Please check your connection and that the server is running.');
+    }
+}
+
+// ── Search ────────────────────────────────────────────
+document.getElementById('topSearch').addEventListener('input', e => {
+    searchQuery = e.target.value.trim();
+    render();
+});
+
+// ── User info ─────────────────────────────────────────
+const ini = (USER.fullName || 'AT').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+document.getElementById('sidebarInitials').textContent = ini;
+document.getElementById('sidebarName').textContent     = USER.fullName || 'Tourist';
+document.getElementById('topbarInitials').textContent  = ini;
+
+// ── Sidebar toggle ────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+});
+overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+});
+
+// ── Toast ─────────────────────────────────────────────
+function showToast(icon, msg, dur = 2800) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
+}
+
+// ── Boot ──────────────────────────────────────────────
+loadSouvenirs();
+</script>
+</body>
+</html>

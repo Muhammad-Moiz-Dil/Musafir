@@ -21,4 +21,11 @@ const ENDPOINTS = {
         SEARCH: `${API_CONFIG.BASE_URL}/destinations/search`,
         BY_ID:  (id) => `${API_CONFIG.BASE_URL}/destinations/${id}`,
     },
+    SOUVENIRS: {
+        ALL:            `${API_CONFIG.BASE_URL}/souvenirs`,
+        BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/souvenirs/${id}`,
+    },
+    SEASONAL: {
+        BY_DESTINATION: (name) => `${API_CONFIG.BASE_URL}/seasonal-data/${encodeURIComponent(name)}`,
+    },
 };

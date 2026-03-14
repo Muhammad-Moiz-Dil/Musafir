@@ -162,3 +162,17 @@ Hibernate `ddl-auto=validate` expects table names in **snake_case** (e.g. `emerg
 
 ### Note
 If `TravelGuidelines` or `EmergencyInfo` tables are missing (e.g., partial DB setup), the backend will fail to start with a `SchemaManagementException`. Solution: Re-run the full `TripifyDB_MySQL.sql` script.
+
+## BUG-007 — Backend fails to start: missing table [emergency_info] (post-merge)
+**Date:** 2026-03-14
+**File:** `Backend/main/java/com/model/EmergencyInfo.java`
+**Status:** Fixed
+
+### Root Cause
+After merging friend's branch, `EmergencyInfo.java` used `@Table(name = "emergency_info")` (snake_case) but the actual MySQL DB table is named `EmergencyInfo` (PascalCase). Hibernate `ddl-auto=validate` looks for the exact table name and fails with `SchemaManagementException: missing table [emergency_info]`.
+
+### Fix Applied
+Changed `@Table(name = "emergency_info")` → `@Table(name = "EmergencyInfo")` in `EmergencyInfo.java` to match the actual DB table name. No DB changes required.
+
+### Rule
+All `@Table(name = ...)` annotations must exactly match the PascalCase table names in `TripifyDB_MySQL.sql` — **except** `travel_guidelines` (which has a lowercase table in DB per BUG-006 fix).

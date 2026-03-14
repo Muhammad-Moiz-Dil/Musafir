@@ -269,6 +269,9 @@
             <h2>⭐ Recommended for You</h2>
             <a href="destinations.html" class="see-all">Browse All →</a>
         </div>
+        <div id="recNoMatch" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 18px;margin-bottom:12px;font-size:13.5px;color:var(--t2);">
+            <strong>No specific matches found.</strong> Here are some popular choices near you.
+        </div>
         <div class="h-scroll" id="recScroll"></div>
     </div>
 
@@ -336,58 +339,117 @@
 const token = localStorage.getItem('tripify_token');
 if (!token) { window.location.href = '../auth/login.html'; }
 
-const DESTS = [
-    { id:1, name:'Hunza Valley',   region:'Gilgit-Baltistan', img:'../../../../public/assets/images/hunza-valley.jpg', rating:4.8, reviews:124, tags:['Mountain','Scenic','Trekking'], badge:'⭐ Top Pick' },
-    { id:2, name:'Murree',         region:'Punjab',           img:'../../../../public/assets/images/murree.jpeg',       rating:4.5, reviews:98,  tags:['Hill Station','Family'],        badge:null },
-    { id:3, name:'Swat Valley',    region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/swat.jpg',        rating:4.6, reviews:110, tags:['Green','Scenic'],               badge:'🌿 Scenic' },
-    { id:4, name:'Skardu',         region:'Gilgit-Baltistan', img:'../../../../public/assets/images/skardu.jpeg',       rating:4.7, reviews:87,  tags:['Adventure','K2'],               badge:'🏔️ K2 Gateway' },
-    { id:5, name:'Naran Kaghan',   region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/naran kaghan.jpg', rating:4.4, reviews:76, tags:['Valley','Nature'],              badge:null },
+// Fallback destinations (shown when backend is unreachable)
+const FALLBACK_DESTS = [
+    { id:1, name:'Hunza Valley',   city:'Gilgit-Baltistan', imageUrl:'../../../../public/assets/images/hunza-valley.jpg', averageRating:4.8, totalReviews:124, matchReason:'Mountains, Scenic' },
+    { id:2, name:'Murree',         city:'Punjab',           imageUrl:'../../../../public/assets/images/murree.jpeg',       averageRating:4.5, totalReviews:98,  matchReason:'Family Trips' },
+    { id:3, name:'Swat Valley',    city:'Khyber Pakhtunkhwa', imageUrl:'../../../../public/assets/images/swat.jpg',        averageRating:4.6, totalReviews:110, matchReason:'Scenic' },
+    { id:4, name:'Skardu',         city:'Gilgit-Baltistan', imageUrl:'../../../../public/assets/images/skardu.jpeg',       averageRating:4.7, totalReviews:87,  matchReason:'Adventure' },
+    { id:5, name:'Naran Kaghan',   city:'Khyber Pakhtunkhwa', imageUrl:'../../../../public/assets/images/naran kaghan.jpg', averageRating:4.4, totalReviews:76, matchReason:'Scenic' },
 ];
 
-// wishlist from localStorage
-let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[1,4]');
+// Local image fallback map keyed by lowercase destination name
+const LOCAL_IMAGES = {
+    'hunza valley':  '../../../../public/assets/images/hunza-valley.jpg',
+    'murree':        '../../../../public/assets/images/murree.jpeg',
+    'swat valley':   '../../../../public/assets/images/swat.jpg',
+    'skardu':        '../../../../public/assets/images/skardu.jpeg',
+    'naran kaghan':  '../../../../public/assets/images/naran kaghan.jpg',
+};
+
+function resolveImage(dest) {
+    // Prefer the DB imageUrl if it looks like a real path/URL
+    if (dest.imageUrl && dest.imageUrl.trim() !== '') return dest.imageUrl;
+    // Fall back to local asset by name
+    const key = (dest.name || '').toLowerCase();
+    return LOCAL_IMAGES[key] || '../../../../public/assets/images/hunza-valley.jpg';
+}
+
+// Wishlist stored as array of destination IDs
+let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[]');
+// Current recommendation list (populated from API or fallback)
+let currentDests = [];
 
 function saveWish() { localStorage.setItem('tripify_wishlist', JSON.stringify(wishlist)); }
 
 function starStr(r) {
-    const full = Math.floor(r); const half = r%1>=0.5?1:0; const empty = 5-full-half;
-    return '★'.repeat(full) + (half?'½':'') + '☆'.repeat(empty);
+    const full = Math.floor(r); const half = r % 1 >= 0.5 ? 1 : 0; const empty = 5 - full - half;
+    return '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(empty);
 }
 
-function renderRec() {
-    const c = document.getElementById('recScroll');
-    c.innerHTML = DESTS.map(d => `
+function destCardHtml(d) {
+    const imgSrc = resolveImage(d);
+    const inWish = wishlist.includes(d.id);
+    const rating = typeof d.averageRating === 'number' ? d.averageRating.toFixed(1) : (d.averageRating || '–');
+    const reviews = d.totalReviews || 0;
+    const reason  = d.matchReason || '';
+    return `
     <div class="dest-card" onclick="location.href='destination-detail.html?id=${d.id}'">
         <div class="dest-card-img">
-            <img src="${d.img}" alt="${d.name}" loading="lazy">
+            <img src="${imgSrc}" alt="${d.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/hunza-valley.jpg'">
             <div class="dest-card-img-overlay"></div>
-            ${d.badge ? `<span class="dc-badge">${d.badge}</span>` : ''}
-            <button class="dc-wish ${wishlist.includes(d.id)?'active':''}" onclick="toggleWish(event,${d.id})" title="Wishlist">
-                ${wishlist.includes(d.id)?'❤️':'🤍'}
+            ${reason ? `<span class="dc-badge">✨ ${reason.split(',')[0].trim()}</span>` : ''}
+            <button class="dc-wish ${inWish ? 'active' : ''}" onclick="toggleWish(event,${d.id})" title="Wishlist">
+                ${inWish ? '❤️' : '🤍'}
             </button>
         </div>
         <div class="dest-card-body">
             <div class="dc-name">${d.name}</div>
-            <div class="dc-region">📍 ${d.region}</div>
-            <div class="dc-rating"><span class="stars">${starStr(d.rating)}</span> ${d.rating} (${d.reviews})</div>
-            <div class="dc-tags">${d.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+            <div class="dc-region">📍 ${d.city || ''}</div>
+            <div class="dc-rating"><span class="stars">${starStr(parseFloat(rating))}</span> ${rating} (${reviews})</div>
+            ${reason ? `<div class="dc-tags"><span class="tag">${reason.split(',').slice(0,2).map(r=>r.trim()).join('</span><span class="tag">')}</span></div>` : ''}
         </div>
-    </div>`).join('');
+    </div>`;
+}
+
+function renderRec(dests) {
+    const c = document.getElementById('recScroll');
+    if (!dests || dests.length === 0) {
+        c.innerHTML = '<p style="color:var(--t3);padding:16px;">No recommendations found. <a href="profile.html">Set your preferences</a> to get personalised picks.</p>';
+        return;
+    }
+    currentDests = dests;
+    c.innerHTML = dests.map(d => destCardHtml(d)).join('');
+}
+
+async function loadRecommendations() {
+    const c = document.getElementById('recScroll');
+    const noMatchBanner = document.getElementById('recNoMatch');
+    c.innerHTML = '<p style="color:var(--t3);padding:16px 0;">Loading recommendations…</p>';
+    try {
+        const res = await fetch(ENDPOINTS.USER.RECOMMENDATIONS(5), {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.status === 401) { AuthService.logout(); return; }
+        if (!res.ok) throw new Error('API error ' + res.status);
+        const data = await res.json();
+        // Response is { noMatches: bool, destinations: [...] }
+        const dests = Array.isArray(data) ? data : (data.destinations || FALLBACK_DESTS);
+        const noMatches = !Array.isArray(data) && data.noMatches === true;
+        noMatchBanner.style.display = noMatches ? 'block' : 'none';
+        renderRec(dests.length ? dests : FALLBACK_DESTS);
+    } catch (e) {
+        // Backend unreachable — show fallback destinations
+        noMatchBanner.style.display = 'none';
+        renderRec(FALLBACK_DESTS);
+    }
 }
 
 function renderWishPreview() {
     const c = document.getElementById('wishPreview');
-    const items = DESTS.filter(d => wishlist.includes(d.id));
+    const items = currentDests.length
+        ? currentDests.filter(d => wishlist.includes(d.id))
+        : FALLBACK_DESTS.filter(d => wishlist.includes(d.id));
     if (!items.length) {
         c.innerHTML = `<div class="wish-empty"><span>🤍</span><p>No saved destinations yet.<br>Explore and add your favourites!</p></div>`;
         return;
     }
     c.innerHTML = items.map(d => `
     <div class="wish-card">
-        <div class="wish-img"><img src="${d.img}" alt="${d.name}" loading="lazy"></div>
+        <div class="wish-img"><img src="${resolveImage(d)}" alt="${d.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/hunza-valley.jpg'"></div>
         <div class="wish-body">
             <div class="wish-name">${d.name}</div>
-            <div class="wish-region">📍 ${d.region}</div>
+            <div class="wish-region">📍 ${d.city || ''}</div>
         </div>
         <button class="wish-remove" onclick="removeWish(${d.id})" title="Remove">✕</button>
     </div>`).join('');
@@ -395,13 +457,18 @@ function renderWishPreview() {
 
 function toggleWish(e, id) {
     e.stopPropagation();
-    if (wishlist.includes(id)) { wishlist = wishlist.filter(x=>x!==id); showToast('🤍','Removed from wishlist'); }
-    else { wishlist.push(id); showToast('❤️','Added to wishlist!'); }
-    saveWish(); renderRec(); renderWishPreview();
+    if (wishlist.includes(id)) { wishlist = wishlist.filter(x => x !== id); showToast('🤍', 'Removed from wishlist'); }
+    else { wishlist.push(id); showToast('❤️', 'Added to wishlist!'); }
+    saveWish();
+    // Re-render cards to update heart icons
+    renderRec(currentDests.length ? currentDests : FALLBACK_DESTS);
+    renderWishPreview();
 }
 function removeWish(id) {
-    wishlist = wishlist.filter(x=>x!==id); saveWish();
-    renderRec(); renderWishPreview(); showToast('🗑️','Removed from wishlist');
+    wishlist = wishlist.filter(x => x !== id); saveWish();
+    renderRec(currentDests.length ? currentDests : FALLBACK_DESTS);
+    renderWishPreview();
+    showToast('🗑️', 'Removed from wishlist');
 }
 
 function doSearch() {
@@ -483,7 +550,7 @@ function showToast(icon, msg, dur=2800) {
     setTimeout(()=>{ t.classList.add('out'); setTimeout(()=>t.remove(),300); },dur);
 }
 
-renderRec(); renderWishPreview();
+loadRecommendations().then(() => renderWishPreview());
 </script>
 </body>
 </html>

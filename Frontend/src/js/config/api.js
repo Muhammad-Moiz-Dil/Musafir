@@ -29,4 +29,8 @@ const ENDPOINTS = {
     SEASONAL: {
         BY_DESTINATION: (name) => `${API_CONFIG.BASE_URL}/seasonal-data/${encodeURIComponent(name)}`,
     },
+    EMERGENCY: {
+        BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/emergency/${id}`,
+        ALL:            `${API_CONFIG.BASE_URL}/emergency`,
+    },
 };

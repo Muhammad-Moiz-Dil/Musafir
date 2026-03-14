@@ -15,6 +15,7 @@ const ENDPOINTS = {
         UPLOAD_AVATAR:    `${API_CONFIG.BASE_URL}/users/profile/avatar`,
         CHANGE_PASSWORD:  `${API_CONFIG.BASE_URL}/users/password`,
         PREFERENCES:      `${API_CONFIG.BASE_URL}/users/preferences`,
+        RECOMMENDATIONS:  (limit = 5) => `${API_CONFIG.BASE_URL}/users/recommendations?limit=${limit}`,
         DELETE_ACCOUNT:   `${API_CONFIG.BASE_URL}/users/account`,
     },
     DESTINATIONS: {

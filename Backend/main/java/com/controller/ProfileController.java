@@ -4,6 +4,7 @@ import com.model.User;
 import com.model.UserPreferences;
 import com.repository.UserRepository;
 import com.service.ProfileService;
+import com.service.RecommendationService;
 import com.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -22,14 +24,18 @@ import java.util.UUID;
 public class ProfileController {
 
     private final ProfileService profileService;
+    private final RecommendationService recommendationService;
     private final UserRepository userRepo;
 
     // Avatar storage directory (relative to where the JAR runs, i.e., Backend/ folder)
     private static final String AVATAR_DIR = "uploads/avatars/";
     private static final String AVATAR_URL_PREFIX = "/uploads/avatars/";
 
-    public ProfileController(ProfileService profileService, UserRepository userRepo) {
+    public ProfileController(ProfileService profileService,
+                             RecommendationService recommendationService,
+                             UserRepository userRepo) {
         this.profileService = profileService;
+        this.recommendationService = recommendationService;
         this.userRepo = userRepo;
     }
 
@@ -167,6 +173,21 @@ public class ProfileController {
         User u = profileService.getProfile(currentEmail());
         profileService.savePreferences(u.getUserId(), req.getAgeGroup(), req.getTravelPreferences());
         return ResponseEntity.ok(Map.of("message", "Preferences saved successfully."));
+    }
+
+    /**
+     * GET /api/users/recommendations?limit=5
+     * Returns personalized destination recommendations based on the user's
+     * saved age group and travel preferences.
+     */
+    @GetMapping("/recommendations")
+    public ResponseEntity<?> getRecommendations(
+            @RequestParam(value = "limit", defaultValue = "5") int limit) {
+        if (limit < 1 || limit > 20) limit = 5;
+        User u = profileService.getProfile(currentEmail());
+        UserPreferences prefs = profileService.getPreferences(u.getUserId());
+        Map<String, Object> result = recommendationService.getRecommendations(prefs, limit);
+        return ResponseEntity.ok(result);
     }
 
     // ── Helpers ───────────────────────────────────────────────

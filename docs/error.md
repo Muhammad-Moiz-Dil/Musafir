@@ -100,3 +100,65 @@
 - Replaced hardcoded `ALL_DESTS` with a live `GET /api/destinations/search` API fetch (same endpoint as destinations page). Liked items are now correctly resolved from real DB data.
 - Fixed localStorage key to `'tripify_user'`.
 - Added same image resolver (`IMG_MAP`) as destinations page so images display correctly.
+
+## BUG-004 — App fails to start: missing table `user_preferences`
+**Date:** 2026-03-14
+**File:** `database/TripifyDB_MySQL.sql`
+**Status:** Fixed
+
+### Root Cause
+Hibernate schema validation (`ddl-auto=validate`) checks every JPA entity against the actual database tables on startup. The `UserPreferences` entity maps to the `user_preferences` table, but that table was never created in the MySQL database — it was missing from the SQL schema file.
+
+### Fix Applied
+Manually ran the following in MySQL Workbench to create the missing table:
+```sql
+CREATE TABLE IF NOT EXISTS user_preferences (
+    preference_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    age_group VARCHAR(20) DEFAULT '18-25',
+    travel_preferences TEXT,
+    updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
+```
+
+## UC15-NOTE-001 — EmergencyInfo & TravelGuidelines tables require data before API is useful
+**Date:** 2026-03-14
+**Files:** `database/UC15_EmergencyData.sql`
+**Status:** Documented (run SQL before testing)
+
+### Cause
+The `EmergencyInfo` table only had 3 rows (Hunza, Murree, Swat) from the seed data. Destinations 4–10 had no emergency data. The `TravelGuidelines` table had no rows with `category='Safety'` for most destinations. When the new API (`GET /api/emergency/{destinationId}`) was called for these destinations, the `contacts.available` field returned `false`, showing the "unavailable" fallback message.
+
+### Fix Applied
+Created `database/UC15_EmergencyData.sql` which:
+1. Updates existing EmergencyInfo rows (1–3) with full details (fire service, embassy, specific local numbers).
+2. Inserts EmergencyInfo for destinations 4–10 with verified local numbers.
+3. Inserts `category='Safety'` TravelGuidelines for all 10 destinations (4–5 guidelines per destination).
+
+**Run this script once in MySQL Workbench before testing UC15.**
+
+## BUG-006 — Backend fails to start: missing table [emergency_info]
+**Date:** 2026-03-14
+**Files:** `Backend/main/java/com/model/EmergencyInfo.java`, `Backend/main/java/com/model/TravelGuideline.java`
+**Status:** Fixed
+
+### Root Cause
+Hibernate `ddl-auto=validate` expects table names in **snake_case** (e.g. `emergency_info`), but the `@Table(name=...)` annotations used the original DB names `EmergencyInfo` and `TravelGuidelines` (PascalCase). MySQL on Windows is case-insensitive but Hibernate validates the exact name, causing `SchemaManagementException: missing table [emergency_info]`.
+
+### Fix Applied
+1. Created new lowercase tables `emergency_info` and `travel_guidelines` in MySQL Workbench.
+2. Copied data from old `EmergencyInfo` / `TravelGuidelines` tables into new ones.
+3. Changed `@Table(name="EmergencyInfo")` → `@Table(name="emergency_info")` in `EmergencyInfo.java`.
+4. Changed `@Table(name="TravelGuidelines")` → `@Table(name="travel_guidelines")` in `TravelGuideline.java`.
+
+## UC15-NOTE-002 — `ddl-auto=validate` requires both tables to exist in DB before backend starts
+**Date:** 2026-03-14
+**Files:** `Backend/main/java/com/model/EmergencyInfo.java`, `Backend/main/java/com/model/TravelGuideline.java`
+**Status:** Documented
+
+### Cause
+`spring.jpa.hibernate.ddl-auto=validate` checks every JPA entity against the actual DB schema at startup. Both `EmergencyInfo` and `TravelGuidelines` tables already exist in `TripifyDB_MySQL.sql`, so no manual table creation is needed — the backend will start normally as long as the full DB schema was applied.
+
+### Note
+If `TravelGuidelines` or `EmergencyInfo` tables are missing (e.g., partial DB setup), the backend will fail to start with a `SchemaManagementException`. Solution: Re-run the full `TripifyDB_MySQL.sql` script.

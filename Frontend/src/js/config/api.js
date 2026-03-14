@@ -15,6 +15,7 @@ const ENDPOINTS = {
         UPLOAD_AVATAR:    `${API_CONFIG.BASE_URL}/users/profile/avatar`,
         CHANGE_PASSWORD:  `${API_CONFIG.BASE_URL}/users/password`,
         PREFERENCES:      `${API_CONFIG.BASE_URL}/users/preferences`,
+        RECOMMENDATIONS:  (limit = 5) => `${API_CONFIG.BASE_URL}/users/recommendations?limit=${limit}`,
         DELETE_ACCOUNT:   `${API_CONFIG.BASE_URL}/users/account`,
     },
     DESTINATIONS: {
@@ -42,5 +43,16 @@ const ENDPOINTS = {
     REVIEWS: {
         SUBMIT: `${API_CONFIG.BASE_URL}/reviews`,
         MINE:   `${API_CONFIG.BASE_URL}/reviews/mine`,
+    },
+    SOUVENIRS: {
+        ALL:            `${API_CONFIG.BASE_URL}/souvenirs`,
+        BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/souvenirs/${id}`,
+    },
+    SEASONAL: {
+        BY_DESTINATION: (name) => `${API_CONFIG.BASE_URL}/seasonal-data/${encodeURIComponent(name)}`,
+    },
+    EMERGENCY: {
+        BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/emergency/${id}`,
+        ALL:            `${API_CONFIG.BASE_URL}/emergency`,
     },
 };

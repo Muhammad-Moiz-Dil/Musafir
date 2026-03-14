@@ -9,20 +9,23 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../css/pages/dashboard.css">
 <style>
-/* ── Destination filter pills ── */
-.dest-filter-bar {
-    display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 22px;
+/* ── Destination selector ── */
+.dest-select-wrap {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--r-xl); padding: 14px 18px;
 }
-.dest-pill {
-    padding: 7px 16px; border-radius: 999px; border: 1px solid var(--border);
-    background: var(--surface); color: var(--t2); font-size: 12.5px;
-    cursor: pointer; transition: var(--ease);
+.dest-select-wrap label {
+    font-size: 13px; font-weight: 600; color: var(--t2); white-space: nowrap;
 }
-.dest-pill:hover { border-color: var(--border-hover); color: var(--white); }
-.dest-pill.active {
-    background: var(--accent); border-color: var(--accent);
-    color: #000; font-weight: 600;
+.dest-select-wrap select {
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: var(--r-sm); padding: 9px 12px;
+    font-size: 13.5px; font-family: var(--font); color: var(--t1);
+    cursor: pointer; outline: none; transition: var(--ease);
 }
+.dest-select-wrap select:focus { border-color: rgba(245,166,35,0.4); }
+.dest-select-wrap select option { background: #0d1b2a; }
 
 /* ── Souvenir grid ── */
 .souv-grid {
@@ -68,19 +71,10 @@
     display: -webkit-box; -webkit-line-clamp: 3;
     -webkit-box-orient: vertical; overflow: hidden;
 }
-.souv-footer {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-top: 12px; padding-top: 10px;
-    border-top: 1px solid var(--border);
-}
-.souv-price {
-    font-size: 17px; font-weight: 700; color: var(--accent);
-    font-family: var(--display);
-}
 .souv-dest-tag {
-    font-size: 11px; padding: 3px 9px;
+    font-size: 11px; padding: 3px 9px; margin-top: 10px;
     background: rgba(255,255,255,0.06); border-radius: 999px;
-    color: var(--t2);
+    color: var(--t2); display: inline-block;
 }
 
 /* ── Empty / loading states ── */
@@ -152,12 +146,10 @@
     font-size: 13.5px; color: var(--t2); line-height: 1.75;
     margin-bottom: 20px;
 }
-.souv-modal-price-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding-top: 16px; border-top: 1px solid var(--border);
+.souv-modal-vendor {
+    font-size: 12.5px; color: var(--t3);
+    padding-top: 12px; border-top: 1px solid var(--border);
 }
-.souv-modal-price { font-size: 22px; font-weight: 700; color: var(--accent); font-family: var(--display); }
-.souv-modal-vendor { font-size: 12.5px; color: var(--t3); }
 
 /* card cursor */
 .souv-card { cursor: pointer; }
@@ -256,10 +248,12 @@
         </div>
     </div>
 
-    <!-- Destination filter pills -->
-    <div class="dest-filter-bar" id="destFilterBar">
-        <button class="dest-pill active" data-id="all">All Destinations</button>
-        <!-- populated dynamically -->
+    <!-- Destination selector -->
+    <div class="dest-select-wrap">
+        <label for="destSelect">📍 Location</label>
+        <select id="destSelect">
+            <option value="">— Select a destination —</option>
+        </select>
     </div>
 
     <!-- Souvenir grid -->
@@ -281,10 +275,7 @@
             </div>
             <div class="souv-modal-meta" id="souvModalMeta"></div>
             <div class="souv-modal-desc" id="souvModalDesc"></div>
-            <div class="souv-modal-price-row">
-                <div class="souv-modal-price" id="souvModalPrice"></div>
-                <div class="souv-modal-vendor" id="souvModalVendor"></div>
-            </div>
+            <div class="souv-modal-vendor" id="souvModalVendor"></div>
         </div>
     </div>
 </div>
@@ -293,91 +284,137 @@
 
 <script src="../../../js/config/api.js"></script>
 <script>
-// ── Auth guard ────────────────────────────────────────
+// ── Auth guard ──────────────────────────────────────────
 const TOKEN = localStorage.getItem('tripify_token');
-const USER  = JSON.parse(localStorage.getItem('tripify_user') || '{"fullName":"Tourist"}');
+const USER  = JSON.parse(localStorage.getItem('tripify_user') || '{}');
 if (!TOKEN) { window.location.href = '../auth/login.html'; }
 
-// ── State ─────────────────────────────────────────────
-let allSouvenirs  = [];   // full list from API
-let activeDestId  = 'all';
-let searchQuery   = '';
+// ── Profile picture ─────────────────────────────────────
+(function applyProfile(u) {
+    const ini = (u.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarName').textContent = u.fullName || 'Tourist';
+    const sa = document.getElementById('sidebarInitials');
+    const ta = document.getElementById('topbarInitials');
+    if (u.profilePicture && u.profilePicture !== '') {
+        const url = 'http://localhost:8080' + u.profilePicture + '?t=' + Date.now();
+        sa.innerHTML = '<img src="' + url + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent=\'' + ini + '\'">';
+        ta.innerHTML = '<img src="' + url + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent=\'' + ini + '\'">';
+    } else {
+        sa.textContent = ini;
+        ta.textContent = ini;
+    }
+})(USER);
 
-// ── DOM refs ──────────────────────────────────────────
-const grid        = document.getElementById('souvGrid');
-const filterBar   = document.getElementById('destFilterBar');
-const countLabel  = document.getElementById('countLabel');
+// ── Sidebar toggle ──────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open'); overlay.classList.toggle('show');
+});
+overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open'); overlay.classList.remove('show');
+});
 
-// ── Render helpers ────────────────────────────────────
-function showLoading() {
-    grid.innerHTML = `<div class="souv-empty">
-        <span style="animation:spin 1s linear infinite">⏳</span>
-        <p>Loading souvenirs…</p>
-    </div>`;
+// ── Toast ───────────────────────────────────────────────
+function showToast(icon, msg, dur = 2800) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + msg + '</span>';
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
+}
+
+// ── Local image map (name → path relative to this page) ─
+const SOUVENIR_IMG = {
+    'hunza cap':     '../../../../public/assets/images/hunza cap.png',
+    'apricot jam':   '../../../../public/assets/images/Apricot Jam.png',
+    'shawls':        '../../../../public/assets/images/shawls.png',
+    'emerald stone': '../../../../public/assets/images/emeralds.png',
+    'emerald':       '../../../../public/assets/images/emeralds.png',
+};
+function getSouvenirImg(s) {
+    if (s.imageUrl) return s.imageUrl;
+    return SOUVENIR_IMG[(s.name || '').toLowerCase()] || null;
+}
+
+// ── DOM refs ────────────────────────────────────────────
+const grid       = document.getElementById('souvGrid');
+const countLabel = document.getElementById('countLabel');
+const destSelect = document.getElementById('destSelect');
+
+// ── State ───────────────────────────────────────────────
+let currentSouvenirs = [];
+let searchQuery = '';
+
+// ── Render helpers ──────────────────────────────────────
+function showPlaceholder() {
+    grid.innerHTML = '<div class="souv-empty"><span>🗺️</span><p>Select a destination above to discover local souvenirs.</p></div>';
     countLabel.textContent = '';
 }
 
-function showEmpty(msg) {
-    grid.innerHTML = `<div class="souv-empty">
-        <span>🎁</span>
-        <p>${msg}</p>
-    </div>`;
+function showLoading() {
+    grid.innerHTML = '<div class="souv-empty"><span style="animation:spin 1s linear infinite">⏳</span><p>Loading souvenirs…</p></div>';
+    countLabel.textContent = '';
+}
+
+function showEmpty() {
+    grid.innerHTML = '<div class="souv-empty"><span>🎁</span><p>No local souvenirs listed for this area yet. Check back soon.</p></div>';
     countLabel.textContent = '';
 }
 
 function showError(msg) {
-    grid.innerHTML = `<div class="souv-empty">
-        <span>📶</span>
-        <p>${msg}</p>
-    </div>`;
+    grid.innerHTML = '<div class="souv-empty"><span>📶</span><p>' + msg + '</p></div>';
     countLabel.textContent = '';
 }
 
 function renderCard(s) {
-    const price = s.price != null ? `PKR ${Number(s.price).toLocaleString()}` : 'Price on request';
-    const imgHtml = s.imageUrl
-        ? `<img src="${s.imageUrl}" alt="${s.name}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'souv-img-placeholder\\'>🎁</div>'">`
-        : `<div class="souv-img-placeholder">🎁</div>`;
-
-    return `
-    <div class="souv-card" onclick="openModal(${s.id})">
-        <div class="souv-img">${imgHtml}</div>
-        <div class="souv-body">
-            <div class="souv-name">${s.name}</div>
-            ${s.vendorName ? `<div class="souv-vendor">🏪 ${s.vendorName}</div>` : ''}
-            ${s.description ? `<div class="souv-desc">${s.description}</div>` : ''}
-            <div class="souv-footer">
-                <div class="souv-price">${price}</div>
-                <span class="souv-dest-tag">📍 ${s.destinationName || 'Pakistan'}</span>
-            </div>
-        </div>
-    </div>`;
+    const imgSrc  = getSouvenirImg(s);
+    const imgHtml = imgSrc
+        ? '<img src="' + imgSrc + '" alt="' + s.name + '" loading="lazy" onerror="this.parentElement.innerHTML=\'<div class=&quot;souv-img-placeholder&quot;>🎁</div>\'">'
+        : '<div class="souv-img-placeholder">🎁</div>';
+    return '<div class="souv-card" onclick="openModal(' + s.id + ')">' +
+        '<div class="souv-img">' + imgHtml + '</div>' +
+        '<div class="souv-body">' +
+            '<div class="souv-name">' + s.name + '</div>' +
+            (s.vendorName ? '<div class="souv-vendor">🏪 ' + s.vendorName + '</div>' : '') +
+            (s.description ? '<div class="souv-desc">' + s.description + '</div>' : '') +
+            '<span class="souv-dest-tag">📍 ' + (s.destinationName || 'Pakistan') + '</span>' +
+        '</div></div>';
 }
 
-// ── Modal ──────────────────────────────────────────────
+function renderGrid() {
+    let items = currentSouvenirs;
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        items = items.filter(s =>
+            (s.name || '').toLowerCase().includes(q) ||
+            (s.description || '').toLowerCase().includes(q) ||
+            (s.vendorName || '').toLowerCase().includes(q)
+        );
+    }
+    if (!items.length) { showEmpty(); return; }
+    countLabel.textContent = items.length + ' souvenir' + (items.length !== 1 ? 's' : '') + ' found';
+    grid.innerHTML = items.map(renderCard).join('');
+}
+
+// ── Modal ───────────────────────────────────────────────
 const modalOverlay = document.getElementById('souvModal');
 
 function openModal(id) {
-    const s = allSouvenirs.find(x => x.id === id);
+    const s = currentSouvenirs.find(x => x.id === id);
     if (!s) return;
-
-    // Image
-    const imgEl = document.getElementById('souvModalImg');
-    imgEl.innerHTML = s.imageUrl
-        ? `<img class="souv-modal-img" src="${s.imageUrl}" alt="${s.name}" onerror="this.outerHTML='<div class=\\'souv-modal-img-placeholder\\'>🎁</div>'">`
-        : `<div class="souv-modal-img-placeholder">🎁</div>`;
-
-    // Text
-    document.getElementById('souvModalName').textContent  = s.name || '';
-    document.getElementById('souvModalDesc').textContent  = s.description || 'No description available.';
-    document.getElementById('souvModalPrice').textContent = s.price != null ? `PKR ${Number(s.price).toLocaleString()}` : 'Price on request';
-    document.getElementById('souvModalVendor').textContent = s.vendorName ? `🏪 ${s.vendorName}` : '';
-
-    // Meta tags
+    const imgEl  = document.getElementById('souvModalImg');
+    const imgSrc = getSouvenirImg(s);
+    imgEl.innerHTML = imgSrc
+        ? '<img class="souv-modal-img" src="' + imgSrc + '" alt="' + s.name + '" onerror="this.outerHTML=\'<div class=&quot;souv-modal-img-placeholder&quot;>🎁</div>\'">'
+        : '<div class="souv-modal-img-placeholder">🎁</div>';
+    document.getElementById('souvModalName').textContent = s.name || '';
+    document.getElementById('souvModalDesc').textContent = s.description || 'No description available.';
+    document.getElementById('souvModalVendor').textContent = s.vendorName ? '🏪 ' + s.vendorName : '';
     const meta = [];
-    if (s.destinationName) meta.push(`📍 ${s.destinationName}`);
-    document.getElementById('souvModalMeta').innerHTML = meta.map(t => `<span class="souv-modal-tag">${t}</span>`).join('');
-
+    if (s.destinationName) meta.push('📍 ' + s.destinationName);
+    document.getElementById('souvModalMeta').innerHTML = meta.map(t => '<span class="souv-modal-tag">' + t + '</span>').join('');
     modalOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
 }
@@ -391,137 +428,62 @@ document.getElementById('souvModalClose').addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeModal(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-function applyFilters() {
-    let items = allSouvenirs;
-
-    // Filter by destination
-    if (activeDestId !== 'all') {
-        items = items.filter(s => s.destinationId === parseInt(activeDestId));
-    }
-
-    // Filter by search query
-    if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        items = items.filter(s =>
-            (s.name        || '').toLowerCase().includes(q) ||
-            (s.description || '').toLowerCase().includes(q) ||
-            (s.vendorName  || '').toLowerCase().includes(q)
-        );
-    }
-
-    return items;
-}
-
-function render() {
-    const items = applyFilters();
-
-    if (!items.length) {
-        const msg = searchQuery
-            ? `No souvenirs found matching "<strong>${searchQuery}</strong>".`
-            : 'No local souvenirs listed for this area yet.';
-        showEmpty(msg);
-        return;
-    }
-
-    countLabel.textContent = `${items.length} souvenir${items.length !== 1 ? 's' : ''} found`;
-    grid.innerHTML = items.map(renderCard).join('');
-}
-
-// ── Build destination filter pills ───────────────────
-function buildDestPills() {
-    const destMap = {};
-    allSouvenirs.forEach(s => {
-        if (s.destinationId && s.destinationName) {
-            destMap[s.destinationId] = s.destinationName;
-        }
-    });
-
-    const pills = Object.entries(destMap).map(([id, name]) =>
-        `<button class="dest-pill" data-id="${id}">${name}</button>`
-    ).join('');
-
-    filterBar.innerHTML = `<button class="dest-pill active" data-id="all">All Destinations</button>${pills}`;
-
-    filterBar.querySelectorAll('.dest-pill').forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterBar.querySelectorAll('.dest-pill').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeDestId = btn.dataset.id;
-            render();
-        });
-    });
-}
-
-// ── Fetch all souvenirs ───────────────────────────────
-async function loadSouvenirs() {
-    showLoading();
+// ── Load destinations into dropdown ────────────────────
+async function loadDestinations() {
     try {
-        const res = await fetch(ENDPOINTS.SOUVENIRS.ALL, {
+        const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH, {
             headers: { 'Authorization': 'Bearer ' + TOKEN }
         });
+        if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+        if (!res.ok) return;
+        const dests = await res.json();
+        const list = Array.isArray(dests) ? dests : (dests.destinations || dests.content || []);
+        list.forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.destinationId || d.id;
+            opt.textContent = d.name;
+            destSelect.appendChild(opt);
+        });
+    } catch (e) { /* silently ignore — user can still type */ }
+}
 
-        if (res.status === 401) {
-            window.location.href = '../auth/login.html';
-            return;
-        }
-
+// ── Load souvenirs for selected destination ─────────────
+async function loadSouvenirs(destId) {
+    showLoading();
+    try {
+        const res = await fetch(ENDPOINTS.SOUVENIRS.BY_DESTINATION(destId), {
+            headers: { 'Authorization': 'Bearer ' + TOKEN }
+        });
+        if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+        if (res.status === 404) { currentSouvenirs = []; showEmpty(); return; }
+        if (!res.ok) { showError('Something went wrong. Please try again later.'); return; }
         const data = await res.json();
-
-        if (res.status === 404) {
-            showEmpty(data.message || 'No souvenirs available at the moment.');
-            return;
-        }
-
-        if (!res.ok) {
-            showError('Something went wrong. Please try again later.');
-            return;
-        }
-
-        allSouvenirs = data;
-        buildDestPills();
-        render();
-
+        currentSouvenirs = Array.isArray(data) ? data : [];
+        if (!currentSouvenirs.length) { showEmpty(); return; }
+        renderGrid();
     } catch (e) {
-        showError('Network error. Please check your connection and that the server is running.');
+        showError('Network error. Please check your connection and try again.');
     }
 }
 
-// ── Search ────────────────────────────────────────────
+// ── Destination select handler ──────────────────────────
+destSelect.addEventListener('change', () => {
+    const val = destSelect.value;
+    searchQuery = '';
+    document.getElementById('topSearch').value = '';
+    if (!val) { currentSouvenirs = []; showPlaceholder(); return; }
+    loadSouvenirs(val);
+});
+
+// ── Search ──────────────────────────────────────────────
 document.getElementById('topSearch').addEventListener('input', e => {
     searchQuery = e.target.value.trim();
-    render();
+    if (currentSouvenirs.length) renderGrid();
 });
 
-// ── User info ─────────────────────────────────────────
-const ini = (USER.fullName || 'AT').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-document.getElementById('sidebarInitials').textContent = ini;
-document.getElementById('sidebarName').textContent     = USER.fullName || 'Tourist';
-document.getElementById('topbarInitials').textContent  = ini;
-
-// ── Sidebar toggle ────────────────────────────────────
-const sidebar = document.getElementById('sidebar');
-const overlay = document.getElementById('overlay');
-document.getElementById('menuToggle').addEventListener('click', () => {
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('show');
-});
-overlay.addEventListener('click', () => {
-    sidebar.classList.remove('open');
-    overlay.classList.remove('show');
-});
-
-// ── Toast ─────────────────────────────────────────────
-function showToast(icon, msg, dur = 2800) {
-    const c = document.getElementById('toastContainer');
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
-    c.appendChild(t);
-    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
-}
-
-// ── Boot ──────────────────────────────────────────────
-loadSouvenirs();
+// ── Boot ────────────────────────────────────────────────
+showPlaceholder();
+loadDestinations();
 </script>
 </body>
 </html>

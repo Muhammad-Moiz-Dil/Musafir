@@ -55,4 +55,7 @@ const ENDPOINTS = {
         BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/emergency/${id}`,
         ALL:            `${API_CONFIG.BASE_URL}/emergency`,
     },
+    CONFIG: {
+        MAPS_KEY: `${API_CONFIG.BASE_URL}/config/maps-key`,
+    },
 };

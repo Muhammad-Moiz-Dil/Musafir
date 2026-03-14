@@ -187,3 +187,50 @@ Same pattern as BUG-007. `TravelGuideline.java` had `@Table(name = "travel_guide
 
 ### Fix Applied
 Changed `@Table(name = "travel_guidelines")` → `@Table(name = "TravelGuidelines")` to match the actual DB table.
+
+---
+
+## BUG-009 — EmergencyInfoController calls undefined TravelGuidelineRepository methods
+**Date:** 2026-03-14
+**Files:** `EmergencyInfoController.java`, `TravelGuidelineRepository.java`
+**Status:** Fixed
+
+### Root Cause
+`EmergencyInfoController` called `guidelineRepo.findByDestination_DestinationIdAndCategory(...)` and `guidelineRepo.findByDestination_DestinationId(...)`. These Spring Data method names imply a `@ManyToOne destination` relationship, but `TravelGuideline` uses a plain `Integer destinationId` field. The correct names are `findByDestinationIdAndCategory` and `findByDestinationId`.
+
+### Fix Applied
+- Added `findByDestinationIdAndCategory(Integer, String)` and `findByDestinationId(Integer)` to `TravelGuidelineRepository`.
+- Updated `EmergencyInfoController` to call the correct method names (removed the `Destination_` navigation prefix).
+
+---
+
+## UC12-NOTE-001 — Google Maps API key must never appear in frontend files
+**Date:** 2026-03-14
+**Files:** `route-finder.html`, `Backend/.../ConfigController.java`, `application.properties`
+**Status:** Implemented
+
+### Design Decisions
+- API key stored in `application.properties` as `google.maps.api-key=...` — never in any frontend file.
+- Backend `GET /api/config/maps-key` (authenticated) serves the key to logged-in users only.
+- Frontend fetches the key at page load, then dynamically injects `<script src="...maps.googleapis.com/...?key=KEY">` into `<head>`.
+- `window.gm_authFailure` catches invalid/rejected key errors from Google Maps itself.
+- `script.onerror` catches network-level script load failure.
+- 12-second timeout catches silent load hang.
+- All three paths call `showMapsError()` → shows the error banner and a toast: "Unable to connect to Google Maps. Please try again later."
+- `window._mapsReady` flag guards `findRoute()` from running before Maps is initialized.
+
+### Rule
+Never hardcode the Google Maps API key (or any API key) in HTML/JS frontend files — GitHub secret scanning will detect and flag it.
+
+---
+
+## CLEANUP-001 — Unused imports and unused injected field in ProfileController/ProfileService
+**Date:** 2026-03-14
+**Files:** `ProfileController.java`, `ProfileService.java`
+**Status:** Fixed
+
+### Fix Applied
+- Removed unused `import java.util.List` and `import com.repository.UserRepository` from `ProfileController`.
+- Removed unused `userRepo` field and constructor parameter from `ProfileController`.
+- Removed unused `import java.util.Optional` from `ProfileService`.
+- Added `@NonNull` annotations to `JwtFilter.doFilterInternal` and `WebConfig.addResourceHandlers` params to satisfy inherited interface contracts.

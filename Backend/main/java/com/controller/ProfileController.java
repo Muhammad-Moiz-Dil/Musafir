@@ -2,7 +2,6 @@ package com.controller;
 
 import com.model.User;
 import com.model.UserPreferences;
-import com.repository.UserRepository;
 import com.service.ProfileService;
 import com.service.RecommendationService;
 import com.service.UserService;
@@ -14,7 +13,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,18 +23,15 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final RecommendationService recommendationService;
-    private final UserRepository userRepo;
 
     // Avatar storage directory (relative to where the JAR runs, i.e., Backend/ folder)
     private static final String AVATAR_DIR = "uploads/avatars/";
     private static final String AVATAR_URL_PREFIX = "/uploads/avatars/";
 
     public ProfileController(ProfileService profileService,
-                             RecommendationService recommendationService,
-                             UserRepository userRepo) {
+                             RecommendationService recommendationService) {
         this.profileService = profileService;
         this.recommendationService = recommendationService;
-        this.userRepo = userRepo;
     }
 
     private String currentEmail() {

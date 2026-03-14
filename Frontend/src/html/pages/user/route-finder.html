@@ -9,23 +9,39 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../../css/pages/dashboard.css">
 <style>
-.route-layout { display:grid; grid-template-columns:340px 1fr; gap:22px; }
+.route-layout { display:grid; grid-template-columns:320px 1fr; gap:22px; }
 
-/* Map */
-#map {
-    width:100%; height:480px;
-    border-radius:var(--r-xl); overflow:hidden;
-    border:1px solid var(--border);
+/* Map container */
+#mapWrapper {
+    width:100%; height:500px; border-radius:var(--r-xl);
+    overflow:hidden; border:1px solid var(--border); position:relative;
 }
-.map-placeholder {
-    width:100%; height:480px;
+#map { width:100%; height:100%; }
+
+/* Overlay shown before Maps loads */
+#mapOverlay {
+    position:absolute; inset:0;
     background:linear-gradient(160deg,#0a1a2a 0%,#0d2238 100%);
-    border:1px solid var(--border); border-radius:var(--r-xl);
     display:flex; align-items:center; justify-content:center;
     flex-direction:column; gap:12px; color:var(--t2);
+    border-radius:var(--r-xl); z-index:10;
+    transition:opacity 0.4s;
 }
-.map-placeholder span { font-size:48px; }
-.map-placeholder p { font-size:13px; text-align:center; line-height:1.6; }
+#mapOverlay span { font-size:48px; }
+#mapOverlay p { font-size:13px; text-align:center; line-height:1.6; }
+#mapOverlay.hidden { opacity:0; pointer-events:none; }
+
+/* Error overlay */
+#mapsErrorOverlay {
+    position:absolute; inset:0;
+    background:linear-gradient(160deg,#1a0808 0%,#2a0d0d 100%);
+    display:none; align-items:center; justify-content:center;
+    flex-direction:column; gap:14px;
+    border-radius:var(--r-xl); z-index:20;
+}
+#mapsErrorOverlay span { font-size:44px; }
+#mapsErrorOverlay p { font-size:13px; text-align:center; line-height:1.7; color:#f87171; }
+#mapsErrorOverlay small { font-size:11.5px; color:var(--t3); }
 
 /* Input panel */
 .route-input-panel {
@@ -45,6 +61,7 @@
     font-size:13.5px; font-family:var(--font); color:var(--t1);
 }
 .location-input-wrap input::placeholder { color:var(--t3); }
+
 .swap-btn {
     width:32px; height:32px; background:var(--accent-glow);
     border:1px solid rgba(245,166,35,0.2);
@@ -55,7 +72,7 @@
 .swap-btn:hover { background:rgba(245,166,35,0.25); transform:rotate(180deg); }
 
 /* Travel mode tabs */
-.mode-tabs { display:flex; gap:6px; margin-bottom:12px; }
+.mode-tabs { display:flex; gap:6px; margin-bottom:14px; }
 .mode-tab {
     flex:1; padding:7px 0; font-size:12px; font-weight:600;
     border:1px solid var(--border); border-radius:var(--r-sm);
@@ -94,7 +111,7 @@
 .alt-badge.alt  { background:rgba(245,166,35,0.12); color:var(--accent); border:1px solid rgba(245,166,35,0.25); }
 
 /* Steps */
-.steps-wrap { margin-top:16px; display:none; }
+.steps-wrap { margin-top:14px; }
 .step-item {
     display:flex; gap:10px; padding:10px 0;
     border-bottom:1px solid var(--border); font-size:12.5px;
@@ -108,37 +125,6 @@
 }
 .step-text { color:var(--t1); line-height:1.5; }
 .step-dist { color:var(--t3); font-size:11px; margin-top:2px; }
-
-/* Popular routes */
-.route-suggestion {
-    background:var(--surface); border:1px solid var(--border);
-    border-radius:var(--r); padding:13px 15px; cursor:pointer;
-    transition:var(--ease); margin-bottom:9px;
-    display:flex; align-items:center; gap:12px;
-}
-.route-suggestion:hover { border-color:var(--border-hover); background:var(--surface-2); }
-.route-suggestion.selected { border-color:rgba(245,166,35,0.4); background:var(--accent-glow); }
-.rs-icon { font-size:22px; }
-.rs-name { font-size:13px; font-weight:700; color:var(--white); }
-.rs-detail { font-size:11.5px; color:var(--t2); }
-.rs-stats { margin-left:auto; text-align:right; }
-.rs-dist { font-size:13px; font-weight:700; color:var(--accent); }
-.rs-time { font-size:11px; color:var(--t3); }
-
-/* Loading spinner */
-.map-loading {
-    width:100%; height:480px;
-    background:linear-gradient(160deg,#0a1a2a 0%,#0d2238 100%);
-    border:1px solid var(--border); border-radius:var(--r-xl);
-    display:flex; align-items:center; justify-content:center;
-    flex-direction:column; gap:16px;
-}
-.spinner {
-    width:36px; height:36px; border:3px solid rgba(245,166,35,0.15);
-    border-top:3px solid var(--accent); border-radius:50%;
-    animation:spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform:rotate(360deg); } }
 
 @media (max-width:900px) { .route-layout { grid-template-columns:1fr; } }
 </style>
@@ -192,7 +178,7 @@
         <div class="page-hdr-row">
             <div>
                 <div class="page-title">Route <span>Finder</span></div>
-                <div class="page-sub">Find the best driving routes between Pakistani destinations</div>
+                <div class="page-sub">Find the best routes between Pakistani destinations</div>
             </div>
             <a href="trip-cost.html" class="btn btn-ghost btn-sm">💰 Estimate Costs</a>
         </div>
@@ -206,10 +192,10 @@
                 <h3 style="font-size:15px;font-weight:700;color:var(--white);margin-bottom:14px">📍 Plan Your Route</h3>
 
                 <!-- Travel mode tabs -->
-                <div class="mode-tabs" id="modeTabs">
-                    <div class="mode-tab active" data-mode="DRIVING"   onclick="setMode('DRIVING')">🚗 Drive</div>
-                    <div class="mode-tab"         data-mode="WALKING"   onclick="setMode('WALKING')">🚶 Walk</div>
-                    <div class="mode-tab"         data-mode="TRANSIT"   onclick="setMode('TRANSIT')">🚌 Transit</div>
+                <div class="mode-tabs">
+                    <div class="mode-tab active" data-mode="DRIVING" onclick="setMode('DRIVING')">🚗 Drive</div>
+                    <div class="mode-tab" data-mode="WALKING"  onclick="setMode('WALKING')">🚶 Walk</div>
+                    <div class="mode-tab" data-mode="TRANSIT"  onclick="setMode('TRANSIT')">🚌 Transit</div>
                 </div>
 
                 <!-- Origin -->
@@ -226,13 +212,7 @@
                     <input type="text" id="destInput" placeholder="To — e.g. Hunza Valley" autocomplete="off">
                 </div>
 
-                <!-- Stopover -->
-                <div class="location-input-wrap" style="margin-top:8px">
-                    <span class="loc-icon">🟡</span>
-                    <input type="text" id="waypointInput" placeholder="Stopover (optional) — e.g. Gilgit" autocomplete="off">
-                </div>
-
-                <button class="btn btn-primary" onclick="findRoute()" style="width:100%;margin-top:12px;justify-content:center">
+                <button class="btn btn-primary" id="findBtn" onclick="findRoute()" style="width:100%;margin-top:14px;justify-content:center">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
                     Find Route
                 </button>
@@ -243,21 +223,23 @@
                 <div style="font-size:12px;color:var(--t3);margin-bottom:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Route Options</div>
                 <div id="alternativesList"></div>
             </div>
-
-            <!-- Popular Routes -->
-            <div style="font-size:12px;color:var(--t3);margin-bottom:8px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-top:4px">Popular Routes</div>
-            <div id="popularRoutes"></div>
         </div>
 
         <!-- ── Right Panel ── -->
         <div>
             <!-- Map -->
-            <div id="mapContainer">
-                <div class="map-placeholder" id="mapPlaceholder">
+            <div id="mapWrapper">
+                <div id="mapOverlay">
                     <span>🗺️</span>
-                    <p>Enter origin &amp; destination<br>then click <strong style="color:var(--accent)">Find Route</strong></p>
+                    <p>Loading map…</p>
                 </div>
-                <div id="map" style="display:none"></div>
+                <div id="mapsErrorOverlay">
+                    <span>🌐</span>
+                    <p>Unable to connect to Google Maps.<br>Please try again later.</p>
+                    <small>Check your internet connection or refresh the page.</small>
+                    <button class="btn btn-ghost btn-sm" onclick="location.reload()" style="margin-top:8px">↻ Retry</button>
+                </div>
+                <div id="map"></div>
             </div>
 
             <!-- Route Summary -->
@@ -276,7 +258,7 @@
                         <div class="summary-stat-lbl">Travel Mode</div>
                     </div>
                 </div>
-                <div style="display:flex;gap:10px">
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
                     <a href="trip-cost.html" class="btn btn-primary btn-sm">💰 Estimate Cost</a>
                     <a href="hotels.html" class="btn btn-ghost btn-sm">🏨 Find Hotels</a>
                     <button class="btn btn-ghost btn-sm" onclick="toggleSteps()">📋 Turn-by-Turn</button>
@@ -306,8 +288,9 @@ const user = JSON.parse(localStorage.getItem('tripify_user') || '{}');
     document.getElementById('sidebarName').textContent = u.fullName || 'Tourist';
     const sa = document.getElementById('sidebarInitials'), ta = document.getElementById('topbarInitials');
     if (u.profilePicture && u.profilePicture !== '') {
-        const img = '<img src="http://localhost:8080' + u.profilePicture + '?t=' + Date.now() + '" alt="Avatar" onerror="this.parentElement.textContent=\'' + ini + '\'">';
-        sa.innerHTML = img; ta.innerHTML = img;
+        const url = 'http://localhost:8080' + u.profilePicture + '?t=' + Date.now();
+        const imgTag = '<img src="' + url + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent=\'' + ini + '\'">';
+        sa.innerHTML = imgTag; ta.innerHTML = imgTag;
     } else { sa.textContent = ini; ta.textContent = ini; }
 })(user);
 const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay');
@@ -320,38 +303,6 @@ function showToast(icon, msg, dur = 2800) {
     t.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + msg + '</span>';
     c.appendChild(t);
     setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
-}
-
-// ── Popular routes (used as quick-fill shortcuts) ──
-const POPULAR = [
-    { icon:'🏔️', from:'Islamabad, Pakistan', to:'Hunza Valley, Gilgit-Baltistan, Pakistan', label:'Islamabad → Hunza Valley' },
-    { icon:'🌲', from:'Islamabad, Pakistan', to:'Murree, Punjab, Pakistan',                   label:'Islamabad → Murree' },
-    { icon:'🌿', from:'Lahore, Pakistan',    to:'Swat Valley, Khyber Pakhtunkhwa, Pakistan',  label:'Lahore → Swat Valley' },
-    { icon:'🏔️', from:'Islamabad, Pakistan', to:'Skardu, Gilgit-Baltistan, Pakistan',         label:'Islamabad → Skardu' },
-    { icon:'🌊', from:'Islamabad, Pakistan', to:'Naran, Khyber Pakhtunkhwa, Pakistan',        label:'Islamabad → Naran Kaghan' },
-    { icon:'🕌', from:'Lahore, Pakistan',    to:'Karachi, Sindh, Pakistan',                   label:'Lahore → Karachi' },
-];
-
-let selectedPopular = null;
-
-function renderPopularRoutes() {
-    document.getElementById('popularRoutes').innerHTML = POPULAR.map((r, i) => `
-    <div class="route-suggestion ${selectedPopular === i ? 'selected' : ''}" onclick="quickFill(${i})">
-        <span class="rs-icon">${r.icon}</span>
-        <div>
-            <div class="rs-name">${r.label}</div>
-            <div class="rs-detail">Tap to autofill &amp; search</div>
-        </div>
-    </div>`).join('');
-}
-
-function quickFill(i) {
-    selectedPopular = i;
-    renderPopularRoutes();
-    document.getElementById('originInput').value = POPULAR[i].from;
-    document.getElementById('destInput').value   = POPULAR[i].to;
-    document.getElementById('waypointInput').value = '';
-    findRoute();
 }
 
 // ── Travel mode ──
@@ -368,10 +319,10 @@ function swapLocations() {
 }
 
 // ── Google Maps globals ──
-let map, directionsService, directionsRenderer, allRoutes = [], activeRouteIdx = 0;
+let map, allRoutes = [], activePolylines = [], activeMarkers = [];
 
+// Called by Google Maps script after it loads
 function initMap() {
-    // Dark map style to match the dashboard theme
     const darkStyle = [
         { elementType:'geometry', stylers:[{ color:'#0d1b2a' }] },
         { elementType:'labels.text.fill', stylers:[{ color:'#8a9bb0' }] },
@@ -386,7 +337,6 @@ function initMap() {
         { featureType:'administrative.country', elementType:'geometry.stroke', stylers:[{ color:'#2a4a6a' }] },
         { featureType:'landscape', elementType:'geometry', stylers:[{ color:'#0d1f30' }] },
     ];
-
     map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 30.3753, lng: 69.3451 },
         zoom: 6,
@@ -396,125 +346,219 @@ function initMap() {
         fullscreenControl: true,
         zoomControl: true,
     });
+    const ov = document.getElementById('mapOverlay');
+    ov.classList.add('hidden');
+    setTimeout(() => { ov.style.display = 'none'; }, 400);
+    window._mapsReady = true;
+}
 
-    directionsService  = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({
-        map: map,
-        suppressMarkers: false,
-        polylineOptions: { strokeColor: '#f5a623', strokeWeight: 5, strokeOpacity: 0.85 },
+// ── Geocode with Nominatim (free, no key needed) ──
+async function geocode(query) {
+    const url = 'https://nominatim.openstreetmap.org/search?q=' +
+        encodeURIComponent(query) + '&format=json&limit=1&accept-language=en';
+    const res = await fetch(url, { headers: { 'User-Agent': 'Tripify/1.0' } });
+    if (!res.ok) throw new Error('geocode-failed');
+    const data = await res.json();
+    if (!data.length) return null;
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), label: data[0].display_name };
+}
+
+// ── Route with OSRM (free, no key needed) ──
+async function getOsrmRoute(origCoords, destCoords, profile) {
+    const url = 'https://router.project-osrm.org/route/v1/' + profile + '/' +
+        origCoords.lng + ',' + origCoords.lat + ';' +
+        destCoords.lng + ',' + destCoords.lat +
+        '?steps=true&overview=full&geometries=geojson&alternatives=true';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('osrm-failed');
+    return res.json();
+}
+
+// ── Clear previous route drawings ──
+function clearMap() {
+    activePolylines.forEach(p => p.setMap(null));
+    activeMarkers.forEach(m => m.setMap(null));
+    activePolylines = [];
+    activeMarkers   = [];
+}
+
+// ── Draw a single route on the map ──
+function drawPolyline(coords, color, weight, opacity) {
+    const path = coords.map(c => ({ lat: c[1], lng: c[0] }));
+    const poly = new google.maps.Polyline({ path, map, strokeColor: color, strokeWeight: weight, strokeOpacity: opacity });
+    activePolylines.push(poly);
+    return path;
+}
+
+function placeMarker(latlng, title, color) {
+    const m = new google.maps.Marker({
+        position: latlng, map, title,
+        icon: 'http://maps.google.com/mapfiles/ms/icons/' + color + '-dot.png'
     });
+    activeMarkers.push(m);
+}
+
+// ── Build step instruction text from OSRM maneuver ──
+function buildInstruction(step) {
+    const type = step.maneuver.type;
+    const mod  = step.maneuver.modifier || '';
+    const name = step.name || 'unnamed road';
+    const instructions = {
+        'depart':     'Start on',
+        'arrive':     'Arrive at',
+        'turn':       'Turn ' + mod + ' onto',
+        'new name':   'Continue onto',
+        'continue':   'Continue ' + (mod ? mod + ' on' : 'on'),
+        'merge':      'Merge onto',
+        'on ramp':    'Take ramp onto',
+        'off ramp':   'Take exit onto',
+        'fork':       'Keep ' + mod + ' toward',
+        'roundabout': 'Enter roundabout',
+        'rotary':     'Enter rotary',
+        'end of road':'At end of road turn ' + mod + ' onto',
+    };
+    return (instructions[type] || 'Continue onto') + ' ' + name;
 }
 
 // ── Find Route ──
-function findRoute() {
-    const origin   = document.getElementById('originInput').value.trim();
-    const dest     = document.getElementById('destInput').value.trim();
-    const waypoint = document.getElementById('waypointInput').value.trim();
+async function findRoute() {
+    const originText = document.getElementById('originInput').value.trim();
+    const destText   = document.getElementById('destInput').value.trim();
 
-    if (!origin || !dest) {
-        showToast('⚠️', 'Please enter both origin and destination');
+    if (!originText && !destText) {
+        showToast('⚠️', 'Please enter both a starting point and a destination.');
+        return;
+    }
+    if (!originText) {
+        showToast('⚠️', 'Please enter a starting location (From).');
+        return;
+    }
+    if (!destText) {
+        showToast('⚠️', 'Please enter a destination (To).');
+        return;
+    }
+    if (!window._mapsReady) {
+        showToast('❌', 'Map is not ready yet. Please wait a moment.', 3000);
         return;
     }
 
-    // Show loading state
-    document.getElementById('mapPlaceholder').style.display = 'none';
-    document.getElementById('map').style.display = 'block';
-    document.getElementById('map').innerHTML = '';
+    const btn = document.getElementById('findBtn');
+    btn.disabled = true;
+    btn.textContent = 'Calculating…';
+    showToast('🗺️', 'Finding route…', 2500);
 
-    // Re-init map if first time or recreate
-    if (!map) { initMap(); }
+    try {
+        // 1. Geocode both locations
+        const [orig, dest] = await Promise.all([geocode(originText), geocode(destText)]);
 
-    // Show loading overlay
-    showToast('🗺️', 'Calculating route…', 2000);
-
-    const waypoints = waypoint ? [{ location: waypoint, stopover: true }] : [];
-
-    const request = {
-        origin: origin,
-        destination: dest,
-        waypoints: waypoints,
-        travelMode: google.maps.TravelMode[travelMode],
-        provideRouteAlternatives: true,
-        region: 'pk',
-    };
-
-    directionsService.route(request, (result, status) => {
-        if (status === 'OK') {
-            allRoutes = result.routes;
-            activeRouteIdx = 0;
-            renderRoute(result, 0);
-            renderAlternatives(result);
-            showToast('✅', 'Route found! ' + allRoutes.length + ' option' + (allRoutes.length > 1 ? 's' : '') + ' available');
-        } else {
-            handleDirectionsError(status, origin, dest);
+        if (!orig) {
+            showToast('❌', 'Could not find "' + originText + '". Try adding ", Pakistan".', 4500);
+            return;
         }
-    });
+        if (!dest) {
+            showToast('❌', 'Could not find "' + destText + '". Try adding ", Pakistan".', 4500);
+            return;
+        }
+
+        // 2. Get route from OSRM (driving / foot — no transit)
+        const profile = travelMode === 'WALKING' ? 'foot' : 'driving';
+        const data    = await getOsrmRoute(orig, dest, profile);
+
+        if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
+            showToast('❌', 'No route found between these locations.', 4000);
+            return;
+        }
+
+        allRoutes = data.routes;
+        clearMap();
+        applyRoute(0, orig, dest);
+        renderAlternatives(orig, dest);
+        showToast('✅', 'Route found! ' + allRoutes.length + ' option' + (allRoutes.length > 1 ? 's' : '') + ' available');
+
+    } catch (e) {
+        showToast('❌', 'Unable to connect to routing service. Please try again later.', 5000);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Find Route';
+    }
 }
 
-function renderRoute(result, routeIdx) {
-    activeRouteIdx = routeIdx;
-    directionsRenderer.setDirections(result);
-    directionsRenderer.setRouteIndex(routeIdx);
+function applyRoute(idx, orig, dest) {
+    clearMap();
+    const route = allRoutes[idx];
 
-    const route = result.routes[routeIdx];
-    // Sum all legs (for multi-waypoint routes)
-    let totalDist = 0, totalDur = 0;
-    route.legs.forEach(leg => { totalDist += leg.distance.value; totalDur += leg.duration.value; });
+    // Draw all alt routes faintly first, then active on top
+    allRoutes.forEach((r, i) => {
+        if (i !== idx) drawPolyline(r.geometry.coordinates, '#4a6480', 4, 0.35);
+    });
+    const path = drawPolyline(route.geometry.coordinates, '#f5a623', 5, 0.9);
 
-    const distText = totalDist >= 1000
-        ? (totalDist / 1000).toFixed(1) + ' km'
-        : totalDist + ' m';
-    const durText  = formatDuration(totalDur);
+    // Markers
+    placeMarker({ lat: orig.lat, lng: orig.lng }, 'Start', 'green');
+    placeMarker({ lat: dest.lat, lng: dest.lng }, 'End',   'red');
 
-    document.getElementById('statDist').textContent = distText;
-    document.getElementById('statTime').textContent = durText;
-    document.getElementById('statMode').textContent = { DRIVING:'🚗 Driving', WALKING:'🚶 Walking', TRANSIT:'🚌 Transit' }[travelMode] || travelMode;
+    // Fit bounds
+    const bounds = new google.maps.LatLngBounds();
+    path.forEach(p => bounds.extend(p));
+    map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+
+    // Summary stats
+    const distKm  = (route.distance / 1000).toFixed(1);
+    document.getElementById('statDist').textContent = distKm + ' km';
+    document.getElementById('statTime').textContent = formatDuration(route.duration);
+    document.getElementById('statMode').textContent = { DRIVING:'🚗 Driving', WALKING:'🚶 Walking', TRANSIT:'🚗 Driving' }[travelMode];
     document.getElementById('routeSummary').style.display = 'block';
 
-    // Build turn-by-turn steps
-    let stepsHtml = '';
-    let stepNum = 1;
-    route.legs.forEach((leg, li) => {
-        if (route.legs.length > 1) {
-            stepsHtml += '<div style="font-size:12px;color:var(--accent);font-weight:700;padding:8px 0 4px">Leg ' + (li+1) + ': ' + leg.start_address.split(',')[0] + ' → ' + leg.end_address.split(',')[0] + '</div>';
-        }
-        leg.steps.forEach(step => {
-            stepsHtml += '<div class="step-item"><div class="step-num">' + stepNum++ + '</div><div><div class="step-text">' + stripHtml(step.instructions) + '</div><div class="step-dist">' + step.distance.text + ' · ' + step.duration.text + '</div></div></div>';
+    // Turn-by-turn steps
+    let html = '', n = 1;
+    (route.legs || []).forEach(leg => {
+        (leg.steps || []).forEach(step => {
+            const dist = step.distance >= 1000 ? (step.distance/1000).toFixed(1) + ' km' : Math.round(step.distance) + ' m';
+            const dur  = formatDuration(step.duration);
+            html += '<div class="step-item"><div class="step-num">' + n++ + '</div><div>' +
+                    '<div class="step-text">' + buildInstruction(step) + '</div>' +
+                    '<div class="step-dist">' + dist + ' · ' + dur + '</div>' +
+                    '</div></div>';
         });
     });
-    document.getElementById('stepsContainer').innerHTML = stepsHtml;
+    document.getElementById('stepsContainer').innerHTML = html;
+
+    // Highlight active alt card
+    document.querySelectorAll('.alt-route').forEach((el, i) => el.classList.toggle('active', i === idx));
 }
 
-function renderAlternatives(result) {
+function renderAlternatives(orig, dest) {
     const wrap = document.getElementById('alternativesWrap');
-    const list = document.getElementById('alternativesList');
-    if (result.routes.length <= 1) { wrap.style.display = 'none'; return; }
-
+    if (allRoutes.length <= 1) { wrap.style.display = 'none'; return; }
     wrap.style.display = 'block';
-    list.innerHTML = result.routes.map((route, i) => {
-        let totalDist = 0, totalDur = 0;
-        route.legs.forEach(leg => { totalDist += leg.distance.value; totalDur += leg.duration.value; });
-        const distText = totalDist >= 1000 ? (totalDist/1000).toFixed(1) + ' km' : totalDist + ' m';
-        const durText  = formatDuration(totalDur);
+    document.getElementById('alternativesList').innerHTML = allRoutes.map((r, i) => {
+        const distKm = (r.distance / 1000).toFixed(1);
+        return '<div class="alt-route ' + (i === 0 ? 'active' : '') + '" id="alt-' + i + '" onclick="switchRoute(' + i + ',origRef,destRef)">' +
+            '<div><div class="alt-label">Route ' + (i+1) + (i===0?' (Fastest)':'') + '</div>' +
+            '<div class="alt-detail">' + distKm + ' km · ' + formatDuration(r.duration) + '</div></div>' +
+            '<span class="alt-badge ' + (i===0?'best':'alt') + '">' + (i===0?'Best':'Alt') + '</span>' +
+            '</div>';
+    }).join('');
+
+    // Store coords on window so onclick can reach them
+    window._routeOrig = orig;
+    window._routeDest = dest;
+
+    // Re-render with proper onclick
+    document.getElementById('alternativesList').innerHTML = allRoutes.map((r, i) => {
+        const distKm = (r.distance / 1000).toFixed(1);
         return '<div class="alt-route ' + (i === 0 ? 'active' : '') + '" id="alt-' + i + '" onclick="switchRoute(' + i + ')">' +
-            '<div><div class="alt-label">Route ' + (i+1) + (i===0?' (Fastest)':'') + '</div><div class="alt-detail">' + distText + ' · ' + durText + '</div></div>' +
+            '<div><div class="alt-label">Route ' + (i+1) + (i===0?' (Fastest)':'') + '</div>' +
+            '<div class="alt-detail">' + distKm + ' km · ' + formatDuration(r.duration) + '</div></div>' +
             '<span class="alt-badge ' + (i===0?'best':'alt') + '">' + (i===0?'Best':'Alt') + '</span>' +
             '</div>';
     }).join('');
 }
 
-function switchRoute(i) {
-    activeRouteIdx = i;
-    directionsRenderer.setRouteIndex(i);
-    // Update summary stats
-    const route = allRoutes[i];
-    let totalDist = 0, totalDur = 0;
-    route.legs.forEach(leg => { totalDist += leg.distance.value; totalDur += leg.duration.value; });
-    document.getElementById('statDist').textContent = totalDist >= 1000 ? (totalDist/1000).toFixed(1) + ' km' : totalDist + ' m';
-    document.getElementById('statTime').textContent = formatDuration(totalDur);
-    // Highlight active
-    document.querySelectorAll('.alt-route').forEach((el, idx) => el.classList.toggle('active', idx === i));
-    showToast('🗺️', 'Switched to Route ' + (i+1));
+function switchRoute(idx) {
+    if (!window._routeOrig || !window._routeDest) return;
+    applyRoute(idx, window._routeOrig, window._routeDest);
+    showToast('🗺️', 'Switched to Route ' + (idx + 1));
 }
 
 function toggleSteps() {
@@ -530,37 +574,49 @@ function formatDuration(seconds) {
     return h + ' hr ' + (m > 0 ? m + ' min' : '');
 }
 
-function stripHtml(html) {
-    const tmp = document.createElement('div'); tmp.innerHTML = html; return tmp.textContent || tmp.innerText || '';
+// ── Google Maps error handler (called by Maps when key is invalid/rejected) ──
+window.gm_authFailure = function () { showMapsConnectError(); };
+
+function showMapsConnectError() {
+    document.getElementById('mapsErrorOverlay').style.display = 'flex';
+    document.getElementById('mapOverlay').style.display = 'none';
+    showToast('❌', 'Unable to connect to Google Maps. Please try again later.', 5000);
 }
 
-function handleDirectionsError(status, origin, dest) {
-    const msgs = {
-        'NOT_FOUND':           'Could not find "' + origin + '" or "' + dest + '". Try being more specific (add ", Pakistan").',
-        'ZERO_RESULTS':        'No route found between these locations for this travel mode.',
-        'MAX_WAYPOINTS_EXCEEDED': 'Too many stopovers. Please reduce the number of waypoints.',
-        'INVALID_REQUEST':     'Invalid request. Please check your inputs.',
-        'REQUEST_DENIED':      'Maps API request denied. Check API key configuration.',
-        'OVER_QUERY_LIMIT':    'Too many requests. Please wait a moment and try again.',
-        'UNKNOWN_ERROR':       'An unknown error occurred. Please try again.',
-    };
-    const msg = msgs[status] || 'Directions error: ' + status;
-    showToast('❌', msg, 4000);
-    // Restore placeholder if no map rendered yet
-    if (!directionsRenderer || activeRouteIdx === 0 && allRoutes.length === 0) {
-        document.getElementById('map').style.display = 'none';
-        document.getElementById('mapPlaceholder').style.display = 'flex';
+// ── Fetch API key from backend, then inject Maps script ──
+async function loadGoogleMaps() {
+    let key;
+    try {
+        const res = await fetch('http://localhost:8080/api/config/maps-key', {
+            headers: { 'Authorization': 'Bearer ' + tripToken }
+        });
+        if (!res.ok) throw new Error('key-fetch-failed');
+        const data = await res.json();
+        key = data.key;
+    } catch (e) {
+        showMapsConnectError();
+        return;
     }
+
+    const loadTimeout = setTimeout(() => {
+        if (!window._mapsReady) { showMapsConnectError(); }
+    }, 12000);
+
+    const _origInit = window.initMap;
+    window.initMap = function () {
+        clearTimeout(loadTimeout);
+        _origInit();
+    };
+
+    const script = document.createElement('script');
+    script.src   = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&callback=initMap';
+    script.async = true;
+    script.defer = true;
+    script.onerror = function () { clearTimeout(loadTimeout); showMapsConnectError(); };
+    document.head.appendChild(script);
 }
 
-// ── Init ──
-renderPopularRoutes();
-</script>
-
-<!-- Google Maps JavaScript API -->
-<script
-    src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&callback=initMap&libraries=places"
-    async defer>
+loadGoogleMaps();
 </script>
 
 </body>

@@ -12,4 +12,10 @@ public interface TravelGuidelineRepository extends JpaRepository<TravelGuideline
      * so the frontend can group them cleanly.
      */
     List<TravelGuideline> findByDestinationIdOrderByCategoryAscTitleAsc(Integer destinationId);
+
+    /** Used by EmergencyInfoController to fetch safety-category guidelines only. */
+    List<TravelGuideline> findByDestinationIdAndCategory(Integer destinationId, String category);
+
+    /** Fallback: all guidelines for a destination when no safety-specific ones exist. */
+    List<TravelGuideline> findByDestinationId(Integer destinationId);
 }

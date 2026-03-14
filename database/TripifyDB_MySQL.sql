@@ -282,6 +282,18 @@ CREATE TABLE SystemSettings (
 );
 
 -- ============================================
+-- 18. USER PREFERENCES TABLE
+-- ============================================
+CREATE TABLE UserPreferences (
+      preference_id INT PRIMARY KEY AUTO_INCREMENT,
+      user_id INT NOT NULL UNIQUE,
+      age_group VARCHAR(20) DEFAULT '18-25',
+      travel_preferences JSON,
+      updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+      FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+  );
+
+-- ============================================
 -- INDEXES
 -- ============================================
 CREATE INDEX idx_users_email ON Users(email);
@@ -469,41 +481,12 @@ VALUES
 (2, '15', '1122', '051-111-888-444', 'CMH Murree'),
 (3, '15', '1122', '0946-9230401', 'Saidu Teaching Hospital');
 
-INSERT INTO Souvenirs (destination_id, name, description, price, vendor_name, image_url)
+INSERT INTO Souvenirs (destination_id, name, description, price, vendor_name)
 VALUES
--- Hunza
-(1, 'Hunza Cap', 'Handcrafted traditional woolen cap worn by the people of Karimabad. A timeless symbol of Hunza culture.', 500, 'Karimabad Handicrafts',
- 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80'),
-(1, 'Organic Apricot Jam', 'Sun-dried and slow-cooked apricot jam made from the famous Hunza apricots. Rich, natural flavour with no preservatives.', 350, 'Hunza Organic',
- 'https://images.unsplash.com/photo-1597528380307-a8e21c47cd5a?w=600&q=80'),
-(1, 'Dried Apricots', 'Premium sun-dried apricots sourced directly from Hunza Valley orchards. A healthy and delicious local snack.', 800, 'Hunza Organic',
- 'https://images.unsplash.com/photo-1562841773-8f04f5c8c877?w=600&q=80'),
-(1, 'Walnut Honey', 'Pure mountain honey blended with crushed Hunza walnuts. A signature gift from the valley.', 1200, 'Karimabad Handicrafts',
- 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=600&q=80'),
--- Murree
-(2, 'Woolen Shawl', 'Handwoven woolen shawl with intricate geometric patterns. Warm, soft, and perfect for cold nights.', 2500, 'Murree Crafts',
- 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=600&q=80'),
-(2, 'Pine Wood Craft', 'Beautifully carved wooden figurines and keepsakes made from Murree pine wood by local artisans.', 1500, 'Mall Road Crafts',
- 'https://images.unsplash.com/photo-1609709295948-17d77cb2a69b?w=600&q=80'),
-(2, 'Hand-knitted Socks', 'Thick, warm hand-knitted socks made from pure wool. Ideal for mountain winters.', 400, 'Murree Crafts',
- 'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=600&q=80'),
--- Swat
-(3, 'Swat Emerald', 'Authentic natural emerald gemstone sourced from the mines of Swat Valley. Each piece is unique.', 6000, 'Swat Gems',
- 'https://images.unsplash.com/photo-1551122087-f353c3d30e97?w=600&q=80'),
-(3, 'Swati Embroidery Cloth', 'Fine hand-embroidered fabric featuring traditional Swati floral and geometric motifs in vibrant colours.', 3500, 'Mingora Textiles',
- 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80'),
-(3, 'Handmade Pottery', 'Traditional Swat pottery glazed with natural earthy tones. Includes bowls, vases, and decorative plates.', 1800, 'Swat Artisans',
- 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600&q=80'),
--- Skardu
-(4, 'Baltit Stone Carving', 'Hand-carved stone art depicting mountains and Karakoram landscapes, crafted by local Balti artisans.', 4000, 'Skardu Stone Art',
- 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80'),
-(4, 'Yak Wool Blanket', 'Soft and warm blanket woven from genuine yak wool. Ideal for cold high-altitude nights.', 5500, 'Baltistan Weavers',
- 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80'),
--- Naran
-(5, 'Kaghan Honey', 'Pure wildflower honey collected from the meadows of Kaghan Valley. Naturally rich and aromatic.', 1500, 'Naran Valley Farms',
- 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80'),
-(5, 'Mountain Herb Tea', 'A blend of wild herbs and flowers hand-picked from the alpine meadows of Naran. Soothing and caffeine-free.', 600, 'Kaghan Botanicals',
- 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&q=80');
+(1, 'Hunza Cap', 'Traditional woolen cap', 500, 'Karimabad Handicrafts'),
+(1, 'Apricot Jam', 'Local organic apricot jam', 300, 'Hunza Organic'),
+(2, 'Shawls', 'Handmade woolen shawls', 2000, 'Murree Crafts'),
+(3, 'Emerald Stone', 'Natural emerald from Swat', 5000, 'Swat Gems');
 
 INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost)
 VALUES
@@ -521,17 +504,6 @@ VALUES
 ('WEATHER_API_KEY', 'your_api_key_here', 'OpenWeatherMap API Key'),
 ('GOOGLE_MAPS_API_KEY', 'your_api_key_here', 'Google Maps API Key');
 
--- ============================================
--- 18. USER PREFERENCES TABLE
--- ============================================
-CREATE TABLE user_preferences (
-      preference_id INT PRIMARY KEY AUTO_INCREMENT,
-      user_id INT NOT NULL UNIQUE,
-      age_group VARCHAR(20) DEFAULT '18-25',
-      travel_preferences JSON,
-      updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
-      FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
-  );
 
 SELECT 'Database setup complete!' AS Status;
 
@@ -541,12 +513,10 @@ WHERE email = 'admin@tripify.com';
 
 SELECT *FROM USERS;
 SELECT *FROM Destinations;
-SELECT *FROM user_preferences;
+SELECT *FROM UserPreferences;
 ALTER TABLE Reviews ADD COLUMN review_text TEXT;
 ALTER TABLE Trips ADD COLUMN status ENUM('PLANNED','COMPLETED') NOT NULL DEFAULT 'PLANNED';
 
- DROP TABLE IF EXISTS TripDestinations;
-DROP TABLE IF EXISTS Trips;
 
 
 

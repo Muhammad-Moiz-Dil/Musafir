@@ -22,6 +22,28 @@ const ENDPOINTS = {
         SEARCH: `${API_CONFIG.BASE_URL}/destinations/search`,
         BY_ID:  (id) => `${API_CONFIG.BASE_URL}/destinations/${id}`,
     },
+    GUIDELINES: {
+        DESTINATIONS: `${API_CONFIG.BASE_URL}/guidelines/destinations`,
+        BY_DEST:      (destId) => `${API_CONFIG.BASE_URL}/guidelines/${destId}`,
+    },
+    FAVORITES: {
+        LIST:   `${API_CONFIG.BASE_URL}/favorites`,
+        IDS:    `${API_CONFIG.BASE_URL}/favorites/ids`,
+        ADD:    (destId) => `${API_CONFIG.BASE_URL}/favorites/${destId}`,
+        REMOVE: (destId) => `${API_CONFIG.BASE_URL}/favorites/${destId}`,
+    },
+    TRIPS: {
+        LIST:        `${API_CONFIG.BASE_URL}/trips`,
+        CREATE:      `${API_CONFIG.BASE_URL}/trips`,
+        COMPLETE:    (tripId)           => `${API_CONFIG.BASE_URL}/trips/${tripId}/complete`,
+        DELETE:      (tripId)           => `${API_CONFIG.BASE_URL}/trips/${tripId}`,
+        ADD_DEST:    (tripId, destId)   => `${API_CONFIG.BASE_URL}/trips/${tripId}/destinations/${destId}`,
+        REMOVE_DEST: (tripId, destId)   => `${API_CONFIG.BASE_URL}/trips/${tripId}/destinations/${destId}`,
+    },
+    REVIEWS: {
+        SUBMIT: `${API_CONFIG.BASE_URL}/reviews`,
+        MINE:   `${API_CONFIG.BASE_URL}/reviews/mine`,
+    },
     SOUVENIRS: {
         ALL:            `${API_CONFIG.BASE_URL}/souvenirs`,
         BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/souvenirs/${id}`,
@@ -32,5 +54,8 @@ const ENDPOINTS = {
     EMERGENCY: {
         BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/emergency/${id}`,
         ALL:            `${API_CONFIG.BASE_URL}/emergency`,
+    },
+    CONFIG: {
+        MAPS_KEY: `${API_CONFIG.BASE_URL}/config/maps-key`,
     },
 };

@@ -51,8 +51,7 @@
 .wstat-lbl { font-size:11px; color:var(--t3); margin-top:2px; }
 
 /* Sort bar */
-.sort-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
-.sort-bar-left { display:flex; align-items:center; gap:8px; }
+.sort-bar { display:flex; align-items:center; justify-content:flex-end; margin-bottom:20px; }
 </style>
 </head>
 <body>
@@ -65,19 +64,15 @@
         <span class="nav-section-label">Main</span>
         <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
         <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="my-trips.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span><span>My Trips</span></a>
         <a href="trip-cost.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
         <a href="route-finder.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
         <span class="nav-section-label">Discover</span>
         <a href="hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Hotels</span></a>
         <a href="wishlist.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span><span>Wishlist</span></a>
-        <a href="souvenirs.html" class="nav-item">
-            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span>
-            <span>Souvenirs</span>
-        </a>
-        <a href="seasonal-insights.html" class="nav-item">
-            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>
-            <span>Seasonal</span>
-        </a>
+        <a href="travel-guidelines.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span>Travel Guidelines</span></a>
+        <a href="souvenirs.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Souvenirs</span></a>
+        <a href="seasonal-insights.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Seasonal</span></a>
         <div class="nav-divider"></div>
         <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
         <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
@@ -110,23 +105,13 @@
                 <div class="page-title">My <span>Wishlist</span></div>
                 <div class="page-sub">Your dream destinations — plan them into real trips</div>
             </div>
-            <a href="destinations.html" class="btn btn-primary btn-sm">+ Add Destinations</a>
+            <a href="destinations.html" class="btn btn-primary btn-sm">+ Add to Favorites</a>
         </div>
     </div>
 
     <div class="wish-stats" id="wishStats"></div>
 
     <div class="sort-bar">
-        <div class="sort-bar-left">
-            <span style="font-size:13px;color:var(--t2)">Sort by:</span>
-            <div class="filter-select-wrap">
-                <select id="sortSelect" onchange="render()">
-                    <option value="default">Added Order</option>
-                    <option value="rating">Highest Rated</option>
-                    <option value="name">Name (A–Z)</option>
-                </select>
-            </div>
-        </div>
         <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑️ Clear All</button>
     </div>
 
@@ -138,18 +123,19 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script src="../../../js/config/api.js"></script>
+<script src="../../../js/services/authService.js"></script>
 <script>
 // ── Auth guard ─────────────────────────────────────────────
 const TOKEN = localStorage.getItem('tripify_token');
 if (!TOKEN) { window.location.href = '../auth/login.html'; }
 
 // ── State ─────────────────────────────────────────────────
-let allDests = [];
-let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[]');
-function save() { localStorage.setItem('tripify_wishlist', JSON.stringify(wishlist)); }
+let wishItems = []; // full destination objects from backend
+let removing  = false; // prevent double-submit on remove
+
 function starStr(r) { return '★'.repeat(Math.floor(r)) + (r%1>=0.5?'½':'') + '☆'.repeat(5-Math.floor(r)-(r%1>=0.5?1:0)); }
 
-// ── Image resolver (same as destinations page) ─────────────
+// ── Image resolver ─────────────────────────────────────────
 const IMG_BASE = '../../../../public/assets/images/';
 const IMG_MAP = {
     'hunza.jpg':'hunza-valley.jpg','murree.jpg':'murree.jpeg','swat.jpg':'swat.jpg',
@@ -166,28 +152,22 @@ function resolveImg(url) {
     return IMG_BASE + url;
 }
 
-// ── Render ─────────────────────────────────────────────────
-function getSorted() {
-    const items = allDests.filter(d => wishlist.includes(d.id));
-    const sort = document.getElementById('sortSelect').value;
-    if (sort === 'rating') return [...items].sort((a,b) => (b.averageRating||0) - (a.averageRating||0));
-    if (sort === 'name')   return [...items].sort((a,b) => a.name.localeCompare(b.name));
-    return items;
-}
-
+// ── Stats ──────────────────────────────────────────────────
 function renderStats() {
-    const items = allDests.filter(d => wishlist.includes(d.id));
-    const avgRating = items.length ? (items.reduce((s,d) => s + (d.averageRating||0), 0) / items.length).toFixed(1) : '—';
-    const regions = [...new Set(items.map(d => d.city))].length;
+    const avgRating = wishItems.length
+        ? (wishItems.reduce((s,d) => s + (d.averageRating||0), 0) / wishItems.length).toFixed(1)
+        : '—';
+    const regions = [...new Set(wishItems.map(d => d.city))].length;
     document.getElementById('wishStats').innerHTML = `
-    <div class="wstat"><div class="wstat-num">${items.length}</div><div class="wstat-lbl">Saved</div></div>
+    <div class="wstat"><div class="wstat-num">${wishItems.length}</div><div class="wstat-lbl">Saved</div></div>
     <div class="wstat"><div class="wstat-num">${avgRating}</div><div class="wstat-lbl">Avg Rating</div></div>
     <div class="wstat"><div class="wstat-num">${regions}</div><div class="wstat-lbl">Regions</div></div>`;
 }
 
+// ── Render grid ────────────────────────────────────────────
 function render() {
     renderStats();
-    const items = getSorted();
+    const items = wishItems;
     const g = document.getElementById('wishGrid');
     if (!items.length) {
         g.innerHTML = `<div class="wish-empty-state">
@@ -199,7 +179,7 @@ function render() {
         return;
     }
     g.innerHTML = items.map(d => `
-    <div class="wish-full-card">
+    <div class="wish-full-card" id="wcard-${d.id}">
         <div class="wfc-img">
             <img src="${resolveImg(d.imageUrl)}" alt="${d.name}" loading="lazy"
                  onerror="this.src='${IMG_BASE}hunza-valley.jpg'">
@@ -215,33 +195,80 @@ function render() {
                 <a href="hotels.html?dest=${d.id}" class="btn btn-ghost btn-sm">🏨</a>
             </div>
         </div>
-        <button class="wfc-remove" onclick="removeItem(${d.id})" title="Remove">✕</button>
+        <button class="wfc-remove" onclick="removeItem(${d.id}, this)" title="Remove">✕</button>
     </div>`).join('');
 }
 
-function removeItem(id) {
-    wishlist = wishlist.filter(x => x !== id); save(); render();
-    showToast('🗑️', 'Removed from wishlist');
+// ── Remove one item ────────────────────────────────────────
+async function removeItem(id, btn) {
+    if (removing) return;
+    removing = true;
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(ENDPOINTS.FAVORITES.REMOVE(id), {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + TOKEN }
+        });
+        if (res.status === 401) { AuthService.logout(); return; }
+
+        if (res.ok) {
+            wishItems = wishItems.filter(d => d.id !== id);
+            render();
+            showToast('🗑️', 'Removed from wishlist');
+        } else {
+            showToast('❌', 'Could not remove. Try again.');
+            btn.disabled = false;
+        }
+    } catch (e) {
+        showToast('📶', 'Network error. Try again.');
+        btn.disabled = false;
+    }
+    removing = false;
 }
-function clearAll() {
-    if (!wishlist.length) return;
-    wishlist = []; save(); render();
+
+// ── Clear all ──────────────────────────────────────────────
+async function clearAll() {
+    if (!wishItems.length) return;
+    if (!confirm('Remove all destinations from your wishlist?')) return;
+
+    // Fire all DELETE requests in parallel
+    const ids = wishItems.map(d => d.id);
+    await Promise.all(ids.map(id =>
+        fetch(ENDPOINTS.FAVORITES.REMOVE(id), {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + TOKEN }
+        }).catch(() => {})
+    ));
+
+    wishItems = [];
+    render();
     showToast('🗑️', 'Wishlist cleared');
 }
 
-// ── Fetch all destinations from API ───────────────────────
-async function loadDests() {
+// ── Load wishlist from backend ─────────────────────────────
+async function loadWishlist() {
     const g = document.getElementById('wishGrid');
-    g.innerHTML = `<div class="wish-empty-state"><div style="font-size:36px;animation:spin 1s linear infinite">⏳</div><p>Loading…</p></div>`;
+    g.innerHTML = `<div class="wish-empty-state"><div style="font-size:36px">⏳</div><p>Loading…</p></div>`;
+
     try {
-        const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH, {
+        const res = await fetch(ENDPOINTS.FAVORITES.LIST, {
             headers: { 'Authorization': 'Bearer ' + TOKEN }
         });
-        if (!res.ok) { render(); return; }
-        allDests = await res.json();
+
+        if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+
+        if (!res.ok) {
+            g.innerHTML = `<div class="wish-empty-state"><p>Could not load wishlist. Please refresh.</p></div>`;
+            return;
+        }
+
+        wishItems = await res.json();
     } catch (e) {
-        // backend unreachable — show empty state
+        g.innerHTML = `<div class="wish-empty-state"><p>Network error. Please check your connection.</p></div>`;
+        return;
     }
+
     render();
 }
 
@@ -268,9 +295,6 @@ const sidebar = document.getElementById('sidebar'), overlay = document.getElemen
 document.getElementById('menuToggle').addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
 overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
 
-// ── Sort change ────────────────────────────────────────────
-document.getElementById('sortSelect').addEventListener('change', () => render());
-
 // ── Toast ─────────────────────────────────────────────────
 function showToast(icon, msg, dur=2800) {
     const c = document.getElementById('toastContainer');
@@ -280,7 +304,7 @@ function showToast(icon, msg, dur=2800) {
     setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
 }
 
-loadDests();
+loadWishlist();
 </script>
 </body>
 </html>

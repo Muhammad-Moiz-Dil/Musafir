@@ -1,0 +1,224 @@
+/* ── Travel Guidelines page styles ── */
+
+/* Selector card */
+.gl-selector-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.gl-selector-icon {
+    font-size: 36px;
+    flex-shrink: 0;
+}
+.gl-selector-body { flex: 1; min-width: 220px; }
+.gl-selector-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--t2);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.gl-select-wrap { position: relative; }
+.gl-dest-select {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-md);
+    color: var(--white);
+    font-size: 15px;
+    font-family: var(--sans);
+    cursor: pointer;
+    appearance: none;
+    transition: var(--ease);
+}
+.gl-dest-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,107,58,0.2);
+}
+.gl-dest-select option { background: var(--bg); color: var(--white); }
+.gl-select-arrow {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--t3);
+}
+
+/* Guidelines output area */
+.gl-output { min-height: 200px; }
+
+/* Empty / placeholder state */
+.gl-placeholder {
+    text-align: center;
+    padding: 64px 24px;
+    background: var(--surface);
+    border: 1px dashed var(--border);
+    border-radius: var(--r-lg);
+    color: var(--t3);
+}
+.gl-placeholder span { font-size: 48px; display: block; margin-bottom: 12px; }
+.gl-placeholder p { font-size: 14px; line-height: 1.6; }
+
+/* Alternate-flow: no guidelines available */
+.gl-no-data {
+    text-align: center;
+    padding: 48px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+}
+.gl-no-data .gl-no-icon { font-size: 44px; margin-bottom: 12px; }
+.gl-no-data .gl-no-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 8px;
+}
+.gl-no-data .gl-no-msg {
+    font-size: 13.5px;
+    color: var(--t2);
+    line-height: 1.65;
+    max-width: 480px;
+    margin: 0 auto 16px;
+}
+.gl-no-data .gl-gov-link {
+    display: inline-block;
+    padding: 8px 18px;
+    background: transparent;
+    border: 1.5px solid var(--border-hover);
+    border-radius: var(--r-md);
+    color: var(--t2);
+    font-size: 13px;
+    text-decoration: none;
+    transition: var(--ease);
+}
+.gl-no-data .gl-gov-link:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Loading spinner */
+.gl-loading {
+    text-align: center;
+    padding: 48px;
+    color: var(--t3);
+    font-size: 14px;
+}
+.gl-spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: glSpin 0.8s linear infinite;
+    margin-bottom: 12px;
+}
+@keyframes glSpin { to { transform: rotate(360deg); } }
+
+/* Destination header shown above guidelines */
+.gl-dest-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.gl-dest-title {
+    font-family: var(--display);
+    font-size: clamp(20px, 2.5vw, 28px);
+    font-weight: 700;
+    color: var(--white);
+}
+.gl-dest-city { font-size: 13px; color: var(--t3); margin-top: 2px; }
+.gl-badge-count {
+    padding: 4px 12px;
+    background: rgba(26,107,58,0.2);
+    border: 1px solid var(--primary);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--primary-lt);
+    font-weight: 600;
+}
+
+/* Category section */
+.gl-category-section { margin-bottom: 24px; }
+.gl-category-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.gl-category-icon { font-size: 18px; }
+.gl-category-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.gl-category-count {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--t3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 2px 8px;
+}
+
+/* Individual guideline card */
+.gl-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    overflow: hidden;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+}
+.gl-card:hover { border-color: var(--border-hover); }
+.gl-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    cursor: pointer;
+    user-select: none;
+    gap: 12px;
+}
+.gl-card-title {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--white);
+    flex: 1;
+}
+.gl-card-chevron {
+    color: var(--t3);
+    transition: transform 0.25s;
+    flex-shrink: 0;
+}
+.gl-card.open .gl-card-chevron { transform: rotate(180deg); }
+.gl-card-body {
+    padding: 0 18px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+}
+.gl-card.open .gl-card-body {
+    padding: 0 18px 18px;
+    max-height: 600px;
+}
+.gl-card-content {
+    font-size: 13.5px;
+    color: var(--t2);
+    line-height: 1.75;
+    white-space: pre-wrap; /* respect line breaks stored in DB */
+}

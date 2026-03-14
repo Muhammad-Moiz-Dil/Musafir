@@ -71,11 +71,11 @@ public class EmergencyInfoController {
 
         // Safety guidelines (category = 'Safety')
         List<TravelGuideline> safetyList =
-            guidelineRepo.findByDestination_DestinationIdAndCategory(destinationId, "Safety");
+            guidelineRepo.findByDestinationIdAndCategory(destinationId, "Safety");
 
         // If no safety-specific guidelines, fall back to all guidelines
         if (safetyList.isEmpty()) {
-            safetyList = guidelineRepo.findByDestination_DestinationId(destinationId);
+            safetyList = guidelineRepo.findByDestinationId(destinationId);
         }
 
         List<Map<String, String>> guidelines = safetyList.stream().map(g -> {

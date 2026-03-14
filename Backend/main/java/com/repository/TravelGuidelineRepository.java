@@ -2,12 +2,20 @@ package com.repository;
 
 import com.model.TravelGuideline;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface TravelGuidelineRepository extends JpaRepository<TravelGuideline, Integer> {
-    List<TravelGuideline> findByDestination_DestinationId(Integer destinationId);
-    List<TravelGuideline> findByDestination_DestinationIdAndCategory(Integer destinationId, String category);
+
+    /**
+     * Returns all guidelines for a destination, sorted by category then title
+     * so the frontend can group them cleanly.
+     */
+    List<TravelGuideline> findByDestinationIdOrderByCategoryAscTitleAsc(Integer destinationId);
+
+    /** Used by EmergencyInfoController to fetch safety-category guidelines only. */
+    List<TravelGuideline> findByDestinationIdAndCategory(Integer destinationId, String category);
+
+    /** Fallback: all guidelines for a destination when no safety-specific ones exist. */
+    List<TravelGuideline> findByDestinationId(Integer destinationId);
 }

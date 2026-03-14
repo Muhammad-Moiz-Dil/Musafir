@@ -41,4 +41,7 @@ public class Destination {
     public BigDecimal getAverageRating() { return averageRating; }
     public Integer getTotalReviews() { return totalReviews; }
     public Boolean getIsActive() { return isActive; }
+
+    public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
+    public void setTotalReviews(Integer totalReviews)      { this.totalReviews  = totalReviews;  }
 }

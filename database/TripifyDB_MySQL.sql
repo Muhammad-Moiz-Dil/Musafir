@@ -205,38 +205,24 @@ CREATE TABLE SeasonalData (
 -- ============================================
 -- 12. TRIPS TABLE
 -- ============================================
-CREATE TABLE Trips (
-    trip_id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    trip_name VARCHAR(255) NOT NULL,
-    start_date DATE,
-    end_date DATE,
-    number_of_travelers INT DEFAULT 1,
-    estimated_budget DECIMAL(10,2),
-    actual_cost DECIMAL(10,2),
-    trip_status ENUM('Planning', 'Confirmed', 'Ongoing', 'Completed', 'Cancelled') DEFAULT 'Planning',
-    notes TEXT,
-    created_at DATETIME DEFAULT NOW(),
-    updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
-    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
-);
+ CREATE TABLE Trips (
+      trip_id    INT AUTO_INCREMENT PRIMARY KEY,
+      user_id    INT          NOT NULL,
+      title      VARCHAR(255) NOT NULL,
+      status     ENUM('PLANNED','COMPLETED') NOT NULL DEFAULT 'PLANNED',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+  );
 
--- ============================================
--- 13. TRIP DESTINATIONS TABLE
--- ============================================
-CREATE TABLE TripDestinations (
-    trip_destination_id INT PRIMARY KEY AUTO_INCREMENT,
-    trip_id INT NOT NULL,
-    destination_id INT NOT NULL,
-    visit_order INT NOT NULL,
-    planned_days INT DEFAULT 1,
-    hotel_id INT,
-    created_at DATETIME DEFAULT NOW(),
-    FOREIGN KEY (trip_id) REFERENCES Trips(trip_id) ON DELETE CASCADE,
-    FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE NO ACTION,
-    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE SET NULL,
-    UNIQUE KEY unique_trip_dest (trip_id, destination_id)
-);
+  CREATE TABLE TripDestinations (
+      trip_destination_id INT AUTO_INCREMENT PRIMARY KEY,
+      trip_id             INT NOT NULL,
+      destination_id      INT NOT NULL,
+      visit_order         INT DEFAULT 0,
+      FOREIGN KEY (trip_id)        REFERENCES Trips(trip_id)               ON DELETE CASCADE,
+      FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE,
+      UNIQUE KEY uq_trip_dest (trip_id, destination_id)
+  );
 
 -- ============================================
 -- 14. NOTIFICATIONS TABLE
@@ -294,6 +280,18 @@ CREATE TABLE SystemSettings (
     description TEXT,
     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW()
 );
+
+-- ============================================
+-- 18. USER PREFERENCES TABLE
+-- ============================================
+CREATE TABLE UserPreferences (
+      preference_id INT PRIMARY KEY AUTO_INCREMENT,
+      user_id INT NOT NULL UNIQUE,
+      age_group VARCHAR(20) DEFAULT '18-25',
+      travel_preferences JSON,
+      updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+      FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+  );
 
 -- ============================================
 -- INDEXES
@@ -408,10 +406,74 @@ VALUES
 
 INSERT INTO TravelGuidelines (destination_id, title, content, category)
 VALUES
-(1, 'Best Time to Visit', 'Visit Hunza between April to October for best weather', 'Season'),
-(1, 'Cultural Etiquette', 'Respect local customs and dress modestly', 'Culture'),
-(2, 'Winter Precautions', 'Roads may be closed due to snow in winter', 'Safety'),
-(3, 'Security Clearance', 'Check latest security situation before travel', 'Safety');
+-- Hunza Valley (1)
+(1, 'Visa Requirements', 'Pakistani nationals need no visa. Foreign nationals should have a valid Pakistan visa. Some areas near the Chinese border require a special permit - obtain it from NADRA or a local travel agency before departure.', 'Visa'),
+(1, 'Best Time to Visit', 'April to October is ideal for visiting Hunza. The cherry blossom season in April is spectacular. Winters (November to March) bring heavy snowfall and many roads become impassable.', 'Weather'),
+(1, 'Cultural Etiquette', 'Dress modestly, especially in local villages. Ismaili Muslim customs are followed - greet locals with Assalam-o-Alaikum. Photography of women without consent is strictly prohibited. Alcohol is not available.', 'Culture'),
+(1, 'Altitude & Health', 'Hunza sits at 2,400m above sea level. Altitude sickness is possible - ascend gradually and stay hydrated. Carry basic medicines. The nearest major hospital is in Gilgit city.', 'Health'),
+(1, 'Getting There', 'Travel via Karakoram Highway (N-35) from Islamabad (~16 hours by road). Gilgit Airport has daily flights from Islamabad (weather permitting). Local jeeps and wagons connect Gilgit to Karimabad.', 'Transport'),
+
+-- Murree (2)
+(2, 'Visa Requirements', 'No special permits required for Pakistani nationals visiting Murree. It is a domestic tourist destination easily accessible from Islamabad and Rawalpindi.', 'Visa'),
+(2, 'Winter Road Safety', 'Roads to Murree can be closed due to heavy snow from December to February. Always check NHMP road closure alerts before travelling. Carry chains or snow tyres in winter.', 'Safety'),
+(2, 'Best Time to Visit', 'May to September is peak season with pleasant weather. Winter (December-February) is popular for snowfall but roads may be hazardous. Avoid long weekends as traffic congestion is extreme.', 'Weather'),
+(2, 'Crowd & Weekend Tips', 'Murree is extremely crowded on public holidays and long weekends. Book hotels at least 2 weeks in advance. Plan to travel on weekdays to avoid hours of traffic on the main Mall Road.', 'General'),
+(2, 'Getting There', 'Murree is 60 km from Islamabad via N-75. Daewoo Express and local coaches run from Rawalpindi. Taxis and ride-hailing apps are available from Islamabad. Drive time is 1.5-2.5 hours depending on traffic.', 'Transport'),
+
+-- Swat Valley (3)
+(3, 'Security Advisory', 'Check the latest security situation from Pakistan Tourism Development Corporation before visiting Swat. The valley has been peaceful for tourists in recent years. Register with local police if staying overnight in remote areas.', 'Safety'),
+(3, 'Best Time to Visit', 'April to October is the best time. The spring season (April-May) brings lush greenery. Summers are mild and perfect for trekking. Winters are cold and snowy above 1,500m.', 'Weather'),
+(3, 'Cultural Respect', 'Swat is a conservative area - dress modestly and cover shoulders and legs. Respect local Pashtun customs. Do not take photos of local women. Learn a few Pashto greetings - locals greatly appreciate the effort.', 'Culture'),
+(3, 'Getting There', 'Travel via M-1 Motorway from Islamabad to Swabi, then N-95 to Mingora (~4 hours). Coaches run from Rawalpindi General Bus Stand. Domestic flights are not available to Swat currently.', 'Transport'),
+
+-- Skardu (4)
+(4, 'Permits Required', 'Skardu is in Gilgit-Baltistan - Pakistani nationals do not need a permit. Foreign nationals visiting restricted border zones (near Deosai, K2 base camp) need a NOC from the Ministry of Interior. Apply at least 4 weeks in advance.', 'Visa'),
+(4, 'Altitude Sickness', 'Skardu is at 2,228m. K2 treks go above 5,000m. Acclimatise for at least 2 days in Skardu before trekking. Symptoms of altitude sickness: headache, nausea, dizziness. Descend immediately if symptoms worsen.', 'Health'),
+(4, 'Best Time to Visit', 'June to September is ideal for trekking to K2 and Concordia. April-May for jeep safaris. The Deosai Plains are accessible July-September only. Avoid October to May for high-altitude treks.', 'Weather'),
+(4, 'Trekking Safety', 'Always hire a licensed guide for treks above 3,000m. Inform local authorities of your trekking route. Carry a satellite phone or GPS device for remote treks. Emergency rescue is operated by Pakistan Army.', 'Safety'),
+(4, 'Getting There', 'PIA operates daily flights from Islamabad to Skardu (subject to weather - cancellations are common). Road journey via Karakoram Highway takes 20-24 hours from Islamabad. Book flights and hotels well in advance.', 'Transport'),
+
+-- Naran Kaghan (5)
+(5, 'Best Time to Visit', 'July to September is peak season for Naran and Kaghan Valley. Babusar Top (4,173m) is accessible July-September only. Spring (May-June) is beautiful but some roads may still be recovering from winter damage.', 'Weather'),
+(5, 'Road Conditions', 'The Babusar Top road is seasonal - open only July to September. Check with NHMP for current road status. The road from Balakot to Naran can be prone to landslides during monsoon rains.', 'Safety'),
+(5, 'Local Health Tips', 'Carry basic first aid and medicines. The nearest large hospital is in Mansehra. Mobile connectivity is limited beyond Naran town - Zong and Telenor have the best coverage.', 'Health'),
+(5, 'Cultural Tips', 'Naran is in Khyber Pakhtunkhwa - dress modestly and respect local customs. Bargaining is common at local shops. Try local trout fish - a regional specialty.', 'Culture'),
+(5, 'Getting There', 'From Islamabad, take M-1 to Hazara Motorway, then towards Mansehra and Balakot to Naran (~5 hours). No flights available. Local coasters run from Mansehra. Jeeps are available from Naran for Babusar Top.', 'Transport'),
+
+-- Lahore (6)
+(6, 'Visa Requirements', 'Pakistani nationals need no visa. Foreign tourists should have a valid Pakistan visa. Citizens of India require special permission and entry is handled through the Wagah Border crossing only.', 'Visa'),
+(6, 'Best Time to Visit', 'October to March is the best time. Winters are mild and pleasant (5-20C). Summers (May-August) are extremely hot (40-45C) and humid. Monsoon brings relief in July-August but humidity rises.', 'Weather'),
+(6, 'Cultural Etiquette', 'Dress modestly when visiting mosques and shrines - cover head and remove shoes before entering. At Data Darbar and Badshahi Mosque, separate entrances exist for men and women. Photography inside shrines may be restricted.', 'Culture'),
+(6, 'Health Tips', 'Drink bottled or filtered water only. Street food is delicious but choose busy, clean stalls. In summer, stay hydrated and avoid midday outdoor activity. Dengue fever is seasonal (July-October) - use mosquito repellent.', 'Health'),
+(6, 'Getting Around', 'Lahore has the Orange Line Metro Train connecting major areas. Rickshaws and Careem/Uber are widely available. Lahore Airport (Allama Iqbal International) has domestic and international flights. Roads are busy - allow extra travel time during peak hours.', 'Transport'),
+
+-- Islamabad (7)
+(7, 'Visa Requirements', 'Pakistani nationals need no visa. Foreign tourists need a valid Pakistan visa - most nationalities can apply online via Pakistan e-Visa portal. The Islamabad International Airport is the main entry point for international visitors.', 'Visa'),
+(7, 'Best Time to Visit', 'October to April offers pleasant weather (10-25C). Summers (June-August) are hot but milder than other cities (30-35C). Islamabad receives monsoon rains July-September, making the Margalla Hills lush and green.', 'Weather'),
+(7, 'Safety', 'Islamabad is one of the safest cities in Pakistan for tourists. It is a planned city with clearly marked sectors. Carry your CNIC or passport at all times as security checkpoints are common near diplomatic areas.', 'Safety'),
+(7, 'Cultural Tips', 'Dress modestly when visiting Faisal Mosque and other religious sites. The mosque has separate entrances and prayer areas for men and women. Non-Muslims are welcome outside prayer times.', 'Culture'),
+(7, 'Getting Around', 'Islamabad International Airport (IATA: ISB) is 25 km from the city centre. Metro Bus connects Islamabad to Rawalpindi. Uber and Careem are widely available. Rental cars are available at the airport.', 'Transport'),
+
+-- Fairy Meadows (8)
+(8, 'Permits Required', 'Pakistani nationals do not need a special permit for Fairy Meadows. For trekking towards Nanga Parbat Base Camp, a registered guide is mandatory. Foreign nationals may need a NOC for high-altitude trekking.', 'Visa'),
+(8, 'Best Time to Visit', 'June to September is the only accessible season. October to May the road is closed due to snow. July and August offer clearest views of Nanga Parbat (8,126m). Nights at the meadow (3,300m) can drop to 5C even in summer.', 'Weather'),
+(8, 'Trekking Safety', 'The jeep track from Raikot Bridge to Tattu village is one of the most dangerous roads in the world - narrow, unpaved, with sheer drops. The 3 km hike from Tattu to Fairy Meadows takes about 1.5 hours. Hire a local guide for the Nanga Parbat base camp trek.', 'Safety'),
+(8, 'Health & Altitude', 'Fairy Meadows sits at 3,300m. Acclimatise for at least 1 day before trekking higher. Carry sufficient water, snacks, and warm clothing. There are no medical facilities on-site - the nearest hospital is in Chilas town.', 'Health'),
+(8, 'Getting There', 'Drive from Islamabad to Raikot Bridge on the Karakoram Highway (~6 hours). From Raikot Bridge, take a hired jeep (1 hour) to Tattu village. Then hike 3 km to Fairy Meadows. Book jeeps in advance through local operators.', 'Transport'),
+
+-- Mohenjo Daro (9)
+(9, 'Visa Requirements', 'Pakistani nationals need no permit. Foreign tourists need a valid Pakistan visa and are advised to register with local police upon arrival in Larkana district. Entry fees apply at the Mohenjo Daro site gate.', 'Visa'),
+(9, 'Best Time to Visit', 'November to February is the best time. Winters are mild (10-20C) and comfortable for outdoor exploration. Summers (April-September) are brutally hot (45-50C) in interior Sindh and are strongly discouraged.', 'Weather'),
+(9, 'Cultural Significance', 'Mohenjo Daro is one of the world oldest cities (3000 BCE), part of the ancient Indus Valley Civilisation. Do not touch or climb on any ruins. Photography is permitted but using flash or tripods inside the museum requires written permission.', 'Culture'),
+(9, 'Health Precautions', 'Carry plenty of water - there are limited refreshment facilities at the site. The site is entirely outdoors with minimal shade. Wear sunscreen, a hat, and light cotton clothing. The nearest hospital is in Larkana city (~30 km).', 'Health'),
+(9, 'Getting There', 'Fly to Moenjodaro Airport (IATA: MJD) from Karachi or Islamabad. Alternatively, take a train or bus to Larkana, then hire a local taxi to the site (~30 km). Site entry fee is approximately PKR 500 for Pakistani nationals.', 'Transport'),
+
+-- Cholistan Desert (10)
+(10, 'Best Time to Visit', 'November to February is ideal for Cholistan. Winters bring cool temperatures (5-20C). The Cholistan Desert Jeep Rally is held in February. Summers (May-September) are dangerously hot (50C+) and should be avoided.', 'Weather'),
+(10, 'Desert Safety', 'Never enter the desert alone. Always hire a local guide or join an organised tour from Bahawalpur. Carry at least 4 litres of water per person per day. Sandstorms can occur suddenly - have a plan to shelter. Share your route before entering.', 'Safety'),
+(10, 'Cultural Tips', 'The desert is home to nomadic communities and ancient Derawar Fort. Dress modestly and ask permission before photographing local people. The communities are welcoming but privacy must be respected.', 'Culture'),
+(10, 'Health Tips', 'Carry oral rehydration salts and antihistamines for sand allergies. Sun protection (SPF 50+, full-sleeve clothing, sunglasses) is essential. Mobile signal is limited - Zong has the best coverage in Bahawalpur district.', 'Health'),
+(10, 'Getting There', 'Bahawalpur is the gateway to Cholistan - fly from Karachi or Lahore, or take the Lahore-Bahawalpur Daewoo Express (~5 hours). From Bahawalpur, hire a 4x4 jeep to Derawar Fort (~100 km on desert tracks). A standard car cannot navigate the terrain.', 'Transport');
 
 INSERT INTO EmergencyInfo (destination_id, police_number, ambulance_number, tourist_helpline, nearest_hospital)
 VALUES
@@ -419,41 +481,12 @@ VALUES
 (2, '15', '1122', '051-111-888-444', 'CMH Murree'),
 (3, '15', '1122', '0946-9230401', 'Saidu Teaching Hospital');
 
-INSERT INTO Souvenirs (destination_id, name, description, price, vendor_name, image_url)
+INSERT INTO Souvenirs (destination_id, name, description, price, vendor_name)
 VALUES
--- Hunza
-(1, 'Hunza Cap', 'Handcrafted traditional woolen cap worn by the people of Karimabad. A timeless symbol of Hunza culture.', 500, 'Karimabad Handicrafts',
- 'https://images.unsplash.com/photo-1521369909029-2afed882baee?w=600&q=80'),
-(1, 'Organic Apricot Jam', 'Sun-dried and slow-cooked apricot jam made from the famous Hunza apricots. Rich, natural flavour with no preservatives.', 350, 'Hunza Organic',
- 'https://images.unsplash.com/photo-1597528380307-a8e21c47cd5a?w=600&q=80'),
-(1, 'Dried Apricots', 'Premium sun-dried apricots sourced directly from Hunza Valley orchards. A healthy and delicious local snack.', 800, 'Hunza Organic',
- 'https://images.unsplash.com/photo-1562841773-8f04f5c8c877?w=600&q=80'),
-(1, 'Walnut Honey', 'Pure mountain honey blended with crushed Hunza walnuts. A signature gift from the valley.', 1200, 'Karimabad Handicrafts',
- 'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=600&q=80'),
--- Murree
-(2, 'Woolen Shawl', 'Handwoven woolen shawl with intricate geometric patterns. Warm, soft, and perfect for cold nights.', 2500, 'Murree Crafts',
- 'https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=600&q=80'),
-(2, 'Pine Wood Craft', 'Beautifully carved wooden figurines and keepsakes made from Murree pine wood by local artisans.', 1500, 'Mall Road Crafts',
- 'https://images.unsplash.com/photo-1609709295948-17d77cb2a69b?w=600&q=80'),
-(2, 'Hand-knitted Socks', 'Thick, warm hand-knitted socks made from pure wool. Ideal for mountain winters.', 400, 'Murree Crafts',
- 'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82?w=600&q=80'),
--- Swat
-(3, 'Swat Emerald', 'Authentic natural emerald gemstone sourced from the mines of Swat Valley. Each piece is unique.', 6000, 'Swat Gems',
- 'https://images.unsplash.com/photo-1551122087-f353c3d30e97?w=600&q=80'),
-(3, 'Swati Embroidery Cloth', 'Fine hand-embroidered fabric featuring traditional Swati floral and geometric motifs in vibrant colours.', 3500, 'Mingora Textiles',
- 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80'),
-(3, 'Handmade Pottery', 'Traditional Swat pottery glazed with natural earthy tones. Includes bowls, vases, and decorative plates.', 1800, 'Swat Artisans',
- 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600&q=80'),
--- Skardu
-(4, 'Baltit Stone Carving', 'Hand-carved stone art depicting mountains and Karakoram landscapes, crafted by local Balti artisans.', 4000, 'Skardu Stone Art',
- 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&q=80'),
-(4, 'Yak Wool Blanket', 'Soft and warm blanket woven from genuine yak wool. Ideal for cold high-altitude nights.', 5500, 'Baltistan Weavers',
- 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&q=80'),
--- Naran
-(5, 'Kaghan Honey', 'Pure wildflower honey collected from the meadows of Kaghan Valley. Naturally rich and aromatic.', 1500, 'Naran Valley Farms',
- 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=600&q=80'),
-(5, 'Mountain Herb Tea', 'A blend of wild herbs and flowers hand-picked from the alpine meadows of Naran. Soothing and caffeine-free.', 600, 'Kaghan Botanicals',
- 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&q=80');
+(1, 'Hunza Cap', 'Traditional woolen cap', 500, 'Karimabad Handicrafts'),
+(1, 'Apricot Jam', 'Local organic apricot jam', 300, 'Hunza Organic'),
+(2, 'Shawls', 'Handmade woolen shawls', 2000, 'Murree Crafts'),
+(3, 'Emerald Stone', 'Natural emerald from Swat', 5000, 'Swat Gems');
 
 INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost)
 VALUES
@@ -471,17 +504,6 @@ VALUES
 ('WEATHER_API_KEY', 'your_api_key_here', 'OpenWeatherMap API Key'),
 ('GOOGLE_MAPS_API_KEY', 'your_api_key_here', 'Google Maps API Key');
 
--- ============================================
--- 18. USER PREFERENCES TABLE
--- ============================================
-CREATE TABLE user_preferences (
-      preference_id INT PRIMARY KEY AUTO_INCREMENT,
-      user_id INT NOT NULL UNIQUE,
-      age_group VARCHAR(20) DEFAULT '18-25',
-      travel_preferences JSON,
-      updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
-      FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
-  );
 
 SELECT 'Database setup complete!' AS Status;
 
@@ -491,10 +513,9 @@ WHERE email = 'admin@tripify.com';
 
 SELECT *FROM USERS;
 SELECT *FROM Destinations;
-SELECT *FROM user_preferences;
-
-
-
+SELECT *FROM UserPreferences;
+ALTER TABLE Reviews ADD COLUMN review_text TEXT;
+ALTER TABLE Trips ADD COLUMN status ENUM('PLANNED','COMPLETED') NOT NULL DEFAULT 'PLANNED';
 
 
 

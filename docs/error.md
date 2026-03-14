@@ -1,5 +1,32 @@
 # Error Log
 
+## Wishlist (Favorites) Implementation Notes
+**Date:** 2026-03-13
+**Files:** `Backend/.../FavoriteController.java`, `Frontend/.../wishlist.html`, `destinations.html`, `destination-detail.html`, `api.js`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/favorites/ids` returns just the ID list — used by destinations & detail pages to fill hearts on load without fetching full destination data twice.
+- `wishlist.html` now calls `GET /api/favorites` (full destination objects, newest first) — no longer reads from `localStorage`.
+- `destinations.html` and `destination-detail.html` heart buttons call `POST/DELETE /api/favorites/{id}` directly; localStorage wishlist keys removed entirely.
+- Double-submit prevented: toggle buttons are disabled during in-flight requests (`btn.disabled = true`).
+- 409 on `POST` is treated as success (already saved) — UI still updates correctly.
+- Clear All on wishlist fires all DELETEs in parallel via `Promise.all`.
+
+---
+
+## UC-07 Implementation Notes — Travel Guidelines
+**Date:** 2026-03-13
+**Files:** `Backend/.../TravelGuidelineController.java`, `Frontend/.../travel-guidelines.html`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/guidelines/destinations` reuses `DestinationRepository.findByIsActiveTrueOrderByNameAsc()` — no duplicate data layer.
+- `GET /api/guidelines/{destinationId}` returns 404 with `message: "no_guidelines"` when destination exists but has no rows in `TravelGuidelines` table — frontend detects this and shows the alternate-flow message.
+- Accordion cards group guidelines by `category` field; category meta (icon + label) is defined client-side so adding new DB categories works without frontend changes.
+- Nav item added to all 9 user pages between Wishlist and the `nav-divider`.
+- `?dest=<id>` query parameter supported — other pages can deep-link directly to a destination's guidelines.
+
 ## BUG-001 — Dashboard profile not displayed after login
 **Date:** 2026-03-13
 **File:** `Frontend/src/html/pages/user/dashboard.html`
@@ -135,3 +162,75 @@ Hibernate `ddl-auto=validate` expects table names in **snake_case** (e.g. `emerg
 
 ### Note
 If `TravelGuidelines` or `EmergencyInfo` tables are missing (e.g., partial DB setup), the backend will fail to start with a `SchemaManagementException`. Solution: Re-run the full `TripifyDB_MySQL.sql` script.
+
+## BUG-007 — Backend fails to start: missing table [emergency_info] (post-merge)
+**Date:** 2026-03-14
+**File:** `Backend/main/java/com/model/EmergencyInfo.java`
+**Status:** Fixed
+
+### Root Cause
+After merging friend's branch, `EmergencyInfo.java` used `@Table(name = "emergency_info")` (snake_case) but the actual MySQL DB table is named `EmergencyInfo` (PascalCase). Hibernate `ddl-auto=validate` looks for the exact table name and fails with `SchemaManagementException: missing table [emergency_info]`.
+
+### Fix Applied
+Changed `@Table(name = "emergency_info")` → `@Table(name = "EmergencyInfo")` in `EmergencyInfo.java` to match the actual DB table name. No DB changes required.
+
+### Rule
+All `@Table(name = ...)` annotations must exactly match the PascalCase table names in `TripifyDB_MySQL.sql`. The lowercase `travel_guidelines` / `emergency_info` tables from BUG-006 do NOT exist in this MySQL instance — always use PascalCase to match the actual DB.
+
+## BUG-008 — Backend fails to start: missing table [travel_guidelines] (post-merge)
+**Date:** 2026-03-14
+**File:** `Backend/main/java/com/model/TravelGuideline.java`
+**Status:** Fixed
+
+### Root Cause
+Same pattern as BUG-007. `TravelGuideline.java` had `@Table(name = "travel_guidelines")` but the DB only has `TravelGuidelines` (PascalCase). The lowercase table from BUG-006 was never created in this MySQL instance.
+
+### Fix Applied
+Changed `@Table(name = "travel_guidelines")` → `@Table(name = "TravelGuidelines")` to match the actual DB table.
+
+---
+
+## BUG-009 — EmergencyInfoController calls undefined TravelGuidelineRepository methods
+**Date:** 2026-03-14
+**Files:** `EmergencyInfoController.java`, `TravelGuidelineRepository.java`
+**Status:** Fixed
+
+### Root Cause
+`EmergencyInfoController` called `guidelineRepo.findByDestination_DestinationIdAndCategory(...)` and `guidelineRepo.findByDestination_DestinationId(...)`. These Spring Data method names imply a `@ManyToOne destination` relationship, but `TravelGuideline` uses a plain `Integer destinationId` field. The correct names are `findByDestinationIdAndCategory` and `findByDestinationId`.
+
+### Fix Applied
+- Added `findByDestinationIdAndCategory(Integer, String)` and `findByDestinationId(Integer)` to `TravelGuidelineRepository`.
+- Updated `EmergencyInfoController` to call the correct method names (removed the `Destination_` navigation prefix).
+
+---
+
+## UC12-NOTE-001 — Google Maps API key must never appear in frontend files
+**Date:** 2026-03-14
+**Files:** `route-finder.html`, `Backend/.../ConfigController.java`, `application.properties`
+**Status:** Implemented
+
+### Design Decisions
+- API key stored in `application.properties` as `google.maps.api-key=...` — never in any frontend file.
+- Backend `GET /api/config/maps-key` (authenticated) serves the key to logged-in users only.
+- Frontend fetches the key at page load, then dynamically injects `<script src="...maps.googleapis.com/...?key=KEY">` into `<head>`.
+- `window.gm_authFailure` catches invalid/rejected key errors from Google Maps itself.
+- `script.onerror` catches network-level script load failure.
+- 12-second timeout catches silent load hang.
+- All three paths call `showMapsError()` → shows the error banner and a toast: "Unable to connect to Google Maps. Please try again later."
+- `window._mapsReady` flag guards `findRoute()` from running before Maps is initialized.
+
+### Rule
+Never hardcode the Google Maps API key (or any API key) in HTML/JS frontend files — GitHub secret scanning will detect and flag it.
+
+---
+
+## CLEANUP-001 — Unused imports and unused injected field in ProfileController/ProfileService
+**Date:** 2026-03-14
+**Files:** `ProfileController.java`, `ProfileService.java`
+**Status:** Fixed
+
+### Fix Applied
+- Removed unused `import java.util.List` and `import com.repository.UserRepository` from `ProfileController`.
+- Removed unused `userRepo` field and constructor parameter from `ProfileController`.
+- Removed unused `import java.util.Optional` from `ProfileService`.
+- Added `@NonNull` annotations to `JwtFilter.doFilterInternal` and `WebConfig.addResourceHandlers` params to satisfy inherited interface contracts.

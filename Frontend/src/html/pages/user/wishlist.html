@@ -247,10 +247,21 @@ async function loadDests() {
 
 // ── User profile ──────────────────────────────────────────
 const user = JSON.parse(localStorage.getItem('tripify_user') || '{}');
-const ini = (user.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
-document.getElementById('sidebarInitials').textContent = ini;
-document.getElementById('sidebarName').textContent = user.fullName || 'Tourist';
-document.getElementById('topbarInitials').textContent = ini;
+function applyUserProfile(u) {
+    const ini = (u.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarName').textContent = u.fullName || 'Tourist';
+    const sa = document.getElementById('sidebarInitials');
+    const ta = document.getElementById('topbarInitials');
+    if (u.profilePicture && u.profilePicture !== '') {
+        const imgTag = '<img src="http://localhost:8080' + u.profilePicture + '?t=' + Date.now() + '" alt="Avatar" onerror="this.parentElement.textContent=\'' + ini + '\'">';
+        sa.innerHTML = imgTag;
+        ta.innerHTML = imgTag;
+    } else {
+        sa.textContent = ini;
+        ta.textContent = ini;
+    }
+}
+applyUserProfile(user);
 
 // ── Sidebar toggle ─────────────────────────────────────────
 const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay');

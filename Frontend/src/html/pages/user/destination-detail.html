@@ -150,79 +150,136 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="../../../js/config/api.js"></script>
 <script>
-const DESTS = {
-    1:{ name:'Hunza Valley', region:'Gilgit-Baltistan', img:'../../../../public/assets/images/hunza-valley.jpg', rating:4.8, reviews:124, altitude:'2,438 m', bestTime:'Apr–Jun', budget:'Moderate', tags:['Mountain','Scenic','Trekking','Photography'],
-        desc:'Hunza Valley is a breathtaking mountain valley nestled between the towering Karakoram peaks in Gilgit-Baltistan. Famous for its ancient Baltit Fort, the pristine Attabad Lake, and spectacular cherry blossom season in spring, Hunza offers a unique blend of natural beauty, rich culture, and warm Burusho hospitality. The valley is surrounded by some of the world\'s highest peaks, making it a paradise for trekkers, photographers, and nature lovers.',
+// ── Auth guard ────────────────────────────────────────────
+const tripToken = localStorage.getItem('tripify_token');
+if (!tripToken) { window.location.href = '../auth/login.html'; }
+
+// ── User profile ──────────────────────────────────────────
+const tripUser = JSON.parse(localStorage.getItem('tripify_user') || '{}');
+function applyUserProfile(u) {
+    const ini = (u.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarName').textContent = u.fullName || 'Tourist';
+    const sa = document.getElementById('sidebarInitials'), ta = document.getElementById('topbarInitials');
+    if (u.profilePicture && u.profilePicture !== '') {
+        const img = '<img src="http://localhost:8080' + u.profilePicture + '?t=' + Date.now() + '" alt="Avatar" onerror="this.parentElement.textContent=\'' + ini + '\'">';
+        sa.innerHTML = img; ta.innerHTML = img;
+    } else { sa.textContent = ini; ta.textContent = ini; }
+}
+applyUserProfile(tripUser);
+
+// ── Sidebar toggle ────────────────────────────────────────
+const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
+overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+
+// ── Helpers ───────────────────────────────────────────────
+function starStr(r) { return '★'.repeat(Math.floor(r)) + (r%1>=0.5?'½':'') + '☆'.repeat(5-Math.floor(r)-(r%1>=0.5?1:0)); }
+function showToast(icon, msg, dur=2800) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div'); t.className = 'toast';
+    t.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
+}
+
+// ── Image resolver (same as destinations page) ────────────
+const IMG_BASE = '../../../../public/assets/images/';
+const IMG_MAP = {
+    'hunza.jpg': IMG_BASE+'hunza-valley.jpg', 'murree.jpg': IMG_BASE+'murree.jpeg',
+    'swat.jpg':  IMG_BASE+'swat.jpg',         'skardu.jpg': IMG_BASE+'skardu.jpeg',
+    'naran.jpg': IMG_BASE+'naran kaghan.jpg',
+    'lahore.jpg': IMG_BASE+'lahore.jpg',
+    'islamabad.jpg': IMG_BASE+'islamabad.jpeg', 'islamabad.jpeg': IMG_BASE+'islamabad.jpeg',
+    'fairy-meadows.jpg': IMG_BASE+'fairyMeadows.jpeg', 'fairyMeadows.jpeg': IMG_BASE+'fairyMeadows.jpeg',
+    'mohenjo-daro.jpg':  IMG_BASE+'mohenjodaro.jpeg',  'mohenjodaro.jpeg': IMG_BASE+'mohenjodaro.jpeg',
+    'cholistan.jpg': IMG_BASE+'cholistanDesert.jpeg',  'cholistanDesert.jpeg': IMG_BASE+'cholistanDesert.jpeg',
+};
+function resolveImage(url) {
+    if (!url) return IMG_BASE + 'hunza-valley.jpg';
+    if (IMG_MAP[url]) return IMG_MAP[url];
+    if (url.startsWith('http') || url.startsWith('/') || url.startsWith('../')) return url;
+    return IMG_BASE + url;
+}
+
+// ── Extra static data (seasonal/guidelines/souvenirs/hotels) keyed by DB id ──
+const EXTRAS = {
+    1:{ altitude:'2,438 m', bestTime:'Apr–Jun', budget:'Moderate', tags:['Mountain','Scenic','Trekking','Photography'],
         seasonal:[40,50,65,80,90,95,85,88,75,60,45,35],
         guidelines:[ {icon:'🌸',title:'Best Time to Visit',text:'April–June for cherry blossoms. September–October for clear mountain views and harvest festivals.'}, {icon:'👗',title:'Dress Code',text:'Dress modestly and respectfully. Carry warm layers even in summer — nights are cold at altitude.'}, {icon:'🥾',title:'Trekking Tips',text:'Carry proper trekking gear. Acclimatize gradually. Hire a local guide for remote treks.'}, {icon:'💱',title:'Currency & Cash',text:'ATM access is limited beyond Karimabad. Carry sufficient PKR cash for your entire stay.'} ],
         souvenirs:[ {name:'Hunza Apricots & Dry Fruits', vendor:'Local Markets, Karimabad', price:'Rs. 500–1500/kg'}, {name:'Gemstone Jewellery', vendor:'Karimabad Bazaar', price:'Rs. 1,000–15,000'}, {name:'Handwoven Wool Caps', vendor:'Artisan Shops', price:'Rs. 300–800'} ],
-        hotels:[ {name:'Eagle Nest Hotel', stars:4, price:'Rs. 8,500/night', rating:4.6}, {name:'Serena Hunza', stars:5, price:'Rs. 18,000/night', rating:4.9}, {name:'Hunza Inn', stars:3, price:'Rs. 4,000/night', rating:4.2} ]
-    },
-    2:{ name:'Murree', region:'Punjab', img:'../../../../public/assets/images/murree.jpeg', rating:4.5, reviews:98, altitude:'2,291 m', bestTime:'Apr–Oct', budget:'Budget',
-        desc:'Murree is Pakistan\'s most beloved hill station, located just 50 km from Islamabad. With its pine forests, colonial-era architecture along Mall Road, and cool mountain climate, Murree has been a favourite retreat for families for over 150 years. Visit for the scenic chairlift rides, fresh Kashmiri tea, and the magical snow-covered winters.',
+        hotels:[ {name:'Eagle Nest Hotel', stars:4, price:'Rs. 8,500/night', rating:4.6}, {name:'Serena Hunza', stars:5, price:'Rs. 18,000/night', rating:4.9}, {name:'Hunza Inn', stars:3, price:'Rs. 4,000/night', rating:4.2} ] },
+    2:{ altitude:'2,291 m', bestTime:'Apr–Oct', budget:'Budget', tags:['Hill Station','Family','Scenic'],
         seasonal:[55,60,70,82,88,84,78,80,76,68,55,48],
         guidelines:[ {icon:'🚗',title:'Getting There',text:'Only 50 km from Islamabad. Avoid weekends in peak season — traffic jams can last 3–4 hours.'}, {icon:'❄️',title:'Winter Safety',text:'Roads can be icy Dec–Feb. Keep snow chains in the car. Check PDMA road status before travelling.'}, {icon:'🍎',title:'Local Food',text:'Try fresh apples, kashmiri tea, and freshly baked bread at local dhabas on Mall Road.'} ],
         souvenirs:[ {name:'Kashmiri Shawls', vendor:'Mall Road Shops', price:'Rs. 1,500–5,000'}, {name:'Wooden Crafts', vendor:'Local Artisans', price:'Rs. 500–2,000'} ],
-        hotels:[ {name:'Shangrila Resort', stars:4, price:'Rs. 7,000/night', rating:4.4}, {name:'Mall Hotel', stars:3, price:'Rs. 3,500/night', rating:4.1} ]
-    },
-    3:{ name:'Swat Valley', region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/swat.jpg', rating:4.6, reviews:110, altitude:'980 m', bestTime:'Apr–Sep', budget:'Budget',
-        desc:'Often called the "Switzerland of Pakistan", Swat Valley is a land of lush green mountains, clear rivers, and ancient Buddhist heritage. The Swat River carves through lush meadows while ancient stupas and carvings dot the hillsides. Explore Mingora\'s bazaars, witness the Buddhist ruins at Butkara, and trek to alpine meadows in Kalam.',
+        hotels:[ {name:'Shangrila Resort', stars:4, price:'Rs. 7,000/night', rating:4.4}, {name:'Mall Hotel', stars:3, price:'Rs. 3,500/night', rating:4.1} ] },
+    3:{ altitude:'980 m', bestTime:'Apr–Sep', budget:'Budget', tags:['Green','Scenic','Adventure'],
         seasonal:[50,58,72,85,90,92,88,90,80,65,52,44],
         guidelines:[ {icon:'🏛️',title:'Historical Sites',text:'Visit Butkara Stupa and Mingora Museum. Hire local guides for historical context — very knowledgeable.'}, {icon:'🌊',title:'River Safety',text:'Do not swim in the Swat River during monsoon season. Currents are extremely dangerous Jul–Aug.'}, {icon:'🍽️',title:'Local Cuisine',text:'Try Peshawari chapli kabab and fresh fish at Kalam riverfront restaurants.'} ],
         souvenirs:[ {name:'Swat Emeralds', vendor:'Mingora Gem Bazaar', price:'Rs. 5,000–50,000'}, {name:'Pashtun Embroidery', vendor:'Local Women Cooperatives', price:'Rs. 800–3,000'} ],
-        hotels:[ {name:'Serena Swat', stars:5, price:'Rs. 15,000/night', rating:4.7}, {name:'Kalam Valley Hotel', stars:3, price:'Rs. 3,000/night', rating:4.2} ]
-    },
-    4:{ name:'Skardu', region:'Gilgit-Baltistan', img:'../../../../public/assets/images/skardu.jpeg', rating:4.7, reviews:87, altitude:'2,228 m', bestTime:'Jun–Sep', budget:'Moderate',
-        desc:'Skardu is the adventure capital of Pakistan and gateway to K2 — the world\'s second highest peak. Surrounded by towering 8000m+ peaks, the cold desert plateau, and the surreal Shangrila Resort on Upper Kachura Lake, Skardu is unlike anywhere else on earth. The town sits at the confluence of the Indus and Shigar rivers, offering breathtaking landscapes at every turn.',
+        hotels:[ {name:'Serena Swat', stars:5, price:'Rs. 15,000/night', rating:4.7}, {name:'Kalam Valley Hotel', stars:3, price:'Rs. 3,000/night', rating:4.2} ] },
+    4:{ altitude:'2,228 m', bestTime:'Jun–Sep', budget:'Moderate', tags:['Adventure','K2','Mountain'],
         seasonal:[25,30,45,65,80,88,90,85,72,55,35,22],
-        guidelines:[ {icon:'✈️',title:'How to Get There',text:'PIA operates flights from Islamabad. Book in advance — seats fill quickly. Karakoram Highway (KKH) is an alternative but takes 2 days.'}, {icon:'🏔️',title:'Altitude Sickness',text:'Skardu is at 2,228m. Acclimatize for 1–2 days before trekking to higher elevations.'}, {icon:'🧊',title:'Weather',text:'Summer days are warm (25°C) but nights are cold (5–10°C). Winters are extreme — only visit June–September.'} ],
+        guidelines:[ {icon:'✈️',title:'How to Get There',text:'PIA operates flights from Islamabad. Book in advance — seats fill quickly. KKH is an alternative but takes 2 days.'}, {icon:'🏔️',title:'Altitude Sickness',text:'Skardu is at 2,228m. Acclimatize for 1–2 days before trekking to higher elevations.'}, {icon:'🧊',title:'Weather',text:'Summer days are warm (25°C) but nights are cold (5–10°C). Winters are extreme — only visit June–September.'} ],
         souvenirs:[ {name:'Skardu Salt Lamps', vendor:'Local Shops', price:'Rs. 500–2,000'}, {name:'Karakoram Gems', vendor:'Gem Dealers, Skardu Bazaar', price:'Rs. 2,000–20,000'} ],
-        hotels:[ {name:'Serena Skardu', stars:5, price:'Rs. 20,000/night', rating:4.8}, {name:'Shangrila Resort', stars:4, price:'Rs. 12,000/night', rating:4.6}, {name:'K2 Motel', stars:3, price:'Rs. 4,500/night', rating:4.0} ]
-    },
-    5:{ name:'Naran Kaghan', region:'Khyber Pakhtunkhwa', img:'../../../../public/assets/images/naran kaghan.jpg', rating:4.4, reviews:76, altitude:'2,409 m', bestTime:'Jun–Aug', budget:'Budget',
-        desc:'Naran is the jewel of Kaghan Valley, home to the famous Saif-ul-Malook Lake — a high-altitude alpine lake surrounded by snow-capped peaks. The valley is accessible via Mansehra and offers one of Pakistan\'s most dramatic landscapes, with roaring rivers, glaciers, and vast summer meadows (called payees) filled with wildflowers.',
+        hotels:[ {name:'Serena Skardu', stars:5, price:'Rs. 20,000/night', rating:4.8}, {name:'Shangrila Resort', stars:4, price:'Rs. 12,000/night', rating:4.6}, {name:'K2 Motel', stars:3, price:'Rs. 4,500/night', rating:4.0} ] },
+    5:{ altitude:'2,409 m', bestTime:'Jun–Aug', budget:'Budget', tags:['Valley','Nature','Scenic'],
         seasonal:[20,25,40,60,75,85,88,82,70,50,30,18],
         guidelines:[ {icon:'📅',title:'Short Window',text:'Naran is accessible only June–September. The Babusar Top pass closes for the rest of the year due to heavy snow.'}, {icon:'🌙',title:'Night Temperature',text:'Even in summer, night temperatures drop to near 0°C. Pack a warm sleeping bag and heavy jacket.'}, {icon:'🚐',title:'4x4 Vehicles',text:'Beyond Naran town, roads are unpaved and steep. Hire a local 4x4 jeep — do not attempt in a regular car.'} ],
         souvenirs:[ {name:'Honey (Wild Mountain)', vendor:'Naran Bazaar', price:'Rs. 1,200–3,000/kg'}, {name:'Woollen Blankets', vendor:'Local Weavers', price:'Rs. 1,500–4,000'} ],
-        hotels:[ {name:'Pine Park Hotel', stars:4, price:'Rs. 6,500/night', rating:4.3}, {name:'Kaghan Resort', stars:3, price:'Rs. 3,200/night', rating:4.0} ]
-    }
+        hotels:[ {name:'Pine Park Hotel', stars:4, price:'Rs. 6,500/night', rating:4.3}, {name:'Kaghan Resort', stars:3, price:'Rs. 3,200/night', rating:4.0} ] },
 };
 
-const id = parseInt(new URLSearchParams(location.search).get('id')) || 1;
-const d = DESTS[id] || DESTS[1];
-let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist')||'[1,4]');
-function saveWish(){ localStorage.setItem('tripify_wishlist',JSON.stringify(wishlist)); }
-function starStr(r){ return '★'.repeat(Math.floor(r))+(r%1>=0.5?'½':'')+'☆'.repeat(5-Math.floor(r)-(r%1>=0.5?1:0)); }
+const DEFAULT_EXTRAS = {
+    altitude:'—', bestTime:'Year-round', budget:'Varies', tags:['Pakistan'],
+    seasonal:[60,62,65,70,75,80,78,78,72,68,63,60],
+    guidelines:[ {icon:'📱',title:'Stay Connected',text:'Save local emergency numbers before you travel. Tourist Helpline: 1422.'}, {icon:'💧',title:'Stay Hydrated',text:'Carry drinking water, especially for longer trips.'}, {icon:'🚗',title:'Plan Your Route',text:'Use our Route Finder to plan the best way to get there.'} ],
+    souvenirs:[ {name:'Local Handicrafts', vendor:'Local Bazaars', price:'Varies'}, {name:'Regional Specialties', vendor:'Local Markets', price:'Varies'} ],
+    hotels:[ {name:'Contact PTDC', stars:3, price:'Varies by season', rating:4.0} ],
+};
 
+// ── Wishlist ──────────────────────────────────────────────
+let wishlist = JSON.parse(localStorage.getItem('tripify_wishlist') || '[]');
+function saveWish() { localStorage.setItem('tripify_wishlist', JSON.stringify(wishlist)); }
+
+// ── Render page with destination data ─────────────────────
 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const maxS = Math.max(...d.seasonal);
-function barColor(v){ return v>=80?'#22c55e':v>=60?'#f5a623':v>=40?'#3b82f6':'rgba(255,255,255,0.2)'; }
+function barColor(v) { return v>=80?'#22c55e':v>=60?'#f5a623':v>=40?'#3b82f6':'rgba(255,255,255,0.2)'; }
 
-document.getElementById('topbarTitle').textContent = d.name;
-document.getElementById('pageContent').innerHTML = `
+function renderPage(d, extras) {
+    const img = resolveImage(d.imageUrl);
+    const rating = d.averageRating ? Number(d.averageRating).toFixed(1) : '–';
+    const reviews = d.totalReviews || 0;
+    const maxS = Math.max(...extras.seasonal);
+
+    document.getElementById('topbarTitle').textContent = d.name;
+    document.title = d.name + ' — Tripify';
+
+    document.getElementById('pageContent').innerHTML = `
 <div style="margin-bottom:14px">
     <a href="destinations.html" class="btn btn-ghost btn-sm">← Back to Destinations</a>
 </div>
 
 <div class="dest-hero">
-    <img src="${d.img}" alt="${d.name}">
+    <img src="${img}" alt="${d.name}" onerror="this.src='${IMG_BASE}hunza-valley.jpg'">
     <div class="dest-hero-overlay"></div>
     <div class="dest-hero-content">
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-            ${d.tags.map(t=>`<span class="badge badge-accent">${t}</span>`).join('')}
+            ${extras.tags.map(t=>`<span class="badge badge-accent">${t}</span>`).join('')}
         </div>
         <div class="dest-hero-name">${d.name}</div>
-        <div class="dest-hero-region">📍 ${d.region} · ⛰️ ${d.altitude} · 📅 Best: ${d.bestTime} · 💰 ${d.budget}</div>
+        <div class="dest-hero-region">📍 ${d.city || 'Pakistan'} · ⛰️ ${extras.altitude} · 📅 Best: ${extras.bestTime} · 💰 ${extras.budget}</div>
     </div>
-    <button class="dest-hero-wish" id="wishBtn" onclick="toggleWish()">${wishlist.includes(id)?'❤️':'🤍'}</button>
+    <button class="dest-hero-wish" id="wishBtn" onclick="toggleWish()">${wishlist.includes(d.id)?'❤️':'🤍'}</button>
 </div>
 
 <div class="info-strip">
-    <div class="info-chip"><div class="info-chip-icon">⭐</div><div class="info-chip-val">${d.rating}</div><div class="info-chip-lbl">${d.reviews} Reviews</div></div>
-    <div class="info-chip"><div class="info-chip-icon">⛰️</div><div class="info-chip-val">${d.altitude}</div><div class="info-chip-lbl">Altitude</div></div>
-    <div class="info-chip"><div class="info-chip-icon">📅</div><div class="info-chip-val">${d.bestTime}</div><div class="info-chip-lbl">Best Season</div></div>
-    <div class="info-chip"><div class="info-chip-icon">💰</div><div class="info-chip-val">${d.budget}</div><div class="info-chip-lbl">Budget Level</div></div>
+    <div class="info-chip"><div class="info-chip-icon">⭐</div><div class="info-chip-val">${rating}</div><div class="info-chip-lbl">${reviews} Reviews</div></div>
+    <div class="info-chip"><div class="info-chip-icon">⛰️</div><div class="info-chip-val">${extras.altitude}</div><div class="info-chip-lbl">Altitude</div></div>
+    <div class="info-chip"><div class="info-chip-icon">📅</div><div class="info-chip-val">${extras.bestTime}</div><div class="info-chip-lbl">Best Season</div></div>
+    <div class="info-chip"><div class="info-chip-icon">💰</div><div class="info-chip-val">${extras.budget}</div><div class="info-chip-lbl">Budget Level</div></div>
 </div>
 
 <div class="detail-layout">
@@ -230,14 +287,14 @@ document.getElementById('pageContent').innerHTML = `
 
     <div class="section-card">
         <h3>📖 About ${d.name}</h3>
-        <p class="desc-text">${d.desc}</p>
+        <p class="desc-text">${d.description || 'A beautiful destination in Pakistan.'}</p>
     </div>
 
     <div class="section-card">
         <h3>🌤️ Monthly Suitability Index</h3>
         <p style="font-size:12px;color:var(--t2);margin-bottom:12px">How suitable is each month for visiting? (Green = Ideal)</p>
         <div class="seasonal-chart">
-            ${d.seasonal.map((v,i)=>`
+            ${extras.seasonal.map((v,i)=>`
             <div class="month-bar" title="${months[i]}: ${v}% suitable">
                 <div class="month-bar-inner" style="height:${Math.round(v/maxS*70)}px;background:${barColor(v)};opacity:0.85;"></div>
                 <div class="month-lbl">${months[i].slice(0,1)}</div>
@@ -252,7 +309,7 @@ document.getElementById('pageContent').innerHTML = `
 
     <div class="section-card">
         <h3>📋 Travel Guidelines</h3>
-        ${d.guidelines.map(g=>`
+        ${extras.guidelines.map(g=>`
         <div class="guideline-item">
             <span class="g-icon">${g.icon}</span>
             <div><div class="g-title">${g.title}</div><div class="g-text">${g.text}</div></div>
@@ -261,7 +318,7 @@ document.getElementById('pageContent').innerHTML = `
 
     <div class="section-card">
         <h3>🛍️ Souvenirs &amp; Local Goods</h3>
-        ${d.souvenirs.map(s=>`
+        ${extras.souvenirs.map(s=>`
         <div class="souvenir-item">
             <div><div class="souvenir-name">${s.name}</div><div class="souvenir-vendor">📍 ${s.vendor}</div></div>
             <div class="souvenir-price">${s.price}</div>
@@ -283,15 +340,15 @@ document.getElementById('pageContent').innerHTML = `
         <h3>🚀 Plan Your Visit</h3>
         <p>Ready to explore ${d.name}? Use our tools to plan the perfect trip.</p>
         <div class="action-btns">
-            <a href="trip-cost.html?dest=${id}" class="btn btn-primary btn-full">💰 Estimate Trip Cost</a>
-            <a href="route-finder.html?to=${id}" class="btn btn-ghost btn-full" style="background:rgba(255,255,255,0.1)">🗺️ Find Route</a>
-            <a href="hotels.html?dest=${id}" class="btn btn-outline-accent btn-full">🏨 View Hotels</a>
+            <a href="trip-cost.html?dest=${d.id}" class="btn btn-primary btn-full">💰 Estimate Trip Cost</a>
+            <a href="route-finder.html?to=${d.id}" class="btn btn-ghost btn-full" style="background:rgba(255,255,255,0.1)">🗺️ Find Route</a>
+            <a href="hotels.html?dest=${d.id}" class="btn btn-outline-accent btn-full">🏨 View Hotels</a>
         </div>
     </div>
 
     <div class="section-card">
         <h3>🏨 Top Hotels</h3>
-        ${d.hotels.map(h=>`
+        ${extras.hotels.map(h=>`
         <div style="padding:10px 0;border-bottom:1px solid var(--border)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
                 <span style="font-size:13.5px;font-weight:600;color:var(--white)">${h.name}</span>
@@ -302,7 +359,7 @@ document.getElementById('pageContent').innerHTML = `
                 <span style="font-size:13px;font-weight:700;color:var(--accent)">${h.price}</span>
             </div>
         </div>`).join('')}
-        <a href="hotels.html?dest=${id}" class="btn btn-ghost btn-full btn-sm" style="margin-top:12px">View All Hotels →</a>
+        <a href="hotels.html?dest=${d.id}" class="btn btn-ghost btn-full btn-sm" style="margin-top:12px">View All Hotels →</a>
     </div>
 
     <div class="section-card">
@@ -316,32 +373,52 @@ document.getElementById('pageContent').innerHTML = `
     </div>
 </div>
 </div>`;
+}
 
-function toggleWish(){
-    if(wishlist.includes(id)){wishlist=wishlist.filter(x=>x!==id);document.getElementById('wishBtn').textContent='🤍';showToast('🤍','Removed from wishlist');}
-    else{wishlist.push(id);document.getElementById('wishBtn').textContent='❤️';showToast('❤️','Added to wishlist!');}
+function toggleWish() {
+    const idVal = parseInt(new URLSearchParams(location.search).get('id'));
+    if (wishlist.includes(idVal)) { wishlist = wishlist.filter(x=>x!==idVal); document.getElementById('wishBtn').textContent='🤍'; showToast('🤍','Removed from wishlist'); }
+    else { wishlist.push(idVal); document.getElementById('wishBtn').textContent='❤️'; showToast('❤️','Added to wishlist!'); }
     saveWish();
 }
-let userRating=0;
-function setRating(v){
-    userRating=v;
-    document.querySelectorAll('.rate-star').forEach((s,i)=>s.classList.toggle('active',i<v));
-    document.getElementById('rateLabel').textContent=`You rated ${v}/5 stars`;
-    showToast('⭐',`Thanks for your ${v}-star rating!`);
+let userRating = 0;
+function setRating(v) {
+    userRating = v;
+    document.querySelectorAll('.rate-star').forEach((s,i) => s.classList.toggle('active', i<v));
+    document.getElementById('rateLabel').textContent = `You rated ${v}/5 stars`;
+    showToast('⭐', `Thanks for your ${v}-star rating!`);
 }
 
-// User
-const user=JSON.parse(localStorage.getItem('user')||'{"fullName":"Ahmed Tariq"}');
-const ini=(user.fullName||'AT').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
-document.getElementById('sidebarInitials').textContent=ini;
-document.getElementById('sidebarName').textContent=user.fullName||'Ahmed Tariq';
-document.getElementById('topbarInitials').textContent=ini;
+// ── Load destination from API ─────────────────────────────
+async function loadDestination() {
+    const id = parseInt(new URLSearchParams(location.search).get('id'));
+    if (!id) { window.location.href = 'destinations.html'; return; }
 
-const sidebar=document.getElementById('sidebar'),overlay=document.getElementById('overlay');
-document.getElementById('menuToggle').addEventListener('click',()=>{sidebar.classList.toggle('open');overlay.classList.toggle('show');});
-overlay.addEventListener('click',()=>{sidebar.classList.remove('open');overlay.classList.remove('show');});
+    const content = document.getElementById('pageContent');
+    content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--t2)"><div style="font-size:36px;animation:spin 1s linear infinite;display:inline-block">⏳</div><p style="margin-top:14px">Loading destination…</p></div>`;
 
-function showToast(icon,msg,dur=2800){const c=document.getElementById('toastContainer');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span class="toast-icon">${icon}</span><span>${msg}</span>`;c.appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),300);},dur);}
+    try {
+        const res = await fetch(ENDPOINTS.DESTINATIONS.BY_ID(id), {
+            headers: { 'Authorization': 'Bearer ' + tripToken }
+        });
+        if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+        if (res.status === 404) {
+            content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--t2)"><div style="font-size:40px">🔍</div><p style="margin-top:14px">Destination not found.</p><a href="destinations.html" class="btn btn-primary" style="margin-top:16px">← Back to Destinations</a></div>`;
+            return;
+        }
+        if (!res.ok) {
+            content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--t2)"><div style="font-size:40px">❌</div><p style="margin-top:14px">Something went wrong. Please try again.</p><a href="destinations.html" class="btn btn-ghost" style="margin-top:16px">← Go Back</a></div>`;
+            return;
+        }
+        const d = await res.json();
+        const extras = EXTRAS[id] || DEFAULT_EXTRAS;
+        renderPage(d, extras);
+    } catch (e) {
+        content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--t2)"><div style="font-size:40px">📶</div><p style="margin-top:14px">Network error. Check your connection and that the server is running.</p><a href="destinations.html" class="btn btn-ghost" style="margin-top:16px">← Go Back</a></div>`;
+    }
+}
+
+loadDestination();
 </script>
 </body>
 </html>

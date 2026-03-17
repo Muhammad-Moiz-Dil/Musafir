@@ -1,7 +1,11 @@
 package com.controller;
 
+import com.model.Trip;
 import com.model.User;
 import com.model.UserPreferences;
+import com.repository.FavoriteRepository;
+import com.repository.TripDestinationRepository;
+import com.repository.TripRepository;
 import com.service.ProfileService;
 import com.service.RecommendationService;
 import com.service.UserService;
@@ -13,8 +17,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")
@@ -23,15 +27,24 @@ public class ProfileController {
 
     private final ProfileService profileService;
     private final RecommendationService recommendationService;
+    private final TripRepository tripRepo;
+    private final TripDestinationRepository tripDestRepo;
+    private final FavoriteRepository favoriteRepo;
 
     // Avatar storage directory (relative to where the JAR runs, i.e., Backend/ folder)
     private static final String AVATAR_DIR = "uploads/avatars/";
     private static final String AVATAR_URL_PREFIX = "/uploads/avatars/";
 
     public ProfileController(ProfileService profileService,
-                             RecommendationService recommendationService) {
+                             RecommendationService recommendationService,
+                             TripRepository tripRepo,
+                             TripDestinationRepository tripDestRepo,
+                             FavoriteRepository favoriteRepo) {
         this.profileService = profileService;
         this.recommendationService = recommendationService;
+        this.tripRepo = tripRepo;
+        this.tripDestRepo = tripDestRepo;
+        this.favoriteRepo = favoriteRepo;
     }
 
     private String currentEmail() {
@@ -183,6 +196,34 @@ public class ProfileController {
         UserPreferences prefs = profileService.getPreferences(u.getUserId());
         Map<String, Object> result = recommendationService.getRecommendations(prefs, limit);
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * GET /api/users/stats
+     * Returns dashboard stat counts for the current user.
+     */
+    @GetMapping("/stats")
+    public ResponseEntity<?> getStats() {
+        User user = profileService.getProfile(currentEmail());
+        int userId = user.getUserId();
+
+        List<Trip> trips = tripRepo.findByUserIdOrderByCreatedAtDesc(userId);
+        int tripsPlanned = trips.size();
+
+        int wishlistItems = favoriteRepo.findDestinationIdsByUserId(userId).size();
+
+        Set<Integer> visitedDestIds = new HashSet<>();
+        trips.stream()
+                .filter(t -> t.getStatus() == Trip.TripStatus.COMPLETED)
+                .forEach(t -> tripDestRepo.findByTripIdOrderByVisitOrder(t.getTripId())
+                        .forEach(td -> visitedDestIds.add(td.getDestinationId())));
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("tripsPlanned", tripsPlanned);
+        stats.put("wishlistItems", wishlistItems);
+        stats.put("hotelsBooked", 0);
+        stats.put("destinationsVisited", visitedDestIds.size());
+        return ResponseEntity.ok(stats);
     }
 
     // ── Helpers ───────────────────────────────────────────────

@@ -47,10 +47,10 @@ public class DestinationController {
 
         String query = q.trim();
 
-        // Validate: only letters, numbers, spaces allowed
-        if (!query.isEmpty() && !query.matches("[a-zA-Z0-9 ]+")) {
+        // Validate: letters, numbers, spaces, hyphens, apostrophes allowed
+        if (!query.isEmpty() && !query.matches("[a-zA-Z0-9 '\\-]+")) {
             return ResponseEntity.status(400).body(Map.of(
-                "message", "Please use letters and numbers only"
+                "message", "Please use letters, numbers, hyphens or apostrophes only"
             ));
         }
 

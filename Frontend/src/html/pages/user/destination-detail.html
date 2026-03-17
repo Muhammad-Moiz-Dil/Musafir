@@ -52,12 +52,34 @@
 .section-card h3 { font-size:15px; font-weight:700; color:var(--white); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
 .desc-text { font-size:13.5px; color:var(--t2); line-height:1.8; }
 
-/* Seasonal chart */
-.seasonal-chart { display:flex; gap:6px; align-items:flex-end; height:80px; margin-top:4px; }
-.month-bar { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
-.month-bar-inner { width:100%; border-radius:4px 4px 0 0; transition:var(--ease); }
-.month-bar:hover .month-bar-inner { opacity:0.8; }
-.month-lbl { font-size:9px; color:var(--t3); }
+/* Review cards */
+.review-card {
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.review-card:last-child { border-bottom: none; }
+.review-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+.reviewer-name { font-size:13.5px; font-weight:600; color:var(--white); }
+.review-date   { font-size:11px; color:var(--t3); }
+.review-stars  { color:var(--accent); font-size:13px; letter-spacing:1px; margin-bottom:5px; }
+.review-text   { font-size:12.5px; color:var(--t2); line-height:1.65; }
+.reviews-empty { text-align:center; padding:28px 0; color:var(--t3); font-size:13px; }
+.reviews-empty span { display:block; font-size:30px; margin-bottom:8px; }
+.rating-summary { display:flex; align-items:center; gap:16px; padding:14px 0 18px; border-bottom:1px solid var(--border); margin-bottom:14px; }
+.rating-big-num { font-size:44px; font-weight:800; color:var(--white); line-height:1; }
+.rating-big-stars { color:var(--accent); font-size:18px; letter-spacing:2px; }
+.rating-big-count { font-size:12px; color:var(--t3); margin-top:3px; }
+
+/* Rate form */
+.rate-form { border-top: 1px solid var(--border); margin-top:16px; padding-top:16px; }
+.rate-form h4 { font-size:13.5px; font-weight:600; color:var(--white); margin-bottom:10px; }
+.rate-stars { display:flex; gap:6px; margin-bottom:10px; }
+.rate-star { font-size:26px; cursor:pointer; transition:var(--ease); color:var(--t3); }
+.rate-star:hover, .rate-star.active { color:var(--accent); transform:scale(1.15); }
+.rate-textarea { width:100%; background:var(--surface-2); border:1px solid var(--border); color:var(--t1); border-radius:var(--r); padding:10px 12px; font-size:13px; font-family:var(--font); resize:vertical; min-height:70px; outline:none; box-sizing:border-box; }
+.rate-textarea:focus { border-color:rgba(245,166,35,0.35); }
+.rate-msg { font-size:12px; margin-top:6px; min-height:16px; }
+.rate-msg.ok  { color:#22c55e; }
+.rate-msg.err { color:#ef4444; }
 
 /* Guideline list */
 .guideline-item {
@@ -116,6 +138,7 @@
         <a href="travel-guidelines.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span>Travel Guidelines</span></a>
         <a href="souvenirs.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Souvenirs</span></a>
         <a href="seasonal-insights.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Seasonal</span></a>
+        <a href="weather-alerts.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/></svg></span><span>Weather Alerts</span></a>
         <div class="nav-divider"></div>
         <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
         <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
@@ -199,38 +222,52 @@ function resolveImage(url) {
     return IMG_BASE + url;
 }
 
-// ── Extra static data (seasonal/guidelines/souvenirs/hotels) keyed by DB id ──
+// ── Extra static data keyed by DB destination id ─────────
 const EXTRAS = {
-    1:{ altitude:'2,438 m', bestTime:'Apr–Jun', budget:'Moderate', tags:['Mountain','Scenic','Trekking','Photography'],
-        seasonal:[40,50,65,80,90,95,85,88,75,60,45,35],
+    1:{ altitude:'2,438 m', bestTime:'Apr–Oct', budget:'Moderate', tags:['Mountain','Scenic','Trekking','Photography'],
         guidelines:[ {icon:'🌸',title:'Best Time to Visit',text:'April–June for cherry blossoms. September–October for clear mountain views and harvest festivals.'}, {icon:'👗',title:'Dress Code',text:'Dress modestly and respectfully. Carry warm layers even in summer — nights are cold at altitude.'}, {icon:'🥾',title:'Trekking Tips',text:'Carry proper trekking gear. Acclimatize gradually. Hire a local guide for remote treks.'}, {icon:'💱',title:'Currency & Cash',text:'ATM access is limited beyond Karimabad. Carry sufficient PKR cash for your entire stay.'} ],
-        souvenirs:[ {name:'Hunza Apricots & Dry Fruits', vendor:'Local Markets, Karimabad', price:'Rs. 500–1500/kg'}, {name:'Gemstone Jewellery', vendor:'Karimabad Bazaar', price:'Rs. 1,000–15,000'}, {name:'Handwoven Wool Caps', vendor:'Artisan Shops', price:'Rs. 300–800'} ],
+        souvenirs:[ {name:'Hunza Apricots & Dry Fruits', vendor:'Local Markets, Karimabad', price:'Rs. 500–1,500/kg'}, {name:'Gemstone Jewellery', vendor:'Karimabad Bazaar', price:'Rs. 1,000–15,000'}, {name:'Handwoven Wool Caps', vendor:'Artisan Shops', price:'Rs. 300–800'} ],
         hotels:[ {name:'Eagle Nest Hotel', stars:4, price:'Rs. 8,500/night', rating:4.6}, {name:'Serena Hunza', stars:5, price:'Rs. 18,000/night', rating:4.9}, {name:'Hunza Inn', stars:3, price:'Rs. 4,000/night', rating:4.2} ] },
     2:{ altitude:'2,291 m', bestTime:'Apr–Oct', budget:'Budget', tags:['Hill Station','Family','Scenic'],
-        seasonal:[55,60,70,82,88,84,78,80,76,68,55,48],
         guidelines:[ {icon:'🚗',title:'Getting There',text:'Only 50 km from Islamabad. Avoid weekends in peak season — traffic jams can last 3–4 hours.'}, {icon:'❄️',title:'Winter Safety',text:'Roads can be icy Dec–Feb. Keep snow chains in the car. Check PDMA road status before travelling.'}, {icon:'🍎',title:'Local Food',text:'Try fresh apples, kashmiri tea, and freshly baked bread at local dhabas on Mall Road.'} ],
         souvenirs:[ {name:'Kashmiri Shawls', vendor:'Mall Road Shops', price:'Rs. 1,500–5,000'}, {name:'Wooden Crafts', vendor:'Local Artisans', price:'Rs. 500–2,000'} ],
         hotels:[ {name:'Shangrila Resort', stars:4, price:'Rs. 7,000/night', rating:4.4}, {name:'Mall Hotel', stars:3, price:'Rs. 3,500/night', rating:4.1} ] },
-    3:{ altitude:'980 m', bestTime:'Apr–Sep', budget:'Budget', tags:['Green','Scenic','Adventure'],
-        seasonal:[50,58,72,85,90,92,88,90,80,65,52,44],
+    3:{ altitude:'980 m', bestTime:'Apr–Sep', budget:'Budget', tags:['Valley','Scenic','Adventure'],
         guidelines:[ {icon:'🏛️',title:'Historical Sites',text:'Visit Butkara Stupa and Mingora Museum. Hire local guides for historical context — very knowledgeable.'}, {icon:'🌊',title:'River Safety',text:'Do not swim in the Swat River during monsoon season. Currents are extremely dangerous Jul–Aug.'}, {icon:'🍽️',title:'Local Cuisine',text:'Try Peshawari chapli kabab and fresh fish at Kalam riverfront restaurants.'} ],
         souvenirs:[ {name:'Swat Emeralds', vendor:'Mingora Gem Bazaar', price:'Rs. 5,000–50,000'}, {name:'Pashtun Embroidery', vendor:'Local Women Cooperatives', price:'Rs. 800–3,000'} ],
         hotels:[ {name:'Serena Swat', stars:5, price:'Rs. 15,000/night', rating:4.7}, {name:'Kalam Valley Hotel', stars:3, price:'Rs. 3,000/night', rating:4.2} ] },
     4:{ altitude:'2,228 m', bestTime:'Jun–Sep', budget:'Moderate', tags:['Adventure','K2','Mountain'],
-        seasonal:[25,30,45,65,80,88,90,85,72,55,35,22],
         guidelines:[ {icon:'✈️',title:'How to Get There',text:'PIA operates flights from Islamabad. Book in advance — seats fill quickly. KKH is an alternative but takes 2 days.'}, {icon:'🏔️',title:'Altitude Sickness',text:'Skardu is at 2,228m. Acclimatize for 1–2 days before trekking to higher elevations.'}, {icon:'🧊',title:'Weather',text:'Summer days are warm (25°C) but nights are cold (5–10°C). Winters are extreme — only visit June–September.'} ],
         souvenirs:[ {name:'Skardu Salt Lamps', vendor:'Local Shops', price:'Rs. 500–2,000'}, {name:'Karakoram Gems', vendor:'Gem Dealers, Skardu Bazaar', price:'Rs. 2,000–20,000'} ],
         hotels:[ {name:'Serena Skardu', stars:5, price:'Rs. 20,000/night', rating:4.8}, {name:'Shangrila Resort', stars:4, price:'Rs. 12,000/night', rating:4.6}, {name:'K2 Motel', stars:3, price:'Rs. 4,500/night', rating:4.0} ] },
-    5:{ altitude:'2,409 m', bestTime:'Jun–Aug', budget:'Budget', tags:['Valley','Nature','Scenic'],
-        seasonal:[20,25,40,60,75,85,88,82,70,50,30,18],
+    5:{ altitude:'2,409 m', bestTime:'Jun–Sep', budget:'Budget', tags:['Valley','Nature','Scenic'],
         guidelines:[ {icon:'📅',title:'Short Window',text:'Naran is accessible only June–September. The Babusar Top pass closes for the rest of the year due to heavy snow.'}, {icon:'🌙',title:'Night Temperature',text:'Even in summer, night temperatures drop to near 0°C. Pack a warm sleeping bag and heavy jacket.'}, {icon:'🚐',title:'4x4 Vehicles',text:'Beyond Naran town, roads are unpaved and steep. Hire a local 4x4 jeep — do not attempt in a regular car.'} ],
-        souvenirs:[ {name:'Honey (Wild Mountain)', vendor:'Naran Bazaar', price:'Rs. 1,200–3,000/kg'}, {name:'Woollen Blankets', vendor:'Local Weavers', price:'Rs. 1,500–4,000'} ],
+        souvenirs:[ {name:'Wild Mountain Honey', vendor:'Naran Bazaar', price:'Rs. 1,200–3,000/kg'}, {name:'Woollen Blankets', vendor:'Local Weavers', price:'Rs. 1,500–4,000'} ],
         hotels:[ {name:'Pine Park Hotel', stars:4, price:'Rs. 6,500/night', rating:4.3}, {name:'Kaghan Resort', stars:3, price:'Rs. 3,200/night', rating:4.0} ] },
+    6:{ altitude:'217 m', bestTime:'Oct–Mar', budget:'Budget', tags:['Cultural','Heritage','Food','History'],
+        guidelines:[ {icon:'🕌',title:'Visiting Mosques & Shrines',text:'Cover head and remove shoes before entering. Separate entrances for men and women at Badshahi Mosque and Data Darbar.'}, {icon:'🌡️',title:'Best Time',text:'October to March is ideal (5–20°C). Summers (May–Aug) are extremely hot at 40–45°C.'}, {icon:'🍢',title:'Food Street',text:'Visit Gawalmandi Food Street and Anarkali Bazaar for authentic Lahori food — biryani, nihari, and paya are must-tries.'}, {icon:'🚇',title:'Getting Around',text:'Orange Line Metro connects major areas. Rickshaws and Careem/Uber are widely available.'} ],
+        souvenirs:[ {name:'Rang Mahal Embroidered Fabric', vendor:'Anarkali Bazaar', price:'Rs. 1,500–6,000'}, {name:'Brass & Copper Craft', vendor:'Shahi Bazaar', price:'Rs. 800–4,000'}, {name:'Lahori Khusa (Embroidered Shoes)', vendor:'Liberty Market', price:'Rs. 500–2,500'} ],
+        hotels:[ {name:'Pearl Continental Lahore', stars:5, price:'Rs. 25,000/night', rating:4.7}, {name:'Avari Lahore', stars:4, price:'Rs. 14,000/night', rating:4.4}, {name:'Faletti\'s Hotel', stars:4, price:'Rs. 10,000/night', rating:4.2} ] },
+    7:{ altitude:'507 m', bestTime:'Oct–Apr', budget:'Budget', tags:['Capital','Modern','Scenic','Nature'],
+        guidelines:[ {icon:'🕌',title:'Faisal Mosque',text:'Non-Muslims welcome outside prayer times. Dress modestly and cover head. Separate entrances for men and women.'}, {icon:'🌿',title:'Margalla Hills',text:'Hiking trails open 6am–6pm. Trail 3 is the most popular (2 hours round trip). Carry water and wear sturdy shoes.'}, {icon:'🔒',title:'Safety',text:'Islamabad is one of Pakistan\'s safest cities. Carry your CNIC or passport near diplomatic enclaves and checkpoints.'}, {icon:'✈️',title:'Airport',text:'Islamabad International Airport (ISB) is 25 km from the city. Metro Bus connects to Rawalpindi. Uber/Careem available.'} ],
+        souvenirs:[ {name:'Lok Mela Handicrafts', vendor:'Lok Virsa Museum Shop', price:'Rs. 500–5,000'}, {name:'Pakistani Marble Crafts', vendor:'F-6 Supermarket', price:'Rs. 1,000–8,000'}, {name:'Kashmiri Shawls', vendor:'Jinnah Super Market', price:'Rs. 2,000–8,000'} ],
+        hotels:[ {name:'Serena Hotel Islamabad', stars:5, price:'Rs. 30,000/night', rating:4.8}, {name:'Marriott Islamabad', stars:5, price:'Rs. 28,000/night', rating:4.7}, {name:'Islamabad Hotel', stars:4, price:'Rs. 12,000/night', rating:4.2} ] },
+    8:{ altitude:'3,300 m', bestTime:'Jun–Sep', budget:'Moderate', tags:['Mountain','Trek','Camping','Nanga Parbat'],
+        guidelines:[ {icon:'🚙',title:'Getting There',text:'Drive from Islamabad to Raikot Bridge (~6 hrs). Take a hired jeep (1 hr) to Tattu village, then 3 km hike to the meadow.'}, {icon:'❄️',title:'Cold Nights',text:'Even in July, nights drop to 5°C or below. Bring a quality sleeping bag, thermal layers, and a warm jacket.'}, {icon:'🥾',title:'Trekking to Base Camp',text:'The 2-day Nanga Parbat Base Camp trek requires a licensed guide and proper high-altitude trekking gear.'}, {icon:'🏥',title:'No Medical Facilities',text:'The nearest hospital is in Chilas. Carry a comprehensive first-aid kit and altitude sickness medicine (Diamox).'} ],
+        souvenirs:[ {name:'Handmade Wool Products', vendor:'Tattu Village', price:'Rs. 600–2,500'}, {name:'Mountain Herb Tea', vendor:'Local Guesthouses', price:'Rs. 200–800'}, {name:'Nanga Parbat Prints & Postcards', vendor:'Fairy Meadows Camp', price:'Rs. 150–500'} ],
+        hotels:[ {name:'Fairy Meadows Hut', stars:2, price:'Rs. 2,500/night', rating:4.3}, {name:'Nanga Parbat View Camp', stars:2, price:'Rs. 1,800/night', rating:4.1}, {name:'Raikot Bridge Guesthouse', stars:2, price:'Rs. 1,500/night', rating:3.9} ] },
+    9:{ altitude:'55 m', bestTime:'Nov–Feb', budget:'Budget', tags:['UNESCO','Ancient','History','Archaeology'],
+        guidelines:[ {icon:'🏛️',title:'Site Rules',text:'Do not touch or climb on any ruins — they are 4,500 years old. Photography permitted but flash and tripods inside the museum require written permission.'}, {icon:'☀️',title:'Beat the Heat',text:'Go early morning (8–11am). Summers are brutally hot (45–50°C). Only visit November–February.'}, {icon:'🚌',title:'Getting There',text:'Fly to Moenjodaro Airport (MJD) from Karachi or Islamabad. Or take a train to Larkana then hire a taxi (~30 km).'}, {icon:'🎟️',title:'Entry Fee',text:'Approx. PKR 500 for Pakistanis, PKR 1,000 for foreigners. Guided tours available at the gate.'} ],
+        souvenirs:[ {name:'Indus Valley Replica Artefacts', vendor:'Site Gift Shop', price:'Rs. 300–2,000'}, {name:'Sindhi Ajrak (Block-print Fabric)', vendor:'Larkana Bazaar', price:'Rs. 800–3,500'}, {name:'Sindhi Embroidery', vendor:'Larkana Craft Shops', price:'Rs. 1,000–4,000'} ],
+        hotels:[ {name:'Mohenjo Daro Hotel', stars:2, price:'Rs. 3,000/night', rating:3.6}, {name:'Hotel Indus Larkana', stars:3, price:'Rs. 5,000/night', rating:3.8}, {name:'PTDC Motel Larkana', stars:2, price:'Rs. 2,500/night', rating:3.5} ] },
+   10:{ altitude:'150 m', bestTime:'Nov–Feb', budget:'Budget', tags:['Desert','Adventure','Heritage','Safari'],
+        guidelines:[ {icon:'🧭',title:'Never Enter Alone',text:'Always hire a local guide or join an organised tour from Bahawalpur. Carry at least 4 litres of water per person.'}, {icon:'🏰',title:'Derawar Fort',text:'Contact Bahawalpur Commissioner\'s office for access permits to Derawar Fort interior. Exterior is always accessible.'}, {icon:'🌪️',title:'Sandstorms',text:'Sandstorms can arise suddenly. Have a plan to shelter — stay in or near your vehicle and cover face with cloth.'}, {icon:'📱',title:'Connectivity',text:'Mobile signal is limited. Zong has the best coverage in Bahawalpur district. Save emergency numbers before you go.'} ],
+        souvenirs:[ {name:'Camel Leather Goods', vendor:'Bahawalpur Bazaar', price:'Rs. 1,000–5,000'}, {name:'Cholistani Pottery', vendor:'Local Artisans', price:'Rs. 500–2,500'}, {name:'Derawar Fort Miniature Prints', vendor:'Souvenir Stalls', price:'Rs. 200–800'} ],
+        hotels:[ {name:'PC Bahawalpur', stars:4, price:'Rs. 8,000/night', rating:4.0}, {name:'Hotel Al-Farooq', stars:3, price:'Rs. 4,500/night', rating:3.8}, {name:'Desert Safari Camp', stars:2, price:'Rs. 3,000/night', rating:4.2} ] },
 };
 
 const DEFAULT_EXTRAS = {
     altitude:'—', bestTime:'Year-round', budget:'Varies', tags:['Pakistan'],
-    seasonal:[60,62,65,70,75,80,78,78,72,68,63,60],
     guidelines:[ {icon:'📱',title:'Stay Connected',text:'Save local emergency numbers before you travel. Tourist Helpline: 1422.'}, {icon:'💧',title:'Stay Hydrated',text:'Carry drinking water, especially for longer trips.'}, {icon:'🚗',title:'Plan Your Route',text:'Use our Route Finder to plan the best way to get there.'} ],
     souvenirs:[ {name:'Local Handicrafts', vendor:'Local Bazaars', price:'Varies'}, {name:'Regional Specialties', vendor:'Local Markets', price:'Varies'} ],
     hotels:[ {name:'Contact PTDC', stars:3, price:'Varies by season', rating:4.0} ],
@@ -239,16 +276,15 @@ const DEFAULT_EXTRAS = {
 // ── Wishlist state ────────────────────────────────────────
 let isFavorited = false;
 let wishBtnBusy = false;
+let currentDestId = null;
+let userRating = 0;
 
 // ── Render page with destination data ─────────────────────
-const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function barColor(v) { return v>=80?'#22c55e':v>=60?'#f5a623':v>=40?'#3b82f6':'rgba(255,255,255,0.2)'; }
-
 function renderPage(d, extras) {
     const img = resolveImage(d.imageUrl);
     const rating = d.averageRating ? Number(d.averageRating).toFixed(1) : '–';
     const reviews = d.totalReviews || 0;
-    const maxS = Math.max(...extras.seasonal);
+    const starsDisplay = d.averageRating ? starStr(Number(d.averageRating)) : '☆☆☆☆☆';
 
     document.getElementById('topbarTitle').textContent = d.name;
     document.title = d.name + ' — Tripify';
@@ -287,23 +323,6 @@ function renderPage(d, extras) {
     </div>
 
     <div class="section-card">
-        <h3>🌤️ Monthly Suitability Index</h3>
-        <p style="font-size:12px;color:var(--t2);margin-bottom:12px">How suitable is each month for visiting? (Green = Ideal)</p>
-        <div class="seasonal-chart">
-            ${extras.seasonal.map((v,i)=>`
-            <div class="month-bar" title="${months[i]}: ${v}% suitable">
-                <div class="month-bar-inner" style="height:${Math.round(v/maxS*70)}px;background:${barColor(v)};opacity:0.85;"></div>
-                <div class="month-lbl">${months[i].slice(0,1)}</div>
-            </div>`).join('')}
-        </div>
-        <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap">
-            <span style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#22c55e;border-radius:2px;display:inline-block"></span>Ideal (80%+)</span>
-            <span style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#f5a623;border-radius:2px;display:inline-block"></span>Good (60%+)</span>
-            <span style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block"></span>OK (40%+)</span>
-        </div>
-    </div>
-
-    <div class="section-card">
         <h3>📋 Travel Guidelines</h3>
         ${extras.guidelines.map(g=>`
         <div class="guideline-item">
@@ -321,13 +340,28 @@ function renderPage(d, extras) {
         </div>`).join('')}
     </div>
 
-    <div class="section-card">
-        <h3>⭐ Rate This Destination</h3>
-        <p style="font-size:12.5px;color:var(--t2);margin-bottom:8px">How was your experience? Share your rating:</p>
-        <div class="rate-stars" id="rateStars">
-            ${[1,2,3,4,5].map(i=>`<span class="rate-star" data-val="${i}" onclick="setRating(${i})">★</span>`).join('')}
+    <div class="section-card" id="reviewsCard">
+        <h3>⭐ Ratings &amp; Reviews</h3>
+        <div class="rating-summary">
+            <div>
+                <div class="rating-big-num">${rating}</div>
+                <div class="rating-big-stars">${starsDisplay}</div>
+                <div class="rating-big-count">${reviews} review${reviews !== 1 ? 's' : ''}</div>
+            </div>
         </div>
-        <p style="font-size:12px;color:var(--t3)" id="rateLabel">Click a star to rate</p>
+        <div id="reviewsList"><div style="text-align:center;padding:20px;color:var(--t3);font-size:13px">Loading reviews…</div></div>
+        <div class="rate-form">
+            <h4>✍️ Write a Review</h4>
+            <p style="font-size:12px;color:var(--t3);margin-bottom:10px">Anyone can submit feedback. Trips with a completed itinerary earn a <strong style="color:#22c55e">✅ Verified Traveller</strong> badge.</p>
+            <div class="rate-stars" id="rateStars">
+                ${[1,2,3,4,5].map(i=>`<span class="rate-star" data-val="${i}" onclick="setRating(${i})">★</span>`).join('')}
+            </div>
+            <textarea class="rate-textarea" id="reviewText" placeholder="Share your experience (optional)…" maxlength="1000"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:10px">
+                <span class="rate-msg" id="rateMsg"></span>
+                <button class="btn btn-primary btn-sm" onclick="submitReview()">Submit Review</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -374,49 +408,108 @@ function renderPage(d, extras) {
 async function toggleWish() {
     if (wishBtnBusy) return;
     wishBtnBusy = true;
-    const btn   = document.getElementById('wishBtn');
-    const idVal = parseInt(new URLSearchParams(location.search).get('id'));
+    const btn    = document.getElementById('wishBtn');
     const method = isFavorited ? 'DELETE' : 'POST';
-
     try {
-        const res = await fetch(ENDPOINTS.FAVORITES.ADD(idVal), {
-            method,
-            headers: { 'Authorization': 'Bearer ' + tripToken }
+        const res = await fetch(ENDPOINTS.FAVORITES.ADD(currentDestId), {
+            method, headers: { 'Authorization': 'Bearer ' + tripToken }
         });
-
         if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
-
-        if (res.status === 409) {
-            // Alternate flow: already in wishlist
-            showToast('💛', 'This destination is already in your Favorites.');
-            wishBtnBusy = false;
-            return;
-        }
-
+        if (res.status === 409) { showToast('💛', 'Already in your Favorites.'); wishBtnBusy = false; return; }
         if (res.ok) {
             isFavorited = !isFavorited;
             btn.textContent = isFavorited ? '❤️' : '🤍';
             showToast(isFavorited ? '❤️' : '🤍', isFavorited ? 'Added to Favorites!' : 'Removed from Favorites');
-        } else {
-            showToast('❌', 'Unable to add to Favorites now. Please try again later.');
-        }
-    } catch (e) {
-        showToast('📶', 'Network error. Try again.');
-    }
+        } else { showToast('❌', 'Unable to update Favorites. Please try again.'); }
+    } catch (e) { showToast('📶', 'Network error. Try again.'); }
     wishBtnBusy = false;
 }
-let userRating = 0;
+
 function setRating(v) {
     userRating = v;
-    document.querySelectorAll('.rate-star').forEach((s,i) => s.classList.toggle('active', i<v));
-    document.getElementById('rateLabel').textContent = `You rated ${v}/5 stars`;
-    showToast('⭐', `Thanks for your ${v}-star rating!`);
+    document.querySelectorAll('.rate-star').forEach((s, i) => s.classList.toggle('active', i < v));
+}
+
+// ── Load + render reviews ─────────────────────────────────
+async function loadReviews(destId) {
+    const list = document.getElementById('reviewsList');
+    if (!list) return;
+    try {
+        const res = await fetch(ENDPOINTS.REVIEWS.BY_DEST(destId), {
+            headers: { 'Authorization': 'Bearer ' + tripToken }
+        });
+        if (!res.ok) { list.innerHTML = '<div class="reviews-empty"><span>❌</span>Could not load reviews.</div>'; return; }
+        const reviews = await res.json();
+        if (!reviews.length) {
+            list.innerHTML = '<div class="reviews-empty"><span>💬</span>No reviews for this destination yet.</div>';
+            return;
+        }
+        list.innerHTML = reviews.map(r => {
+            const stars  = '★'.repeat(r.rating) + '☆'.repeat(5 - r.rating);
+            const date   = r.createdAt ? new Date(r.createdAt).toLocaleDateString('en-GB', {month:'short', year:'numeric'}) : '';
+            const text   = r.reviewText ? `<div class="review-text">${escHtml(r.reviewText)}</div>` : '';
+            const badge  = r.verified
+                ? `<span style="font-size:10.5px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.25);border-radius:20px;padding:2px 8px;font-weight:600;">✅ Verified Traveller</span>`
+                : `<span style="font-size:10.5px;background:rgba(255,255,255,0.05);color:var(--t3);border:1px solid var(--border);border-radius:20px;padding:2px 8px;font-weight:500;">💬 General Feedback</span>`;
+            return `<div class="review-card">
+                <div class="review-header">
+                    <span class="reviewer-name">${escHtml(r.reviewerName || 'Anonymous')}</span>
+                    <span class="review-date">${date}</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+                    <div class="review-stars">${stars}</div>
+                    ${badge}
+                </div>
+                ${text}
+            </div>`;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = '<div class="reviews-empty"><span>📶</span>Could not load reviews.</div>';
+    }
+}
+
+function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Submit review ─────────────────────────────────────────
+async function submitReview() {
+    const msg = document.getElementById('rateMsg');
+    if (!userRating) { msg.className = 'rate-msg err'; msg.textContent = 'Please select a star rating first.'; return; }
+    const text = (document.getElementById('reviewText').value || '').trim();
+
+    msg.className = 'rate-msg'; msg.textContent = 'Submitting…';
+    try {
+        const res = await fetch(ENDPOINTS.REVIEWS.SUBMIT, {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + tripToken, 'Content-Type': 'application/json' },
+            body: JSON.stringify({ destinationId: currentDestId, rating: userRating, reviewText: text || null })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 201) {
+            const label = data.verified ? '✅ Verified review submitted!' : '💬 General feedback submitted!';
+            msg.className = 'rate-msg ok'; msg.textContent = label;
+            document.getElementById('reviewText').value = '';
+            userRating = 0;
+            document.querySelectorAll('.rate-star').forEach(s => s.classList.remove('active'));
+            loadReviews(currentDestId);
+        } else if (res.status === 403) {
+            msg.className = 'rate-msg err'; msg.textContent = data.message || 'Only allowed for completed-trip destinations.';
+        } else if (res.status === 409) {
+            msg.className = 'rate-msg err'; msg.textContent = 'You have already reviewed this destination.';
+        } else {
+            msg.className = 'rate-msg err'; msg.textContent = data.message || 'Submission failed. Try again.';
+        }
+    } catch (e) {
+        msg.className = 'rate-msg err'; msg.textContent = 'Network error. Try again.';
+    }
 }
 
 // ── Load destination from API ─────────────────────────────
 async function loadDestination() {
     const id = parseInt(new URLSearchParams(location.search).get('id'));
     if (!id) { window.location.href = 'destinations.html'; return; }
+    currentDestId = id;
 
     const content = document.getElementById('pageContent');
     content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--t2)"><div style="font-size:36px;animation:spin 1s linear infinite;display:inline-block">⏳</div><p style="margin-top:14px">Loading destination…</p></div>`;
@@ -437,25 +530,19 @@ async function loadDestination() {
         const d = await res.json();
         const extras = EXTRAS[id] || DEFAULT_EXTRAS;
 
-        // Check if this destination is already in user's wishlist
         try {
-            const favRes = await fetch(ENDPOINTS.FAVORITES.IDS, {
-                headers: { 'Authorization': 'Bearer ' + tripToken }
-            });
-            if (favRes.ok) {
-                const ids = await favRes.json();
-                isFavorited = ids.includes(id);
-            }
-        } catch (e) { /* non-critical — heart defaults to 🤍 */ }
+            const favRes = await fetch(ENDPOINTS.FAVORITES.IDS, { headers: { 'Authorization': 'Bearer ' + tripToken } });
+            if (favRes.ok) { const ids = await favRes.json(); isFavorited = ids.includes(id); }
+        } catch (e) {}
 
         renderPage(d, extras);
-
-        // Update heart button to reflect actual wishlist state
         const wishBtn = document.getElementById('wishBtn');
         if (wishBtn) wishBtn.textContent = isFavorited ? '❤️' : '🤍';
 
+        loadReviews(id);
+
     } catch (e) {
-        content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--t2)"><div style="font-size:40px">📶</div><p style="margin-top:14px">Network error. Check your connection and that the server is running.</p><a href="destinations.html" class="btn btn-ghost" style="margin-top:16px">← Go Back</a></div>`;
+        content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--t2)"><div style="font-size:40px">📶</div><p style="margin-top:14px">Network error. Check your connection.</p><a href="destinations.html" class="btn btn-ghost" style="margin-top:16px">← Go Back</a></div>`;
     }
 }
 

@@ -91,11 +91,15 @@ button { font-family: var(--font); cursor: pointer; }
 }
 .sidebar-nav {
     flex: 1;
-    padding: 14px 10px;
+    min-height: 0;
+    padding: 10px 10px;
     overflow-y: auto;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.08) transparent;
 }
-.sidebar-nav::-webkit-scrollbar { display: none; }
+.sidebar-nav::-webkit-scrollbar { width: 4px; }
+.sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar-nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 .nav-section-label {
     display: block;
     font-size: 10px;
@@ -103,13 +107,13 @@ button { font-family: var(--font); cursor: pointer; }
     letter-spacing: 1.6px;
     text-transform: uppercase;
     color: var(--t3);
-    padding: 10px 10px 6px;
+    padding: 6px 10px 4px;
 }
 .nav-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 9px 12px;
+    padding: 7px 12px;
     border-radius: var(--r-sm);
     color: var(--t2);
     font-size: 13.5px;
@@ -605,6 +609,7 @@ button { font-family: var(--font); cursor: pointer; }
     appearance: none;
 }
 .filter-select-wrap select:focus { border-color: rgba(245,166,35,0.3); color: var(--t1); }
+.filter-select-wrap select option { background: #0d1b2a; color: var(--t1); }
 .filter-select-wrap::after {
     content: '▾'; position: absolute; right: 10px; font-size: 9px;
     color: var(--t3); pointer-events: none;

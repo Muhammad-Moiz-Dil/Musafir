@@ -24,6 +24,9 @@ public class Review {
     @Column(name = "review_text", columnDefinition = "TEXT")
     private String reviewText;
 
+    @Column(name = "verified")
+    private Boolean verified = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -36,6 +39,7 @@ public class Review {
     public Integer getDestinationId()     { return destinationId; }
     public Integer getRating()            { return rating; }
     public String  getReviewText()        { return reviewText; }
+    public Boolean getVerified()          { return verified; }
     public LocalDateTime getCreatedAt()   { return createdAt; }
 
     // ── Setters ──────────────────────────────────────────────
@@ -43,4 +47,5 @@ public class Review {
     public void setDestinationId(Integer destinationId) { this.destinationId = destinationId; }
     public void setRating(Integer rating)               { this.rating        = rating;       }
     public void setReviewText(String reviewText)        { this.reviewText    = reviewText;   }
+    public void setVerified(Boolean verified)           { this.verified      = verified;     }
 }

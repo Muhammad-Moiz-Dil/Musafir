@@ -15,19 +15,6 @@
     border-radius:var(--r-xl); padding:24px;
 }
 .input-panel h3 { font-size:16px; font-weight:700; color:var(--white); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
-.range-group { margin-bottom:16px; }
-.range-label { display:flex; justify-content:space-between; font-size:12.5px; font-weight:600; color:var(--t2); margin-bottom:7px; }
-.range-val { color:var(--accent); }
-input[type=range] {
-    width:100%; -webkit-appearance:none; appearance:none;
-    height:5px; border-radius:3px; outline:none; cursor:pointer;
-    background:linear-gradient(to right,var(--accent) 0%,var(--accent) var(--prog,50%),rgba(255,255,255,0.12) var(--prog,50%),rgba(255,255,255,0.12) 100%);
-}
-input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance:none; width:17px; height:17px; border-radius:50%;
-    background:var(--accent); border:2px solid var(--bg); cursor:pointer;
-    box-shadow:var(--shadow-accent);
-}
 
 /* Results panel */
 .result-panel {
@@ -66,6 +53,17 @@ input[type=range]::-webkit-slider-thumb {
 }
 .route-chip:hover { background:var(--accent-glow); border-color:rgba(245,166,35,0.25); color:var(--accent); }
 
+/* Validation */
+.field-error { display:block; font-size:11.5px; color:#ef4444; margin-top:4px; min-height:16px; }
+.form-input.invalid { border-color:#ef4444 !important; }
+
+/* Error banner */
+.error-banner {
+    background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+    border-radius:var(--r); padding:12px 16px; font-size:13px; color:#fca5a5;
+    margin-bottom:16px; display:flex; align-items:center; gap:8px;
+}
+
 @media (max-width:900px) { .estimator-layout { grid-template-columns:1fr; } }
 </style>
 </head>
@@ -79,6 +77,7 @@ input[type=range]::-webkit-slider-thumb {
         <span class="nav-section-label">Main</span>
         <a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
         <a href="destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Explore</span></a>
+        <a href="my-trips.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span><span>My Trips</span></a>
         <a href="trip-cost.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span><span>Trip Cost</span></a>
         <a href="route-finder.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span><span>Route Finder</span></a>
         <span class="nav-section-label">Discover</span>
@@ -87,6 +86,7 @@ input[type=range]::-webkit-slider-thumb {
         <a href="travel-guidelines.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span>Travel Guidelines</span></a>
         <a href="souvenirs.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Souvenirs</span></a>
         <a href="seasonal-insights.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Seasonal</span></a>
+        <a href="weather-alerts.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/></svg></span><span>Weather Alerts</span></a>
         <div class="nav-divider"></div>
         <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
         <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
@@ -127,18 +127,42 @@ input[type=range]::-webkit-slider-thumb {
     <div class="mb-22">
         <div style="font-size:12.5px;color:var(--t2);margin-bottom:8px;font-weight:600;">⚡ Quick Presets</div>
         <div class="route-chips" id="presetChips">
-            <button class="route-chip" onclick="applyPreset(500,2,3)">🏔️ Islamabad → Hunza (500 km)</button>
-            <button class="route-chip" onclick="applyPreset(50,4,2)">🌲 Islamabad → Murree (50 km)</button>
-            <button class="route-chip" onclick="applyPreset(340,3,4)">🌊 Lahore → Swat (340 km)</button>
-            <button class="route-chip" onclick="applyPreset(620,2,5)">🏔️ Islamabad → Skardu (620 km)</button>
-            <button class="route-chip" onclick="applyPreset(250,4,3)">🌿 Islamabad → Naran (250 km)</button>
+            <button class="route-chip" onclick="applyPreset('Hunza Valley',500,2,3)">🏔️ Islamabad → Hunza (500 km)</button>
+            <button class="route-chip" onclick="applyPreset('Murree',50,4,2)">🌲 Islamabad → Murree (50 km)</button>
+            <button class="route-chip" onclick="applyPreset('Swat Valley',340,3,4)">🌿 Lahore → Swat (340 km)</button>
+            <button class="route-chip" onclick="applyPreset('Skardu',620,2,5)">⛰️ Islamabad → Skardu (620 km)</button>
+            <button class="route-chip" onclick="applyPreset('Naran Kaghan',250,4,3)">🌊 Islamabad → Naran (250 km)</button>
         </div>
+    </div>
+
+    <!-- Error banner -->
+    <div class="error-banner" id="errorBanner" style="display:none">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Unable to fetch cost data. Please try again later.
     </div>
 
     <div class="estimator-layout">
         <!-- Input Panel -->
         <div class="input-panel">
             <h3>⚙️ Trip Parameters</h3>
+
+            <!-- Destination select -->
+            <div class="form-group">
+                <label class="form-label">📍 Select Destination</label>
+                <select class="form-select" id="destSelect" onchange="onDestChange(this.value)">
+                    <option value="">— Choose a destination —</option>
+                    <option value="Hunza Valley"  data-dist="500">🏔️ Hunza Valley (500 km from ISB)</option>
+                    <option value="Murree"         data-dist="50">🌲 Murree (50 km from ISB)</option>
+                    <option value="Swat Valley"    data-dist="340">🌿 Swat Valley (340 km from ISB)</option>
+                    <option value="Skardu"         data-dist="620">⛰️ Skardu (620 km from ISB)</option>
+                    <option value="Naran Kaghan"   data-dist="250">🌊 Naran Kaghan (250 km from ISB)</option>
+                    <option value="Lahore"         data-dist="380">🏙️ Lahore (380 km from ISB)</option>
+                    <option value="Islamabad"      data-dist="10">🕌 Islamabad (local)</option>
+                    <option value="Fairy Meadows"  data-dist="550">🏕️ Fairy Meadows (550 km from ISB)</option>
+                    <option value="Mohenjo Daro"   data-dist="1200">🏛️ Mohenjo Daro (1200 km from ISB)</option>
+                    <option value="Cholistan Desert" data-dist="700">🏜️ Cholistan Desert (700 km from ISB)</option>
+                </select>
+            </div>
 
             <div class="form-group">
                 <label class="form-label">🚗 Transport Type</label>
@@ -150,19 +174,22 @@ input[type=range]::-webkit-slider-thumb {
                 </select>
             </div>
 
-            <div class="range-group">
-                <div class="range-label"><span>📏 One-Way Distance</span><span class="range-val" id="distVal">250 km</span></div>
-                <input type="range" id="dist" min="50" max="1500" value="250" step="10">
+            <div class="form-group">
+                <label class="form-label">📏 One-Way Distance (km)</label>
+                <input type="number" class="form-input" id="dist" min="1" max="5000" value="250" placeholder="e.g. 250" oninput="clearError('dist')">
+                <span class="field-error" id="distErr"></span>
             </div>
 
-            <div class="range-group">
-                <div class="range-label"><span>👥 Number of Travelers</span><span class="range-val" id="travelersVal">3</span></div>
-                <input type="range" id="travelers" min="1" max="20" value="3" step="1">
+            <div class="form-group">
+                <label class="form-label">👥 Number of Travelers</label>
+                <input type="number" class="form-input" id="travelers" min="1" max="100" value="3" placeholder="e.g. 3" oninput="clearError('travelers')">
+                <span class="field-error" id="travelersErr"></span>
             </div>
 
-            <div class="range-group">
-                <div class="range-label"><span>🌙 Nights of Stay</span><span class="range-val" id="nightsVal">3 nights</span></div>
-                <input type="range" id="nights" min="1" max="14" value="3" step="1">
+            <div class="form-group">
+                <label class="form-label">🌙 Nights of Stay</label>
+                <input type="number" class="form-input" id="nights" min="1" max="365" value="3" placeholder="e.g. 3" oninput="clearError('nights')">
+                <span class="field-error" id="nightsErr"></span>
             </div>
 
             <div class="form-group">
@@ -183,7 +210,7 @@ input[type=range]::-webkit-slider-thumb {
                 </select>
             </div>
 
-            <button class="btn btn-primary btn-full" style="margin-top:6px" onclick="calculate()">
+            <button class="btn btn-primary btn-full" style="margin-top:6px" id="calcBtn" onclick="calculate()">
                 💰 Calculate Total Cost
             </button>
         </div>
@@ -192,7 +219,7 @@ input[type=range]::-webkit-slider-thumb {
         <div class="result-panel" id="resultPanel">
             <div class="result-placeholder" id="resultPlaceholder">
                 <span>💡</span>
-                <p>Adjust the parameters on the left and<br>click <strong style="color:var(--accent)">Calculate</strong> to see your cost breakdown.</p>
+                <p>Select a destination or fill in the parameters on the left and<br>click <strong style="color:var(--accent)">Calculate</strong> to see your cost breakdown.</p>
             </div>
             <div id="resultContent" style="display:none">
                 <div class="total-box">
@@ -217,82 +244,122 @@ input[type=range]::-webkit-slider-thumb {
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-// Range updaters
-function setRangeProg(el){
-    const pct=((el.value-el.min)/(el.max-el.min))*100;
-    el.style.setProperty('--prog',pct+'%');
-}
-['dist','travelers','nights'].forEach(id=>{
-    const el=document.getElementById(id);
-    el.addEventListener('input',()=>{
-        if(id==='dist') document.getElementById('distVal').textContent=el.value+' km';
-        if(id==='travelers') document.getElementById('travelersVal').textContent=el.value;
-        if(id==='nights') document.getElementById('nightsVal').textContent=el.value+' night'+(el.value>1?'s':'');
-        setRangeProg(el);
-    });
-    setRangeProg(el);
-});
+// Destination → default distance map
+const DEST_DIST = {
+    'Hunza Valley':500,'Murree':50,'Swat Valley':340,'Skardu':620,
+    'Naran Kaghan':250,'Lahore':380,'Islamabad':10,
+    'Fairy Meadows':550,'Mohenjo Daro':1200,'Cholistan Desert':700
+};
 
-function applyPreset(dist,travelers,nights){
-    document.getElementById('dist').value=dist;
-    document.getElementById('travelers').value=travelers;
-    document.getElementById('nights').value=nights;
-    document.getElementById('distVal').textContent=dist+' km';
-    document.getElementById('travelersVal').textContent=travelers;
-    document.getElementById('nightsVal').textContent=nights+' night'+(nights>1?'s':'');
-    ['dist','travelers','nights'].forEach(id=>setRangeProg(document.getElementById(id)));
+function onDestChange(dest){
+    if(dest && DEST_DIST[dest]){
+        document.getElementById('dist').value = DEST_DIST[dest];
+        clearError('dist');
+    }
+}
+
+function clearError(field){
+    const err=document.getElementById(field+'Err');
+    if(err) err.textContent='';
+    const inp=document.getElementById(field);
+    if(inp) inp.classList.remove('invalid');
+    document.getElementById('errorBanner').style.display='none';
+}
+
+function validate(){
+    let ok=true;
+    const dist     = parseInt(document.getElementById('dist').value);
+    const travelers= parseInt(document.getElementById('travelers').value);
+    const nights   = parseInt(document.getElementById('nights').value);
+
+    if(!document.getElementById('dist').value.trim() || isNaN(dist) || dist < 1 || dist > 5000){
+        document.getElementById('distErr').textContent = dist > 5000 ? 'Maximum distance is 5,000 km.' : 'Please enter a valid distance (1–5,000 km).';
+        document.getElementById('dist').classList.add('invalid');
+        ok=false;
+    }
+    if(!document.getElementById('travelers').value.trim() || isNaN(travelers) || travelers < 1 || travelers > 100){
+        document.getElementById('travelersErr').textContent = travelers > 100 ? 'Maximum 100 travelers.' : 'Please enter a valid number of travelers (1–100).';
+        document.getElementById('travelers').classList.add('invalid');
+        ok=false;
+    }
+    if(!document.getElementById('nights').value.trim() || isNaN(nights) || nights < 1 || nights > 365){
+        document.getElementById('nightsErr').textContent = nights > 365 ? 'Maximum 365 nights.' : 'Please enter valid nights of stay (1–365).';
+        document.getElementById('nights').classList.add('invalid');
+        ok=false;
+    }
+    return ok;
+}
+
+function applyPreset(dest, dist, travelers, nights){
+    document.getElementById('destSelect').value  = dest;
+    document.getElementById('dist').value        = dist;
+    document.getElementById('travelers').value   = travelers;
+    document.getElementById('nights').value      = nights;
+    ['dist','travelers','nights'].forEach(id=>{ clearError(id); });
     calculate();
 }
 
 function fmtPKR(n){ return 'Rs. '+n.toLocaleString('en-PK'); }
 
 function calculate(){
-    const dist     = parseInt(document.getElementById('dist').value);
-    const travelers= parseInt(document.getElementById('travelers').value);
-    const nights   = parseInt(document.getElementById('nights').value);
-    const transport= document.getElementById('transport').value;
-    const hotelCat = document.getElementById('hotelCat').value;
-    const mealPref = document.getElementById('mealPref').value;
+    document.getElementById('errorBanner').style.display='none';
+    if(!validate()) return;
 
-    const hotelRate = {budget:3000, mid:7000, luxury:18000}[hotelCat];
-    const mealRate  = {local:400,   mid:800,  restaurant:1500}[mealPref];
-    const petrolPrice = 295; // PKR per litre
+    try {
+        const dist      = parseInt(document.getElementById('dist').value);
+        const travelers = parseInt(document.getElementById('travelers').value);
+        const nights    = parseInt(document.getElementById('nights').value);
+        const transport = document.getElementById('transport').value;
+        const hotelCat  = document.getElementById('hotelCat').value;
+        const mealPref  = document.getElementById('mealPref').value;
 
-    let fuelCost = 0;
-    if(transport==='car')    fuelCost = Math.round((dist*2/12)*petrolPrice);
-    else if(transport==='suv') fuelCost = Math.round((dist*2/8)*petrolPrice);
-    else if(transport==='bus') fuelCost = Math.round(dist*2*7*travelers); // Rs.7/km per person
-    else if(transport==='flight') fuelCost = Math.round(travelers*18000); // avg domestic flight
+        const hotelRate   = {budget:3000, mid:7000, luxury:18000}[hotelCat];
+        const mealRate    = {local:400, mid:800, restaurant:1500}[mealPref];
+        const petrolPrice = 295; // PKR per litre
 
-    const hotelCost = hotelRate * nights * Math.ceil(travelers/2);
-    const foodCost  = mealRate  * 3 * travelers * (nights+1);
-    const misc      = Math.round((fuelCost+hotelCost+foodCost)*0.10);
-    const total     = fuelCost + hotelCost + foodCost + misc;
+        let fuelCost = 0;
+        if(transport==='car')    fuelCost = Math.round((dist*2/12)*petrolPrice);
+        else if(transport==='suv') fuelCost = Math.round((dist*2/8)*petrolPrice);
+        else if(transport==='bus') fuelCost = Math.round(dist*2*7*travelers);
+        else if(transport==='flight') fuelCost = Math.round(travelers*18000);
 
-    const items=[
-        {icon:'⛽',label:'Fuel / Transport',sub:`${dist*2} km × ${transport}`,amt:fuelCost,color:'#f5a623',pct:Math.round(fuelCost/total*100)},
-        {icon:'🏨',label:'Accommodation',sub:`${nights} nights × ${Math.ceil(travelers/2)} rooms`,amt:hotelCost,color:'#3b82f6',pct:Math.round(hotelCost/total*100)},
-        {icon:'🍽️',label:'Food & Meals',sub:`${travelers} traveler${travelers>1?'s':''} × ${nights+1} days`,amt:foodCost,color:'#22c55e',pct:Math.round(foodCost/total*100)},
-        {icon:'🎒',label:'Miscellaneous (10%)',sub:'Tips, entry fees, emergencies',amt:misc,color:'#a855f7',pct:Math.round(misc/total*100)},
-    ];
+        const hotelCost = hotelRate * nights * Math.ceil(travelers/2);
+        const foodCost  = mealRate  * 3 * travelers * (nights+1);
+        const misc      = Math.round((fuelCost+hotelCost+foodCost)*0.10);
+        const total     = fuelCost + hotelCost + foodCost + misc;
 
-    document.getElementById('totalAmt').textContent=fmtPKR(total);
-    document.getElementById('totalPer').textContent=`≈ ${fmtPKR(Math.round(total/travelers))} per person`;
-    document.getElementById('breakdown').innerHTML=items.map(it=>`
-    <div class="breakdown-item">
-        <div class="bi-icon" style="background:${it.color}22">${it.icon}</div>
-        <div style="flex:1">
-            <div class="bi-label">${it.label}</div>
-            <div class="bi-sub">${it.sub}</div>
-            <div class="cost-bar" style="background:${it.color};width:${it.pct}%;"></div>
-        </div>
-        <div class="bi-amount">${fmtPKR(it.amt)}</div>
-    </div>`).join('');
+        if(total <= 0) throw new Error('Invalid total');
 
-    document.getElementById('resultPlaceholder').style.display='none';
-    document.getElementById('resultContent').style.display='block';
-    document.getElementById('resultPanel').classList.add('has-result');
-    showToast('💰','Cost calculated!');
+        const items=[
+            {icon:'⛽',label:'Fuel / Transport',sub:`${dist*2} km × ${transport}`,amt:fuelCost,color:'#f5a623',pct:Math.round(fuelCost/total*100)},
+            {icon:'🏨',label:'Accommodation',sub:`${nights} nights × ${Math.ceil(travelers/2)} rooms`,amt:hotelCost,color:'#3b82f6',pct:Math.round(hotelCost/total*100)},
+            {icon:'🍽️',label:'Food & Meals',sub:`${travelers} traveler${travelers>1?'s':''} × ${nights+1} days`,amt:foodCost,color:'#22c55e',pct:Math.round(foodCost/total*100)},
+            {icon:'🎒',label:'Miscellaneous (10%)',sub:'Tips, entry fees, emergencies',amt:misc,color:'#a855f7',pct:Math.round(misc/total*100)},
+        ];
+
+        document.getElementById('totalAmt').textContent=fmtPKR(total);
+        document.getElementById('totalPer').textContent=`≈ ${fmtPKR(Math.round(total/travelers))} per person`;
+        document.getElementById('breakdown').innerHTML=items.map(it=>`
+        <div class="breakdown-item">
+            <div class="bi-icon" style="background:${it.color}22">${it.icon}</div>
+            <div style="flex:1">
+                <div class="bi-label">${it.label}</div>
+                <div class="bi-sub">${it.sub}</div>
+                <div class="cost-bar" style="background:${it.color};width:${it.pct}%;"></div>
+            </div>
+            <div class="bi-amount">${fmtPKR(it.amt)}</div>
+        </div>`).join('');
+
+        document.getElementById('resultPlaceholder').style.display='none';
+        document.getElementById('resultContent').style.display='block';
+        document.getElementById('resultPanel').classList.add('has-result');
+        showToast('💰','Cost calculated!');
+    } catch(e) {
+        document.getElementById('errorBanner').style.display='flex';
+        document.getElementById('resultContent').style.display='none';
+        document.getElementById('resultPlaceholder').style.display='block';
+        document.getElementById('resultPanel').classList.remove('has-result');
+    }
 }
 
 // User

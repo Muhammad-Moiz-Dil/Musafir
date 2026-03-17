@@ -174,6 +174,7 @@ CREATE TABLE EmergencyInfo (
     tourist_helpline VARCHAR(20),
     nearest_hospital VARCHAR(255),
     embassy_contact VARCHAR(255),
+    covid_rules TEXT,
     created_at DATETIME DEFAULT NOW(),
     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
     FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE
@@ -508,16 +509,33 @@ VALUES
 (5, 'Flash Flood Risk', 'The trail to Lake Saif-ul-Malook is steep and dangerous after rain. Only take the jeep trail — do not attempt on foot alone. Always hire a local guide for high-altitude treks.', 'Safety'),
 (5, 'Vehicle Requirements', 'Beyond Naran town, roads are unpaved, steep and rocky. Only 4x4 vehicles should be used — standard cars will get stranded. Hire a local jeep driver who knows the routes well.', 'Safety');
 
--- ── Emergency Info (complete data for all 5 destinations) ────────────────────
+-- ── Emergency Info (complete data for all 10 destinations) ───────────────────
 -- Uses UC15 verified local numbers. Covers police, ambulance, fire, tourist helpline,
--- nearest hospital and embassy contact for all 5 main destinations.
-INSERT INTO EmergencyInfo (destination_id, police_number, ambulance_number, fire_service_number, tourist_helpline, nearest_hospital, embassy_contact)
+-- nearest hospital, embassy contact, and COVID-19 guidelines for all 10 destinations.
+INSERT INTO EmergencyInfo (destination_id, police_number, ambulance_number, fire_service_number, tourist_helpline, nearest_hospital, embassy_contact, covid_rules)
 VALUES
-(1, '05811-920070', '1122', '16', '1422', 'DHQ Hospital Gilgit',     '051-2279770'),
-(2, '051-3465010',  '1122', '16', '1422', 'THQ Hospital Murree',     '051-2279770'),
-(3, '0946-9230100', '1122', '16', '1422', 'Saidu Teaching Hospital', '051-2279770'),
-(4, '05815-920070', '1122', '16', '1422', 'DHQ Hospital Skardu',     '051-2279770'),
-(5, '0997-360011',  '1122', '16', '1422', 'THQ Hospital Mansehra',   '051-2279770');
+(1, '05811-920070', '1122', '16', '1422', 'DHQ Hospital Gilgit',          '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No PCR test required for domestic travel. Carry your vaccination card if available. Masks are optional but recommended in crowded bazaars. Health screening may apply at Gilgit airport.'),
+(2, '051-3465010',  '1122', '16', '1422', 'THQ Hospital Murree',          '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No PCR test or quarantine required for domestic travel. During peak tourist season, Murree can become overcrowded — keep hand sanitizer handy. Restaurants and hotels are fully operational.'),
+(3, '0946-9230100', '1122', '16', '1422', 'Saidu Teaching Hospital',      '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No special entry requirements for Swat Valley. Vaccination recommended before travel. Hotels, guesthouses and public transport are operating normally. Carry personal hygiene supplies for remote treks.'),
+(4, '05815-920070', '1122', '16', '1422', 'DHQ Hospital Skardu',          '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No PCR test required for domestic flights to Skardu. Vaccination card is recommended. Remote high-altitude areas have extremely limited medical facilities — ensure you are fully vaccinated. Carry personal medicines for extended stays.'),
+(5, '0997-360011',  '1122', '16', '1422', 'THQ Hospital Mansehra',        '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No special protocols required for Naran-Kaghan. Vaccination recommended. Medical facilities are very limited in the valley — carry personal medicines. During July-August peak season, practice standard hygiene in crowded tourist spots.'),
+(6, '042-99213590', '1122', '16', '1422', 'Services Hospital Lahore',     '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No PCR test or quarantine required for domestic travel to Lahore. Vaccination card recommended but not mandatory. All restaurants, hotels, museums and tourist sites are fully operational. Standard hygiene practices advised in crowded markets like Anarkali and Food Street.'),
+(7, '051-9261100',  '1122', '16', '1422', 'PIMS Hospital Islamabad',      '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No special health requirements for travel to Islamabad. Vaccination recommended. All public spaces, Faisal Mosque, Margalla Hills trails and shopping centres are fully open. No mask mandate in effect — carry hand sanitizer as a precaution.'),
+(8, '05811-920070', '1122', '16', '1422', 'DHQ Hospital Gilgit',          '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No PCR test required for travel to Fairy Meadows. Vaccination recommended before trekking. Medical facilities are virtually non-existent in the area — carry a comprehensive first aid kit and personal medicines. Nearest hospital is in Gilgit city, several hours away.'),
+(9, '0746-450001',  '1122', '16', '1422', 'Civil Hospital Larkana',       '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No special entry requirements for Mohenjo Daro. Vaccination recommended, especially in Sindh''s hot climate. The site is fully open to visitors. Carry personal hygiene supplies and drinking water as facilities at the archaeological site are limited.'),
+(10,'0621-9255225', '1122', '16', '1422', 'Victoria Hospital Bahawalpur', '051-2279770', 'COVID-19 restrictions have been lifted in Pakistan. No special health requirements for Cholistan Desert travel. Vaccination recommended. All desert camps and Derawar Fort are accessible. Extreme heat in summer (May-August) poses a greater health risk than COVID — carry ample water, sunscreen and oral rehydration salts.');
+
+-- ── Patch covid_rules for destinations 1-5 in case DB has old rows without this data ─
+UPDATE EmergencyInfo SET covid_rules = 'COVID-19 restrictions have been lifted in Pakistan. No PCR test required for domestic travel. Carry your vaccination card if available. Masks are optional but recommended in crowded bazaars. Health screening may apply at Gilgit airport.'
+WHERE destination_id = 1 AND (covid_rules IS NULL OR covid_rules = '');
+UPDATE EmergencyInfo SET covid_rules = 'COVID-19 restrictions have been lifted in Pakistan. No PCR test or quarantine required for domestic travel. During peak tourist season, Murree can become overcrowded — keep hand sanitizer handy. Restaurants and hotels are fully operational.'
+WHERE destination_id = 2 AND (covid_rules IS NULL OR covid_rules = '');
+UPDATE EmergencyInfo SET covid_rules = 'COVID-19 restrictions have been lifted in Pakistan. No special entry requirements for Swat Valley. Vaccination recommended before travel. Hotels, guesthouses and public transport are operating normally. Carry personal hygiene supplies for remote treks.'
+WHERE destination_id = 3 AND (covid_rules IS NULL OR covid_rules = '');
+UPDATE EmergencyInfo SET covid_rules = 'COVID-19 restrictions have been lifted in Pakistan. No PCR test required for domestic flights to Skardu. Vaccination card is recommended. Remote high-altitude areas have extremely limited medical facilities — ensure you are fully vaccinated. Carry personal medicines for extended stays.'
+WHERE destination_id = 4 AND (covid_rules IS NULL OR covid_rules = '');
+UPDATE EmergencyInfo SET covid_rules = 'COVID-19 restrictions have been lifted in Pakistan. No special protocols required for Naran-Kaghan. Vaccination recommended. Medical facilities are very limited in the valley — carry personal medicines. During July-August peak season, practice standard hygiene in crowded tourist spots.'
+WHERE destination_id = 5 AND (covid_rules IS NULL OR covid_rules = '');
 
 -- ── Souvenirs ─────────────────────────────────────────────────────────────────
 INSERT INTO Souvenirs (destination_id, name, description, price, vendor_name)

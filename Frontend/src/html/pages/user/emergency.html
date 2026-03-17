@@ -38,18 +38,6 @@
 .emg-card-num { font-size:24px; font-weight:800; color:#ef4444; font-family:var(--display); line-height:1; }
 .emg-card-sub { font-size:11px; color:var(--t3); margin-top:4px; }
 
-/* Destination selector tabs */
-.dest-tabs { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
-.dest-tab {
-    display:flex; align-items:center; gap:8px;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--r-sm);
-    padding:9px 16px; font-size:13px; font-weight:600; color:var(--t2);
-    cursor:pointer; transition:var(--ease);
-}
-.dest-tab:hover { border-color:rgba(245,166,35,0.3); color:var(--white); }
-.dest-tab.active { border-color:var(--accent); color:var(--accent); background:rgba(245,166,35,0.08); }
-.dest-tab-img { width:22px; height:22px; border-radius:4px; object-fit:cover; }
-
 /* Destination detail panel */
 .dest-emg-panel {
     background:var(--surface); border:1px solid var(--border); border-radius:var(--r-xl);
@@ -91,8 +79,45 @@
 .gc-title { font-size:14px; font-weight:700; color:var(--white); margin-bottom:5px; }
 .gc-text  { font-size:13px; color:var(--t2); line-height:1.7; }
 
-/* Alert section */
-.active-alerts { display:flex; flex-direction:column; gap:10px; }
+/* Destination select row */
+.dest-select-row {
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:16px;
+}
+.dest-select-row label { font-size:13px; font-weight:600; color:var(--t2); white-space:nowrap; }
+.dest-select-row select {
+    flex:1; min-width:200px; max-width:340px;
+    background:#0e1d30; border:1px solid var(--border); border-radius:var(--r-sm);
+    color:var(--t1); font-size:13.5px; padding:10px 14px; cursor:pointer;
+    outline:none; transition:var(--ease);
+}
+.dest-select-row select:focus { border-color:var(--accent); }
+.dest-select-row select option { background:#0d1b2a; color:rgba(255,255,255,0.93); }
+
+/* Bookmark button */
+.bookmark-btn {
+    display:flex; align-items:center; gap:7px;
+    background:rgba(245,166,35,0.08); border:1px solid rgba(245,166,35,0.25);
+    border-radius:var(--r-sm); padding:9px 16px; font-size:13px; font-weight:600;
+    color:var(--accent); cursor:pointer; transition:var(--ease); white-space:nowrap;
+}
+.bookmark-btn:hover { background:rgba(245,166,35,0.15); border-color:rgba(245,166,35,0.5); }
+.bookmark-btn.bookmarked { background:rgba(245,166,35,0.2); border-color:var(--accent); }
+
+/* Covid rules section */
+.covid-section {
+    margin-top:18px; padding:16px 18px;
+    background:rgba(59,130,246,0.06); border:1px solid rgba(59,130,246,0.2);
+    border-radius:var(--r-lg);
+}
+.covid-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.covid-header-icon { font-size:22px; }
+.covid-header-title { font-size:14px; font-weight:700; color:var(--white); }
+.covid-header-badge {
+    margin-left:auto; font-size:11px; font-weight:600; padding:3px 10px;
+    border-radius:20px; background:rgba(34,197,94,0.15); color:#4ade80;
+    border:1px solid rgba(34,197,94,0.25);
+}
+.covid-text { font-size:13px; color:var(--t2); line-height:1.75; }
 
 /* Unavailable state */
 .emg-unavailable {
@@ -196,23 +221,18 @@
         <div class="emg-card"><div class="emg-card-icon">🆘</div><div class="emg-card-title">Emergency Helpline</div><div class="emg-card-num">1080</div><div class="emg-card-sub">General emergencies</div></div>
     </div>
 
-    <!-- Active Travel Alerts -->
-    <div class="sec-hdr mb-14"><h2>⚠️ Active Travel Alerts</h2><span class="badge badge-warning">3 Active</span></div>
-    <div class="active-alerts mb-28">
-        <div class="alert-bar danger"><span class="alert-icon">⛰️</span><div class="alert-body"><div class="alert-title">Skardu — Road Closures (Dec–Feb)</div><div class="alert-sub">Heavy snowfall is blocking several access roads to Skardu. Verify with NHHA before travel.</div></div></div>
-        <div class="alert-bar"><span class="alert-icon">🌧️</span><div class="alert-body"><div class="alert-title">Murree &amp; Naran — Monsoon Advisory (Jul–Aug)</div><div class="alert-sub">Heavy rainfall expected. Risk of flash floods and landslides on mountain roads. Exercise caution.</div></div></div>
-        <div class="alert-bar info"><span class="alert-icon">ℹ️</span><div class="alert-body"><div class="alert-title">Hunza — NOC Requirements</div><div class="alert-sub">Foreign tourists may require No Objection Certificate (NOC) for some restricted areas beyond Karimabad.</div></div></div>
-    </div>
-
     <!-- Per-Destination Emergency (Dynamic) -->
     <div class="sec-hdr mb-14">
         <h2>📍 Destination Emergency Contacts</h2>
         <span class="badge badge-accent" id="destLoadBadge">Loading…</span>
     </div>
 
-    <!-- Destination Tabs -->
-    <div class="dest-tabs" id="destTabs">
-        <div class="spin-wrap"><div style="font-size:24px;animation:spin 1s linear infinite;display:inline-block">⏳</div></div>
+    <!-- Destination Selector -->
+    <div class="dest-select-row">
+        <label for="destDropdown">📍 Select Destination:</label>
+        <select id="destDropdown" onchange="onDestDropdownChange(this.value)">
+            <option value="">— Choose a destination —</option>
+        </select>
     </div>
 
     <!-- Selected Destination Panel -->
@@ -306,21 +326,25 @@ function catIcon(cat) { return CAT_ICONS[cat] || '📋'; }
 // ── State ──────────────────────────────────────────────────
 let allDestinations = [];
 let activeDestId = null;
+let bookmarkedIds = new Set();
 
-// ── Render destination tabs ────────────────────────────────
+// ── Populate destination dropdown ─────────────────────────
 function renderTabs(dests) {
-    const tabs = document.getElementById('destTabs');
-    tabs.innerHTML = dests.map(d => `
-        <div class="dest-tab" data-id="${d.destinationId}" onclick="selectDest(${d.destinationId})">
-            <img class="dest-tab-img"
-                 src="${resolveImage(d.imageUrl)}"
-                 alt="${d.name}"
-                 onerror="this.style.display='none'">
-            ${d.name}
-        </div>`).join('');
-
+    const dd = document.getElementById('destDropdown');
+    dests.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.destinationId;
+        opt.textContent = d.name;
+        dd.appendChild(opt);
+    });
     document.getElementById('destLoadBadge').textContent = dests.length + ' Destinations';
     document.getElementById('destLoadBadge').className = 'badge badge-accent';
+}
+
+// ── Dropdown change handler ────────────────────────────────
+function onDestDropdownChange(val) {
+    if (!val) return;
+    selectDest(parseInt(val));
 }
 
 // ── Select & load destination emergency info ───────────────
@@ -328,10 +352,8 @@ async function selectDest(id) {
     if (activeDestId === id) return;
     activeDestId = id;
 
-    // Update active tab
-    document.querySelectorAll('.dest-tab').forEach(t => {
-        t.classList.toggle('active', parseInt(t.dataset.id) === id);
-    });
+    // Sync dropdown
+    document.getElementById('destDropdown').value = id;
 
     const panel = document.getElementById('destPanel');
     panel.innerHTML = `<div class="spin-wrap"><div style="font-size:28px;animation:spin 1s linear infinite;display:inline-block">⏳</div><p style="margin-top:10px;color:var(--t2)">Loading emergency info…</p></div>`;
@@ -358,6 +380,7 @@ async function selectDest(id) {
         const c   = emg.contacts;
         const dest = allDestinations.find(d => d.destinationId === id);
         const img  = dest ? resolveImage(dest.imageUrl) : '';
+        const isBookmarked = bookmarkedIds.has(id);
 
         // Chip helper
         const chip = (label, val, cls='') =>
@@ -390,6 +413,20 @@ async function selectDest(id) {
             </div>`;
         }
 
+        // Covid rules HTML
+        let covidHtml = '';
+        if (c.covidRules) {
+            covidHtml = `
+            <div class="covid-section">
+                <div class="covid-header">
+                    <span class="covid-header-icon">🦠</span>
+                    <span class="covid-header-title">COVID-19 Travel Guidelines</span>
+                    <span class="covid-header-badge">✓ Restrictions Lifted</span>
+                </div>
+                <div class="covid-text">${c.covidRules}</div>
+            </div>`;
+        }
+
         panel.innerHTML = `
         <div class="dest-emg-panel">
             <div class="dep-header">
@@ -398,7 +435,12 @@ async function selectDest(id) {
                     <div class="dep-name">${emg.destinationName}</div>
                     <div class="dep-region">📍 ${emg.city}</div>
                 </div>
-                ${!c.available ? '<span class="badge badge-warning" style="margin-left:auto">Limited Data</span>' : '<span class="badge badge-accent" style="margin-left:auto">✓ Verified</span>'}
+                <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+                    ${!c.available ? '<span class="badge badge-warning">Limited Data</span>' : '<span class="badge badge-accent">✓ Verified</span>'}
+                    <button id="bookmarkBtn" class="bookmark-btn ${isBookmarked ? 'bookmarked' : ''}" onclick="toggleBookmark(${id})">
+                        ${isBookmarked ? '🔖 Bookmarked' : '🔖 Bookmark'}
+                    </button>
+                </div>
             </div>
 
             <div class="dep-contacts-grid">
@@ -414,6 +456,8 @@ async function selectDest(id) {
                 💡 Click any contact to copy the number to clipboard
             </p>
 
+            ${covidHtml}
+
             ${guideHtml}
 
             <div style="margin-top:16px">
@@ -425,11 +469,58 @@ async function selectDest(id) {
         panel.innerHTML = `
         <div class="emg-unavailable">
             <div class="eu-icon">📶</div>
-            <p>Network error. Check your connection and that the server is running.<br>
-            National Tourist Helpline: <b style="color:var(--accent)">1422</b></p>
+            <p>Emergency contact information is currently unavailable for this location.<br>
+            Check your connection or contact the national Tourist Helpline: <b style="color:var(--accent)">1422</b></p>
             <button class="btn btn-ghost btn-sm" style="margin-top:14px" onclick="selectDest(${id})">🔄 Retry</button>
         </div>`;
     }
+}
+
+// ── Bookmark / un-bookmark a destination ──────────────────
+async function toggleBookmark(destId) {
+    const btn = document.getElementById('bookmarkBtn');
+    const isNowBookmarked = bookmarkedIds.has(destId);
+    const method = isNowBookmarked ? 'DELETE' : 'POST';
+    const url    = isNowBookmarked
+        ? ENDPOINTS.FAVORITES.REMOVE(destId)
+        : ENDPOINTS.FAVORITES.ADD(destId);
+
+    try {
+        const res = await fetch(url, {
+            method,
+            headers: { 'Authorization': 'Bearer ' + tripToken }
+        });
+        if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+
+        if (res.ok) {
+            if (isNowBookmarked) {
+                bookmarkedIds.delete(destId);
+                if (btn) { btn.textContent = '🔖 Bookmark'; btn.classList.remove('bookmarked'); }
+                showToast('🔖', 'Removed from wishlist');
+            } else {
+                bookmarkedIds.add(destId);
+                if (btn) { btn.textContent = '🔖 Bookmarked'; btn.classList.add('bookmarked'); }
+                showToast('⭐', 'Added to wishlist!');
+            }
+        } else {
+            showToast('⚠️', 'Could not update wishlist. Try again.');
+        }
+    } catch {
+        showToast('⚠️', 'Network error. Check your connection.');
+    }
+}
+
+// ── Load bookmarked destination IDs ───────────────────────
+async function loadBookmarks() {
+    try {
+        const res = await fetch(ENDPOINTS.FAVORITES.IDS, {
+            headers: { 'Authorization': 'Bearer ' + tripToken }
+        });
+        if (res.ok) {
+            const ids = await res.json();
+            bookmarkedIds = new Set(Array.isArray(ids) ? ids.map(Number) : []);
+        }
+    } catch { /* silent */ }
 }
 
 // ── Copy number to clipboard ───────────────────────────────
@@ -437,12 +528,13 @@ function copyNum(label, val) {
     navigator.clipboard?.writeText(val).then(() => showToast('📋', `Copied ${val}`));
 }
 
-// ── Search filter for destination tabs ────────────────────
+// ── Topbar search filters the dropdown ────────────────────
 document.getElementById('destSearch').addEventListener('input', function() {
     const q = this.value.toLowerCase().trim();
-    document.querySelectorAll('.dest-tab').forEach(tab => {
-        const name = tab.textContent.toLowerCase();
-        tab.style.display = (!q || name.includes(q)) ? '' : 'none';
+    const dd = document.getElementById('destDropdown');
+    Array.from(dd.options).forEach(opt => {
+        if (!opt.value) return; // keep placeholder
+        opt.hidden = q && !opt.textContent.toLowerCase().includes(q);
     });
 });
 
@@ -481,6 +573,7 @@ async function loadAllDestinations() {
     }
 }
 
+loadBookmarks();
 loadAllDestinations();
 </script>
 </body>

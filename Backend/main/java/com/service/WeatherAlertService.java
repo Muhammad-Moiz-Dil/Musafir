@@ -108,6 +108,70 @@ public class WeatherAlertService {
         return result;
     }
 
+    // ── Lookup weather for any destination by name (UC17 search) ───────────────
+    public Map<String, Object> lookupWeatherByName(String name) {
+        // 1. Try matching a known destination in the DB
+        List<Destination> matches = destinationRepo.searchByQuery("%" + name + "%");
+        if (!matches.isEmpty()) {
+            Destination dest = matches.get(0);
+            Map<String, Object> owm = fetchWeather(dest);
+            if (owm == null) return errorLookup(name);
+            return buildWeatherCard(dest, owm);
+        }
+        // 2. Fall back to OWM city-name search (for cities not in our DB)
+        String url = "https://api.openweathermap.org/data/2.5/weather?q="
+                + name.replace(" ", "+")
+                + "&appid=" + weatherApiKey + "&units=metric";
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> owm = restTemplate.getForObject(url, Map.class);
+            if (owm == null) return errorLookup(name);
+            return buildDirectWeatherCard(name, owm);
+        } catch (Exception e) {
+            return errorLookup(name);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> buildDirectWeatherCard(String name, Map<String, Object> owm) {
+        Map<String, Object> main  = (Map<String, Object>) owm.getOrDefault("main", new HashMap<>());
+        Map<String, Object> wind  = (Map<String, Object>) owm.getOrDefault("wind", new HashMap<>());
+        List<Map<String, Object>> wList = (List<Map<String, Object>>) owm.get("weather");
+        Map<String, Object> w = (wList != null && !wList.isEmpty()) ? wList.get(0) : new HashMap<>();
+
+        double temp      = ((Number) main.getOrDefault("temp",       0)).doubleValue();
+        double feelsLike = ((Number) main.getOrDefault("feels_like", 0)).doubleValue();
+        int    humidity  = ((Number) main.getOrDefault("humidity",   0)).intValue();
+        double windSpeed = ((Number) wind.getOrDefault("speed",      0)).doubleValue();
+        int    condId    = ((Number) w.getOrDefault("id",          800)).intValue();
+        String condition = (String) w.getOrDefault("main",        "Unknown");
+        String desc      = (String) w.getOrDefault("description",       "");
+        String icon      = (String) w.getOrDefault("icon",           "01d");
+
+        Map<String, Object> card = new LinkedHashMap<>();
+        card.put("destinationId",   null);
+        card.put("destinationName", name);
+        card.put("city",            null);
+        card.put("temp",            round1(temp));
+        card.put("feelsLike",       round1(feelsLike));
+        card.put("humidity",        humidity);
+        card.put("windSpeed",       round1(windSpeed));
+        card.put("condition",       condition);
+        card.put("description",     desc);
+        card.put("icon",            icon);
+        card.put("iconUrl",         "https://openweathermap.org/img/wn/" + icon + "@2x.png");
+        card.put("isAlert",         isSignificantCondition(condId, temp, windSpeed));
+        card.put("error",           false);
+        return card;
+    }
+
+    private Map<String, Object> errorLookup(String name) {
+        Map<String, Object> card = new LinkedHashMap<>();
+        card.put("destinationName", name);
+        card.put("error", true);
+        return card;
+    }
+
     public long getUnreadCount(Integer userId) {
         return notificationRepo.countByUserIdAndTypeAndIsReadFalse(userId, "WEATHER_ALERT");
     }

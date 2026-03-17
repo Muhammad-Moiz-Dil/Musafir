@@ -59,6 +59,7 @@ public class EmergencyInfoController {
             contacts.put("touristHelpline",   nvl(e.getTouristHelpline(),   "1422"));
             contacts.put("nearestHospital",   nvl(e.getNearestHospital(),   "Contact PTDC"));
             contacts.put("embassyContact",    nvl(e.getEmbassyContact(),    "051-111-888-444"));
+            contacts.put("covidRules",        e.getCovidRules() != null ? e.getCovidRules() : "");
         } else {
             contacts.put("available",        false);
             contacts.put("policeNumber",     "15");
@@ -67,6 +68,7 @@ public class EmergencyInfoController {
             contacts.put("touristHelpline",  "1422");
             contacts.put("nearestHospital",  "Contact local PTDC office");
             contacts.put("embassyContact",   "051-111-888-444");
+            contacts.put("covidRules",       "");
         }
 
         // Safety guidelines (category = 'Safety')

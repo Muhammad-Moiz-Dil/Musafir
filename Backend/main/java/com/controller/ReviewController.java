@@ -96,7 +96,13 @@ public class ReviewController {
             return ResponseEntity.status(404).body(Map.of("message", "Destination not found"));
         }
 
-        // Destination must be in at least one COMPLETED trip of this user
+        // Prevent duplicate review
+        if (reviewRepo.existsByUserIdAndDestinationId(user.getUserId(), destinationId)) {
+            return ResponseEntity.status(409).body(
+                    Map.of("message", "You have already reviewed this destination"));
+        }
+
+        // Check if verified: destination must be in a COMPLETED trip of this user
         List<Integer> completedTripIds = tripRepo
                 .findByUserIdOrderByCreatedAtDesc(user.getUserId())
                 .stream()
@@ -104,24 +110,8 @@ public class ReviewController {
                 .map(Trip::getTripId)
                 .collect(Collectors.toList());
 
-        if (completedTripIds.isEmpty()) {
-            return ResponseEntity.status(403).body(
-                    Map.of("message", "You can only rate destinations from completed trips"));
-        }
-
-        boolean inCompletedTrip = completedTripIds.stream()
+        boolean isVerified = !completedTripIds.isEmpty() && completedTripIds.stream()
                 .anyMatch(tid -> tripDestRepo.existsByTripIdAndDestinationId(tid, destinationId));
-
-        if (!inCompletedTrip) {
-            return ResponseEntity.status(403).body(
-                    Map.of("message", "You can only rate destinations from your completed trips"));
-        }
-
-        // Prevent duplicate review
-        if (reviewRepo.existsByUserIdAndDestinationId(user.getUserId(), destinationId)) {
-            return ResponseEntity.status(409).body(
-                    Map.of("message", "You have already reviewed this destination"));
-        }
 
         // Save review
         Review review = new Review();
@@ -129,12 +119,51 @@ public class ReviewController {
         review.setDestinationId(destinationId);
         review.setRating(rating);
         review.setReviewText(reviewText);
+        review.setVerified(isVerified);
         reviewRepo.save(review);
 
         // Recalculate destination average rating
         updateDestinationRating(dest);
 
-        return ResponseEntity.status(201).body(Map.of("message", "Review submitted successfully"));
+        String label = isVerified ? "Verified review submitted!" : "General feedback submitted!";
+        return ResponseEntity.status(201).body(Map.of("message", label, "verified", isVerified));
+    }
+
+    // ── GET /api/reviews/destination/{destId} ───────────────
+    @GetMapping("/destination/{destId}")
+    public ResponseEntity<?> getByDestination(@PathVariable Integer destId) {
+        Destination dest = destRepo.findById(destId).orElse(null);
+        if (dest == null || !Boolean.TRUE.equals(dest.getIsActive())) {
+            return ResponseEntity.status(404).body(Map.of("message", "Destination not found"));
+        }
+
+        List<Review> reviews = reviewRepo.findByDestinationId(destId);
+        reviews.sort(Comparator.comparing(Review::getCreatedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+
+        List<Map<String, Object>> result = reviews.stream().map(r -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("reviewId",   r.getReviewId());
+            m.put("rating",     r.getRating());
+            m.put("reviewText", r.getReviewText() != null ? r.getReviewText() : "");
+            m.put("verified",   Boolean.TRUE.equals(r.getVerified()));
+            m.put("createdAt",  r.getCreatedAt());
+            userRepo.findById(r.getUserId()).ifPresent(u -> {
+                String name = u.getFullName();
+                if (name != null && !name.isBlank()) {
+                    String[] parts = name.trim().split("\\s+");
+                    String display = parts[0];
+                    if (parts.length > 1) display += " " + parts[parts.length - 1].charAt(0) + ".";
+                    m.put("reviewerName", display);
+                } else {
+                    m.put("reviewerName", "Anonymous");
+                }
+            });
+            if (!m.containsKey("reviewerName")) m.put("reviewerName", "Anonymous");
+            return m;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
     }
 
     // ── GET /api/reviews/mine ────────────────────────────────
@@ -160,11 +189,20 @@ public class ReviewController {
         return ResponseEntity.ok(result);
     }
 
-    // ── Recalculate average rating on Destination ─────────────
+    // ── Recalculate weighted average rating on Destination ────
+    // Verified reviews have full weight (1.0), unverified have half weight (0.5)
     private void updateDestinationRating(Destination dest) {
         List<Review> allReviews = reviewRepo.findByDestinationId(dest.getDestinationId());
         if (allReviews.isEmpty()) return;
-        double avg = allReviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
+
+        double weightedSum  = 0.0;
+        double totalWeight  = 0.0;
+        for (Review r : allReviews) {
+            double w = Boolean.TRUE.equals(r.getVerified()) ? 1.0 : 0.5;
+            weightedSum += r.getRating() * w;
+            totalWeight += w;
+        }
+        double avg = totalWeight > 0 ? weightedSum / totalWeight : 0.0;
         dest.setAverageRating(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
         dest.setTotalReviews(allReviews.size());
         destRepo.save(dest);

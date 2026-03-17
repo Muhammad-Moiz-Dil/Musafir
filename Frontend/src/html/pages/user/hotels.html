@@ -72,6 +72,7 @@
         <a href="travel-guidelines.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span><span>Travel Guidelines</span></a>
         <a href="souvenirs.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Souvenirs</span></a>
         <a href="seasonal-insights.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Seasonal</span></a>
+        <a href="weather-alerts.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/></svg></span><span>Weather Alerts</span></a>
         <div class="nav-divider"></div>
         <a href="emergency.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Emergency</span></a>
         <a href="profile.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span>Profile</span></a>
@@ -110,8 +111,25 @@
 
     <!-- Filters -->
     <div class="mb-22">
+        <!-- Destination search / select row -->
+        <div style="display:flex;gap:10px;margin-bottom:12px;align-items:center;flex-wrap:wrap">
+            <div style="position:relative;flex:1;min-width:220px;max-width:340px">
+                <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--t3)" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="destSearch" placeholder="Search destination..." style="width:100%;padding:9px 12px 9px 34px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);color:var(--white);font-size:13px;outline:none" oninput="onDestSearch(this.value)">
+            </div>
+            <div class="filter-select-wrap" style="min-width:180px">
+                <select id="destSelect">
+                    <option value="all">📍 All Destinations</option>
+                    <option value="Hunza Valley">🏔️ Hunza Valley</option>
+                    <option value="Murree">🌲 Murree</option>
+                    <option value="Swat Valley">🌿 Swat Valley</option>
+                    <option value="Skardu">⛰️ Skardu</option>
+                    <option value="Naran Kaghan">🌊 Naran Kaghan</option>
+                </select>
+            </div>
+        </div>
         <div class="filter-bar">
-            <button class="filter-pill active" data-dest="all">All Destinations</button>
+            <button class="filter-pill active" data-dest="all">All</button>
             <button class="filter-pill" data-dest="Hunza Valley">🏔️ Hunza</button>
             <button class="filter-pill" data-dest="Murree">🌲 Murree</button>
             <button class="filter-pill" data-dest="Swat Valley">🌿 Swat</button>
@@ -131,6 +149,8 @@
                     <option value="5">5 Star</option>
                     <option value="4">4 Star</option>
                     <option value="3">3 Star</option>
+                    <option value="2">2 Star</option>
+                    <option value="1">1 Star</option>
                 </select>
             </div>
         </div>
@@ -184,18 +204,17 @@
 
 <script>
 const HOTELS = [
-    { id:1, name:'Eagle Nest Hotel', dest:'Hunza Valley', img:'../../../../public/assets/images/hunza-valley.jpg', stars:4, rating:4.6, reviews:89, price:8500, amenities:['WiFi','Parking','Restaurant','Mountain View'], desc:'Perched on a hilltop with panoramic views of Rakaposhi peak.' },
-    { id:2, name:'Serena Hunza',     dest:'Hunza Valley', img:'../../../../public/assets/images/hunza-valley.jpg', stars:5, rating:4.9, reviews:134, price:18000, amenities:['WiFi','Spa','Pool','Restaurant','Gym','Mountain View'], desc:'Pakistan\'s most iconic 5-star luxury hotel in the heart of Hunza.' },
-    { id:3, name:'Hunza Inn',        dest:'Hunza Valley', img:'../../../../public/assets/images/hunza-valley.jpg', stars:3, rating:4.2, reviews:62,  price:4000, amenities:['WiFi','Breakfast','Garden'], desc:'Cozy budget-friendly guesthouse with warm Hunzai hospitality.' },
-    { id:4, name:'Shangrila Resort', dest:'Murree',       img:'../../../../public/assets/images/murree.jpeg',      stars:4, rating:4.4, reviews:78,  price:7000, amenities:['WiFi','Restaurant','Parking','Fireplace'], desc:'Nestled in pine trees, just a short walk from Mall Road.' },
-    { id:5, name:'Mall Hotel',       dest:'Murree',       img:'../../../../public/assets/images/murree.jpeg',      stars:3, rating:4.1, reviews:55,  price:3500, amenities:['WiFi','Breakfast','Cable TV'], desc:'Budget-friendly stay in the heart of Murree town.' },
-    { id:6, name:'Serena Swat',      dest:'Swat Valley',  img:'../../../../public/assets/images/swat.jpg',         stars:5, rating:4.7, reviews:101, price:15000, amenities:['WiFi','Pool','Spa','Restaurant','Garden','Room Service'], desc:'Award-winning 5-star resort on the banks of the Swat River.' },
-    { id:7, name:'Kalam Valley Hotel',dest:'Swat Valley', img:'../../../../public/assets/images/swat.jpg',         stars:3, rating:4.2, reviews:44,  price:3000, amenities:['WiFi','Parking','River View'], desc:'Simple mountain hotel with stunning river views in Kalam.' },
-    { id:8, name:'Serena Skardu',    dest:'Skardu',       img:'../../../../public/assets/images/skardu.jpeg',      stars:5, rating:4.8, reviews:97,  price:20000, amenities:['WiFi','Spa','Restaurant','Mountain View','Library'], desc:'Luxury property surrounded by 8000m peaks in Skardu valley.' },
-    { id:9, name:'K2 Motel',         dest:'Skardu',       img:'../../../../public/assets/images/skardu.jpeg',      stars:3, rating:4.0, reviews:38,  price:4500, amenities:['WiFi','Parking','Meals'], desc:'No-frills clean stay, perfect base for K2 trekkers.' },
-    { id:10, name:'Pine Park Hotel', dest:'Naran Kaghan', img:'../../../../public/assets/images/naran kaghan.jpg', stars:4, rating:4.3, reviews:67,  price:6500, amenities:['WiFi','Restaurant','Garden','River View'], desc:'Charming hotel overlooking the Kunhar River in Naran valley.' },
-    { id:11, name:'Kaghan Resort',   dest:'Naran Kaghan', img:'../../../../public/assets/images/naran kaghan.jpg', stars:3, rating:4.0, reviews:41,  price:3200, amenities:['WiFi','Breakfast','Campfire'], desc:'Rustic mountain resort perfect for adventure travellers.' },
-    { id:12, name:'Shangrila Lake Resort', dest:'Skardu', img:'../../../../public/assets/images/skardu.jpeg',     stars:4, rating:4.6, reviews:112, price:12000, amenities:['WiFi','Lake View','Restaurant','Boat Rides'], desc:'Romantic retreat on the shores of Upper Kachura Lake.' },
+    { id:1, name:'Eagle Nest Hotel',   dest:'Hunza Valley', img:'../../../../public/assets/images/Eagle nest hotel.jpeg', stars:4, rating:4.6, reviews:89,  price:8500,  amenities:['WiFi','Parking','Restaurant','Mountain View'], desc:'Perched on a hilltop with panoramic views of Rakaposhi peak.' },
+    { id:2, name:'Serena Hunza',       dest:'Hunza Valley', img:'../../../../public/assets/images/serena hunza.jpeg',     stars:5, rating:4.9, reviews:134, price:18000, amenities:['WiFi','Spa','Pool','Restaurant','Gym','Mountain View'], desc:'Pakistan\'s most iconic 5-star luxury hotel in the heart of Hunza.' },
+    { id:3, name:'Hunza Inn',          dest:'Hunza Valley', img:'../../../../public/assets/images/Hunza Inn.jpeg',        stars:3, rating:4.2, reviews:62,  price:4000,  amenities:['WiFi','Breakfast','Garden'], desc:'Cozy budget-friendly guesthouse with warm Hunzai hospitality.' },
+    { id:4, name:'Shangrila Resort',   dest:'Murree',       img:'../../../../public/assets/images/murree.jpeg',           stars:4, rating:4.4, reviews:78,  price:7000,  amenities:['WiFi','Restaurant','Parking','Fireplace'], desc:'Nestled in pine trees, just a short walk from Mall Road.' },
+    { id:5, name:'Mall Hotel',         dest:'Murree',       img:'../../../../public/assets/images/mall hotel.jpeg',       stars:3, rating:4.1, reviews:55,  price:3500,  amenities:['WiFi','Breakfast','Cable TV'], desc:'Budget-friendly stay in the heart of Murree town.' },
+    { id:6, name:'Serena Swat',        dest:'Swat Valley',  img:'../../../../public/assets/images/sarena swat.jpg',       stars:5, rating:4.7, reviews:101, price:15000, amenities:['WiFi','Pool','Spa','Restaurant','Garden','Room Service'], desc:'Award-winning 5-star resort on the banks of the Swat River.' },
+    { id:7, name:'Kalam Valley Hotel', dest:'Swat Valley',  img:'../../../../public/assets/images/kalam valley hotel.jpeg', stars:3, rating:4.2, reviews:44, price:3000,  amenities:['WiFi','Parking','River View'], desc:'Simple mountain hotel with stunning river views in Kalam.' },
+    { id:8, name:'Serena Skardu',      dest:'Skardu',       img:'../../../../public/assets/images/sarena skardu.jpeg',    stars:5, rating:4.8, reviews:97,  price:20000, amenities:['WiFi','Spa','Restaurant','Mountain View','Library'], desc:'Luxury property surrounded by 8000m peaks in Skardu valley.' },
+    { id:9, name:'K2 Motel',           dest:'Skardu',       img:'../../../../public/assets/images/k2 motel.jpeg',         stars:3, rating:4.0, reviews:38,  price:4500,  amenities:['WiFi','Parking','Meals'], desc:'No-frills clean stay, perfect base for K2 trekkers.' },
+    { id:10, name:'Pine Park Hotel',   dest:'Naran Kaghan', img:'../../../../public/assets/images/pine park hotel.jpeg',  stars:4, rating:4.3, reviews:67,  price:6500,  amenities:['WiFi','Restaurant','Garden','River View'], desc:'Charming hotel overlooking the Kunhar River in Naran valley.' },
+    { id:11, name:'Kaghan Resort',     dest:'Naran Kaghan', img:'../../../../public/assets/images/kaghan resort.jpg',     stars:3, rating:4.0, reviews:41,  price:3200,  amenities:['WiFi','Breakfast','Campfire'], desc:'Rustic mountain resort perfect for adventure travellers.' },
 ];
 
 let destFilter='all', priceFilter='', starsFilter='', searchQ='';
@@ -203,7 +222,7 @@ let bookingHotel=null;
 
 function filtered(){
     return HOTELS.filter(h=>{
-        const okDest  = destFilter==='all' || h.dest===destFilter;
+        const okDest  = destFilter==='all' || h.dest===destFilter || h.dest.toLowerCase().includes(destFilter);
         const okPrice = !priceFilter || (priceFilter==='budget'&&h.price<5000)||(priceFilter==='mid'&&h.price>=5000&&h.price<=12000)||(priceFilter==='luxury'&&h.price>12000);
         const okStars = !starsFilter || h.stars===parseInt(starsFilter);
         const okQ     = !searchQ || h.name.toLowerCase().includes(searchQ) || h.dest.toLowerCase().includes(searchQ);
@@ -261,12 +280,22 @@ function updateTotal(){
 function closeModal(){ document.getElementById('modalBg').classList.remove('open'); document.body.style.overflow=''; }
 function confirmBooking(){ closeModal(); showToast('✅','Booking request sent! Hotel will confirm within 24 hours.'); }
 
+function setDestFilter(val){
+    destFilter=val;
+    document.querySelectorAll('.filter-pill').forEach(b=>b.classList.toggle('active',b.dataset.dest===val));
+    document.getElementById('destSelect').value=val;
+    render();
+}
 document.querySelectorAll('.filter-pill').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-        document.querySelectorAll('.filter-pill').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active'); destFilter=btn.dataset.dest; render();
-    });
+    btn.addEventListener('click',()=>setDestFilter(btn.dataset.dest));
 });
+document.getElementById('destSelect').addEventListener('change',e=>setDestFilter(e.target.value));
+function onDestSearch(val){
+    const v=val.trim().toLowerCase();
+    if(!v){ setDestFilter('all'); return; }
+    const match=['Hunza Valley','Murree','Swat Valley','Skardu','Naran Kaghan'].find(d=>d.toLowerCase().includes(v));
+    if(match) setDestFilter(match); else { destFilter=v; render(); }
+}
 document.getElementById('priceFilter').addEventListener('change',e=>{priceFilter=e.target.value;render();});
 document.getElementById('starsFilter').addEventListener('change',e=>{starsFilter=e.target.value;render();});
 document.getElementById('topSearch').addEventListener('input',e=>{searchQ=e.target.value.toLowerCase();render();});

@@ -16,6 +16,7 @@ const ENDPOINTS = {
         CHANGE_PASSWORD:  `${API_CONFIG.BASE_URL}/users/password`,
         PREFERENCES:      `${API_CONFIG.BASE_URL}/users/preferences`,
         RECOMMENDATIONS:  (limit = 5) => `${API_CONFIG.BASE_URL}/users/recommendations?limit=${limit}`,
+        STATS:            `${API_CONFIG.BASE_URL}/users/stats`,
         DELETE_ACCOUNT:   `${API_CONFIG.BASE_URL}/users/account`,
     },
     DESTINATIONS: {
@@ -41,8 +42,9 @@ const ENDPOINTS = {
         REMOVE_DEST: (tripId, destId)   => `${API_CONFIG.BASE_URL}/trips/${tripId}/destinations/${destId}`,
     },
     REVIEWS: {
-        SUBMIT: `${API_CONFIG.BASE_URL}/reviews`,
-        MINE:   `${API_CONFIG.BASE_URL}/reviews/mine`,
+        SUBMIT:   `${API_CONFIG.BASE_URL}/reviews`,
+        MINE:     `${API_CONFIG.BASE_URL}/reviews/mine`,
+        BY_DEST:  (id) => `${API_CONFIG.BASE_URL}/reviews/destination/${id}`,
     },
     SOUVENIRS: {
         ALL:            `${API_CONFIG.BASE_URL}/souvenirs`,
@@ -57,5 +59,11 @@ const ENDPOINTS = {
     },
     CONFIG: {
         MAPS_KEY: `${API_CONFIG.BASE_URL}/config/maps-key`,
+    },
+    WEATHER: {
+        ALERTS:       `${API_CONFIG.BASE_URL}/weather/alerts`,
+        UNREAD_COUNT: `${API_CONFIG.BASE_URL}/weather/unread-count`,
+        MARK_READ:    (id) => `${API_CONFIG.BASE_URL}/weather/notifications/${id}/read`,
+        MARK_ALL_READ:`${API_CONFIG.BASE_URL}/weather/notifications/read-all`,
     },
 };

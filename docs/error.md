@@ -224,6 +224,48 @@ Never hardcode the Google Maps API key (or any API key) in HTML/JS frontend file
 
 ---
 
+## BUG-010 — Travel Guidelines wiped by UC15_EmergencyData.sql bare DELETE
+**Date:** 2026-03-17
+**Files:** `database/UC15_EmergencyData.sql`, `database/TripifyDB_MySQL.sql`
+**Status:** Fixed (merged into TripifyDB_MySQL.sql)
+
+### Root Cause
+`UC15_EmergencyData.sql` contained `DELETE FROM travel_guidelines` and `DELETE FROM emergency_info` without any WHERE clause. On Windows, MySQL table name lookup is case-insensitive, so `travel_guidelines` and `TravelGuidelines` refer to the same table. Running UC15 therefore deleted ALL rows from `TravelGuidelines`, leaving only the 20 Safety-category guidelines that UC15 re-inserts for the 5 original destinations. All non-Safety guidelines and all guidelines for destinations 6–10 were silently lost.
+
+### Fix Applied
+- Merged UC15_EmergencyData.sql and SeasonalData_AllDests.sql into `TripifyDB_MySQL.sql`.
+- The combined file never uses bare DELETE — all data is inserted fresh from a clean DB run.
+- Safety guidelines from UC15 are appended as additional INSERT rows after the existing guidelines (not DELETE+reinsert).
+- EmergencyInfo now has complete 5-row data (all fields including `fire_service_number` and `embassy_contact`) sourced from UC15 verified local numbers.
+- SeasonalData now has full 12-month coverage for all 5 destinations (sourced from SeasonalData_AllDests.sql).
+- The two separate SQL files (`SeasonalData_AllDests.sql`, `UC15_EmergencyData.sql`) should NOT be run separately anymore — all data is in `TripifyDB_MySQL.sql`.
+
+### Other bugs fixed in same pass
+- `CREATE INDEX idx_trips_status ON Trips(trip_status)` — column is `status`, not `trip_status`. Fixed to `Trips(status)`.
+- `INSERT INTO Souvenirs ... VALUE` — typo fixed to `VALUES`.
+
+---
+
+## UC16-NOTE-001 — Push Weather Alerts (Weather API + Notifications)
+**Date:** 2026-03-17
+**Files:** `WeatherAlertService.java`, `WeatherAlertController.java`, `Notification.java`, `NotificationRepository.java`, `weather-alerts.html`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/weather/alerts` fetches live OWM weather for all of the user's favorited destinations + returns stored `WEATHER_ALERT` notifications from DB. Both happen in one call.
+- OWM is called with lat/lon (added `latitude`/`longitude` to `Destination.java`) — more accurate than city name for mountain destinations.
+- Significant conditions: temp ≥ 40°C (extreme heat), temp < 0°C (freezing), OWM condition IDs 200–699 (storms, rain, snow, atmosphere), wind ≥ 15 m/s.
+- Deduplication: same alert title + destination not re-inserted for the same user within 6 hours.
+- `@Scheduled(fixedRate=3_600_000, initialDelay=120_000)` in `WeatherAlertService` generates background alerts hourly for all favorited destinations across all users. `@EnableScheduling` added to `TripifyApplication`.
+- `PUT /api/weather/notifications/{id}/read` and `PUT /api/weather/notifications/read-all` for marking read.
+- OWM API key in `application.properties` as `weather.api-key` (not in DB/frontend). Replace `your_owm_api_key_here` before testing.
+- Weather & Travel Alerts section removed from `dashboard.html`; replaced by the dedicated `weather-alerts.html` page accessible from sidebar of all user pages.
+
+### Rule
+`@Table(name="Notifications")` — PascalCase as per project convention.
+
+---
+
 ## CLEANUP-001 — Unused imports and unused injected field in ProfileController/ProfileService
 **Date:** 2026-03-14
 **Files:** `ProfileController.java`, `ProfileService.java`

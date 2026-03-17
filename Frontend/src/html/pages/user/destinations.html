@@ -84,6 +84,7 @@
         </a>
         <a href="souvenirs.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Souvenirs</span></a>
         <a href="seasonal-insights.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Seasonal</span></a>
+        <a href="weather-alerts.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/></svg></span><span>Weather Alerts</span></a>
         <div class="nav-divider"></div>
         <a href="emergency.html" class="nav-item">
             <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
@@ -113,7 +114,6 @@
         <input type="text" placeholder="Search destinations..." id="topSearch">
     </div>
     <div class="topbar-actions">
-        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notif-dot"></span></button>
         <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
     </div>
 </header>
@@ -145,11 +145,15 @@
             <button class="filter-pill" data-filter="valley">🌿 Valley</button>
             <button class="filter-pill" data-filter="adventure">⚡ Adventure</button>
             <button class="filter-pill" data-filter="family">👨‍👩‍👧 Family</button>
+            <button class="filter-pill" data-filter="cultural">🏛️ Cultural</button>
             <div class="filter-select-wrap">
                 <select id="ratingFilter">
                     <option value="">⭐ Any Rating</option>
                     <option value="4.5">⭐ 4.5+</option>
                     <option value="4.0">⭐ 4.0+</option>
+                    <option value="3.5">⭐ 3.5+</option>
+                    <option value="3.0">⭐ 3.0+</option>
+                    <option value="2.0">⭐ 2.0+</option>
                 </select>
             </div>
         </div>
@@ -179,10 +183,11 @@ let debounceTimer;
 
 // ── Tag keyword map for local client-side filtering ───
 const TAG_KEYWORDS = {
-    mountain:  ['mountain', 'peak', 'glacier', 'karakoram', 'k2', 'himalaya'],
-    valley:    ['valley', 'lush', 'green', 'river', 'kaghan', 'swat'],
-    adventure: ['adventure', 'trek', 'trekking', 'climbing', 'hiking', 'extreme'],
-    family:    ['family', 'hill station', 'resort', 'scenic', 'pleasant', 'murree']
+    mountain:  ['mountain', 'peak', 'glacier', 'karakoram', 'k2', 'nanga parbat', 'himalaya', 'alpine', 'high-altitude', 'highest'],
+    valley:    ['valley', 'lush', 'green', 'river', 'kaghan', 'swat', 'meadow', 'plateau', 'confluenc'],
+    adventure: ['adventure', 'trek', 'trekking', 'climbing', 'hiking', 'extreme', 'jeep', 'safari', 'base camp', 'trail', 'unpaved'],
+    family:    ['family', 'hill station', 'resort', 'scenic', 'pleasant', 'murree', 'garden', 'park', 'viewpoint', 'chairlift'],
+    cultural:  ['cultural', 'mughal', 'mosque', 'heritage', 'fort', 'civilization', 'civilisation', 'museum', 'ancient', 'historic', 'ruins', 'badshahi', 'indus', 'bazaar', 'stupa', 'buddhist', 'colonial', 'shrine', 'derawar', 'mohenjo', 'unesco']
 };
 
 // ── Wishlist state (loaded from backend on page ready) ────
@@ -361,8 +366,8 @@ async function doSearch(rawQ) {
     clearError();
 
     // Client-side special-char validation (mirrors backend rule)
-    if (q && !/^[a-zA-Z0-9 ]+$/.test(q)) {
-        showInputError('Please use letters and numbers only');
+    if (q && !/^[a-zA-Z0-9 '\-]+$/.test(q)) {
+        showInputError('Please use letters, numbers, hyphens or apostrophes only');
         allResults = [];
         grid.innerHTML = '';
         countEl.textContent = '';

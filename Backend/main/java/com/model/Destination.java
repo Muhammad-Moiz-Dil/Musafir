@@ -21,6 +21,12 @@ public class Destination {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @Column(name = "image_url")
     private String imageUrl;
 
@@ -33,7 +39,12 @@ public class Destination {
     @Column(name = "is_active")
     private Boolean isActive;
 
+    @Column(name = "search_keywords", columnDefinition = "TEXT")
+    private String searchKeywords;
+
     public Integer getDestinationId() { return destinationId; }
+    public Double  getLatitude()      { return latitude; }
+    public Double  getLongitude()     { return longitude; }
     public String getName() { return name; }
     public String getCity() { return city; }
     public String getDescription() { return description; }
@@ -42,6 +53,8 @@ public class Destination {
     public Integer getTotalReviews() { return totalReviews; }
     public Boolean getIsActive() { return isActive; }
 
-    public void setAverageRating(BigDecimal averageRating) { this.averageRating = averageRating; }
-    public void setTotalReviews(Integer totalReviews)      { this.totalReviews  = totalReviews;  }
+    public String  getSearchKeywords()                           { return searchKeywords; }
+    public void setSearchKeywords(String searchKeywords)         { this.searchKeywords = searchKeywords; }
+    public void setAverageRating(BigDecimal averageRating)       { this.averageRating  = averageRating; }
+    public void setTotalReviews(Integer totalReviews)        { this.totalReviews  = totalReviews;  }
 }

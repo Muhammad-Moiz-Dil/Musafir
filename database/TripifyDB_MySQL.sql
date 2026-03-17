@@ -1,8 +1,14 @@
 -- ============================================
 -- TRIPIFY DATABASE SCHEMA (MySQL)
 -- ============================================
+-- ⚠️  HOW TO RUN IN MYSQL WORKBENCH:
+--     1. Open a new Query tab (do NOT select TripifyDB in the schema panel)
+--     2. Run this entire file with Ctrl+Shift+Enter
+--     The USE mysql line below ensures the DROP works even if you were connected to TripifyDB.
 
-CREATE DATABASE IF NOT EXISTS TripifyDB;
+USE mysql;
+DROP DATABASE IF EXISTS TripifyDB;
+CREATE DATABASE TripifyDB;
 USE TripifyDB;
 
 -- ============================================
@@ -29,7 +35,7 @@ CREATE TABLE Users (
 -- ============================================
 CREATE TABLE Destinations (
     destination_id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(255) NOT NULL,
+    name VARCHAR(255) UNIQUE NOT NULL,
     country VARCHAR(100) NOT NULL,
     city VARCHAR(100),
     description TEXT,
@@ -38,6 +44,7 @@ CREATE TABLE Destinations (
     image_url VARCHAR(500),
     average_rating DECIMAL(3,2) DEFAULT 0.00,
     total_reviews INT DEFAULT 0,
+    search_keywords TEXT,
     created_at DATETIME DEFAULT NOW(),
     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
     is_active TINYINT(1) DEFAULT 1
@@ -112,10 +119,12 @@ CREATE TABLE Reviews (
     user_id INT NOT NULL,
     destination_id INT NOT NULL,
     rating INT CHECK (rating BETWEEN 1 AND 5) NOT NULL,
-    comment TEXT,
+    review_text TEXT,
+    verified TINYINT(1) DEFAULT 0,   -- 1 = verified traveller (completed trip), 0 = general feedback
     created_at DATETIME DEFAULT NOW(),
     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
     is_flagged TINYINT(1) DEFAULT 0,
+    UNIQUE KEY uq_user_dest_review (user_id, destination_id),
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE
 );
@@ -205,24 +214,27 @@ CREATE TABLE SeasonalData (
 -- ============================================
 -- 12. TRIPS TABLE
 -- ============================================
- CREATE TABLE Trips (
-      trip_id    INT AUTO_INCREMENT PRIMARY KEY,
-      user_id    INT          NOT NULL,
-      title      VARCHAR(255) NOT NULL,
-      status     ENUM('PLANNED','COMPLETED') NOT NULL DEFAULT 'PLANNED',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
-  );
+CREATE TABLE Trips (
+    trip_id    INT AUTO_INCREMENT PRIMARY KEY,
+    user_id    INT          NOT NULL,
+    title      VARCHAR(255) NOT NULL,
+    status     ENUM('PLANNED','COMPLETED') NOT NULL DEFAULT 'PLANNED',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
 
-  CREATE TABLE TripDestinations (
-      trip_destination_id INT AUTO_INCREMENT PRIMARY KEY,
-      trip_id             INT NOT NULL,
-      destination_id      INT NOT NULL,
-      visit_order         INT DEFAULT 0,
-      FOREIGN KEY (trip_id)        REFERENCES Trips(trip_id)               ON DELETE CASCADE,
-      FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE,
-      UNIQUE KEY uq_trip_dest (trip_id, destination_id)
-  );
+-- ============================================
+-- 13. TRIP DESTINATIONS TABLE
+-- ============================================
+CREATE TABLE TripDestinations (
+    trip_destination_id INT AUTO_INCREMENT PRIMARY KEY,
+    trip_id             INT NOT NULL,
+    destination_id      INT NOT NULL,
+    visit_order         INT DEFAULT 0,
+    FOREIGN KEY (trip_id)        REFERENCES Trips(trip_id)               ON DELETE CASCADE,
+    FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE,
+    UNIQUE KEY uq_trip_dest (trip_id, destination_id)
+);
 
 -- ============================================
 -- 14. NOTIFICATIONS TABLE
@@ -285,13 +297,13 @@ CREATE TABLE SystemSettings (
 -- 18. USER PREFERENCES TABLE
 -- ============================================
 CREATE TABLE UserPreferences (
-      preference_id INT PRIMARY KEY AUTO_INCREMENT,
-      user_id INT NOT NULL UNIQUE,
-      age_group VARCHAR(20) DEFAULT '18-25',
-      travel_preferences JSON,
-      updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
-      FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
-  );
+    preference_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    age_group VARCHAR(20) DEFAULT '18-25',
+    travel_preferences JSON,
+    updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
+);
 
 -- ============================================
 -- INDEXES
@@ -312,7 +324,7 @@ CREATE INDEX idx_reviews_user ON Reviews(user_id);
 CREATE INDEX idx_hotelreviews_hotel ON HotelReviews(hotel_id);
 CREATE INDEX idx_hotelreviews_user ON HotelReviews(user_id);
 CREATE INDEX idx_trips_user ON Trips(user_id);
-CREATE INDEX idx_trips_status ON Trips(trip_status);
+CREATE INDEX idx_trips_status ON Trips(status);
 CREATE INDEX idx_tripdestinations_trip ON TripDestinations(trip_id);
 CREATE INDEX idx_notifications_user ON Notifications(user_id);
 CREATE INDEX idx_notifications_read ON Notifications(is_read);
@@ -328,74 +340,61 @@ CREATE INDEX idx_flaggedcontent_status ON FlaggedContent(status);
 INSERT INTO Users (email, password_hash, user_type, full_name, phone_number, cnic)
 VALUES ('admin@tripify.com', '$2a$10$UBSS3mzzbjAmJvwSRZTaKOniKif8HJ/.plSnztlOXtD81TYJmV5I6', 'Admin', 'System Admin', '03001234567', '12345-1234567-1');
 
-INSERT INTO Destinations (name, country, city, description, latitude, longitude, image_url)
+-- ── All 10 destinations (name, country, city, description, lat, lon, image_url, is_active, search_keywords) ─
+INSERT INTO Destinations (name, country, city, description, latitude, longitude, image_url, is_active, search_keywords)
 VALUES
-('Hunza Valley', 'Pakistan', 'Gilgit-Baltistan', 'Beautiful mountain valley with stunning views', 36.3167, 74.6500, 'hunza.jpg'),
-('Murree', 'Pakistan', 'Punjab', 'Popular hill station near Islamabad', 33.9062, 73.3903, 'murree.jpg'),
-('Swat Valley', 'Pakistan', 'Khyber Pakhtunkhwa', 'Switzerland of Pakistan', 35.2227, 72.4258, 'swat.jpg'),
-('Skardu', 'Pakistan', 'Gilgit-Baltistan', 'Gateway to K2 and mighty peaks', 35.2977, 75.6333, 'skardu.jpg'),
-('Naran Kaghan', 'Pakistan', 'Khyber Pakhtunkhwa', 'Scenic valley with lakes and mountains', 34.9042, 73.6519, 'naran.jpg');
 
--- ----------------------Some More Destinations-------------------------------------
- INSERT INTO Destinations (name, country, city, description, latitude, longitude, image_url, is_active)
-  VALUES
-  ('Lahore', 'Pakistan', 'Punjab',
-   'Cultural capital of Pakistan — Mughal-era Badshahi Mosque, Lahore Fort, vibrant Food Street, and the bustling Anarkali Bazaar.',
-   31.5497, 74.3436, 'lahore.jpg', 1),
+('Hunza Valley', 'Pakistan', 'Gilgit-Baltistan',
+ 'A breathtaking mountain valley nestled between Karakoram peaks, famous for ancient Baltit Fort, pristine Attabad Lake, cherry blossoms in spring, and stunning K2 views.',
+ 36.3167, 74.6500, 'hunza.jpg', 1,
+ 'Baltit Fort, Altit Fort, Attabad Lake, Eagles Nest, Rakaposhi, Karimabad, cherry blossom, Nagar, Duikar, Ganish, Hunzakuts, Gilgit'),
 
-  ('Islamabad', 'Pakistan', 'Capital Territory',
-   'Pakistan''s modern capital — Faisal Mosque, Margalla Hills hiking trails, Daman-e-Koh viewpoint, and Shakarparian gardens.',
-   33.6844, 73.0479, 'islamabad.jpg', 1),
+('Murree', 'Pakistan', 'Punjab',
+ 'Pakistan''s most beloved hill station — cool pine forests, colonial Mall Road, chairlift rides, and fresh Kashmiri chai. Only 50 km from Islamabad.',
+ 33.9062, 73.3903, 'murree.jpg', 1,
+ 'Mall Road, Patriata, New Murree, chairlift, Bhurban, Kashmir Point, Pindi Point, pine forest, Ayubia, Nathiagali'),
 
-  ('Fairy Meadows', 'Pakistan', 'Gilgit-Baltistan',
-   'A grassy plateau at the base of Nanga Parbat — the world''s 9th highest peak. Accessible only by jeep and foot, one of
-  Pakistan''s most scenic campsites.',
-   35.3850, 74.5891, 'fairy-meadows.jpg', 1),
+('Swat Valley', 'Pakistan', 'Khyber Pakhtunkhwa',
+ 'The "Switzerland of Pakistan" — lush green mountains, clear rivers, ancient Buddhist stupas at Butkara, and vibrant bazaars in Mingora.',
+ 35.2227, 72.4258, 'swat.jpg', 1,
+ 'Mingora, Kalam, Malam Jabba, Butkara Stupa, White Palace, Fizagat Park, Bahrain, Mahodand Lake, Ushu Forest, Marghazar'),
 
-  ('Mohenjo Daro', 'Pakistan', 'Sindh',
-   'One of the world''s earliest urban settlements dating back to 2500 BC. UNESCO World Heritage Site with remarkable ancient ruins
-  of the Indus Valley Civilization.',
-   27.3244, 68.1376, 'mohenjo-daro.jpg', 1),
+('Skardu', 'Pakistan', 'Gilgit-Baltistan',
+ 'Gateway to K2 and the world''s highest peaks. Cold desert plateau, turquoise Shangrila lake, and the confluence of Indus and Shigar rivers.',
+ 35.2977, 75.6333, 'skardu.jpg', 1,
+ 'Shangrila Resort, Satpara Lake, K2 base camp, Shigar Fort, Kharphocho Fort, Deosai Plains, Upper Kachura, Concordia, Baltoro Glacier, Cold Desert'),
 
-  ('Cholistan Desert', 'Pakistan', 'Punjab',
-   'A vast desert in Bahawalpur with ancient Derawar Fort, camel safaris, and the famous Cholistan Desert Jeep Rally held every
-  year.',
-   28.2500, 71.5000, 'cholistan.jpg', 1);
-   
--- Fix destination descriptions and image_url values
--- Run these in MySQL Workbench if you have already seeded the DB:
-UPDATE Destinations SET
-    image_url   = 'hunza.jpg',
-    description = 'A breathtaking mountain valley nestled between Karakoram peaks, famous for ancient Baltit Fort, pristine Attabad Lake, cherry blossoms in spring, and stunning K2 views.'
-WHERE name = 'Hunza Valley';
+('Naran Kaghan', 'Pakistan', 'Khyber Pakhtunkhwa',
+ 'Home to the famous Saif-ul-Malook Lake — a high-altitude alpine lake surrounded by snow-capped peaks, glaciers and wildflower meadows.',
+ 34.9042, 73.6519, 'naran.jpg', 1,
+ 'Saif ul Malook Lake, Saiful Maluk, Lake Lulusar, Babusar Top, Lalazar, Shogran, Payye Meadows, Ansoo Lake, Batakundi, Mansehra'),
 
-UPDATE Destinations SET
-    image_url   = 'murree.jpg',
-    description = 'Pakistan''s most beloved hill station — cool pine forests, colonial Mall Road, chairlift rides, and fresh Kashmiri chai. Only 50 km from Islamabad.'
-WHERE name = 'Murree';
+('Lahore', 'Pakistan', 'Punjab',
+ 'Cultural capital of Pakistan — Mughal-era Badshahi Mosque, Lahore Fort, vibrant Food Street, and the bustling Anarkali Bazaar.',
+ 31.5497, 74.3436, 'lahore.jpg', 1,
+ 'Minar-e-Pakistan, Minare Pakistan, Minar e Pakistan, Badshahi Mosque, Lahore Fort, Shalimar Gardens, Walled City, Anarkali, Data Darbar, Food Street, Wagah Border, Wagah, Jahangir Tomb, Shahi Qila, Noor Jahan, Sunehri Masjid, Liberty Market, Gulberg, Hussain Agahi, Cooco Den, Hafiz Center, Orange Line'),
 
-UPDATE Destinations SET
-    image_url   = 'swat.jpg',
-    description = 'The "Switzerland of Pakistan" — lush green mountains, clear rivers, ancient Buddhist stupas at Butkara, and vibrant bazaars in Mingora.'
-WHERE name = 'Swat Valley';
+('Islamabad', 'Pakistan', 'Capital Territory',
+ 'Pakistan''s modern capital — Faisal Mosque, Margalla Hills hiking trails, Daman-e-Koh viewpoint, and Shakarparian gardens.',
+ 33.6844, 73.0479, 'islamabad.jpeg', 1,
+ 'Faisal Mosque, Margalla Hills, Daman-e-Koh, Shakarparian, Pakistan Monument, Lake View Park, Rawal Lake, Centaurus, Trail 3, Trail 5, F-7, F-6, Saidpur Village, Lok Virsa, PIMS, Zero Point, Melody, Kohsar Market'),
 
-UPDATE Destinations SET
-    image_url   = 'skardu.jpg',
-    description = 'Gateway to K2 and the world''s highest peaks. Cold desert plateau, turquoise Shangrila lake, and the confluence of Indus and Shigar rivers.'
-WHERE name = 'Skardu';
+('Fairy Meadows', 'Pakistan', 'Gilgit-Baltistan',
+ 'A grassy plateau at the base of Nanga Parbat — the world''s 9th highest peak. Accessible only by jeep and foot, one of Pakistan''s most scenic campsites.',
+ 35.3850, 74.5891, 'fairyMeadows.jpeg', 1,
+ 'Nanga Parbat, Killer Mountain, Raikot Bridge, Tattu Village, Beyal Camp, Diamir, Rupal Face, basecamp, Nanga Parbat base camp, 9th highest peak'),
 
-UPDATE Destinations SET
-    image_url   = 'naran.jpg',
-    description = 'Home to the famous Saif-ul-Malook Lake — a high-altitude alpine lake surrounded by snow-capped peaks, glaciers and wildflower meadows.'
-WHERE name = 'Naran Kaghan';
+('Mohenjo Daro', 'Pakistan', 'Sindh',
+ 'One of the world''s earliest urban settlements dating back to 2500 BC. UNESCO World Heritage Site with remarkable ancient ruins of the Indus Valley Civilization.',
+ 27.3244, 68.1376, 'mohenjodaro.jpeg', 1,
+ 'Indus Valley Civilization, Great Bath, Dancing Girl, Priest King, Larkana, bronze age, Harappan, Mohenjodaro, Moenjodaro, ancient city, 2500 BC, UNESCO, archaeological site'),
 
+('Cholistan Desert', 'Pakistan', 'Punjab',
+ 'A vast desert in Bahawalpur with ancient Derawar Fort, camel safaris, and the famous Cholistan Desert Jeep Rally held every year.',
+ 28.2500, 71.5000, 'cholistanDesert.jpeg', 1,
+ 'Derawar Fort, Bahawalpur, camel safari, jeep rally, Yazman, Fort Abbas, Dingarh Fort, Marot, Islamgarh, desert camp, Cholistan rally, Abbasi');
 
-  UPDATE Destinations SET image_url = 'islamabad.jpeg'     WHERE name = 'Islamabad';
-  UPDATE Destinations SET image_url = 'fairyMeadows.jpeg'  WHERE name = 'Fairy Meadows';
-  UPDATE Destinations SET image_url = 'mohenjodaro.jpeg'   WHERE name = 'Mohenjo Daro';
-  UPDATE Destinations SET image_url = 'cholistanDesert.jpeg' WHERE name = 'Cholistan Desert';
-
-
+-- ── Hotels ───────────────────────────────────────────────────────────────────
 INSERT INTO Hotels (destination_id, hotel_name, address, contact_number, star_rating, price_per_night, total_rooms, available_rooms, amenities)
 VALUES
 (1, 'Hunza Serena Inn', 'Karimabad, Hunza', '03451234567', 4, 15000, 50, 45, 'WiFi, Restaurant, Parking'),
@@ -404,6 +403,7 @@ VALUES
 (4, 'Skardu Inn', 'Main Bazaar, Skardu', '03451234570', 3, 8000, 30, 28, 'WiFi, Restaurant'),
 (5, 'Naran Pines Hotel', 'Naran Valley', '03451234571', 3, 10000, 40, 35, 'WiFi, Restaurant, Parking');
 
+-- ── Travel Guidelines (all categories for all 10 destinations) ───────────────
 INSERT INTO TravelGuidelines (destination_id, title, content, category)
 VALUES
 -- Hunza Valley (1)
@@ -475,51 +475,143 @@ VALUES
 (10, 'Health Tips', 'Carry oral rehydration salts and antihistamines for sand allergies. Sun protection (SPF 50+, full-sleeve clothing, sunglasses) is essential. Mobile signal is limited - Zong has the best coverage in Bahawalpur district.', 'Health'),
 (10, 'Getting There', 'Bahawalpur is the gateway to Cholistan - fly from Karachi or Lahore, or take the Lahore-Bahawalpur Daewoo Express (~5 hours). From Bahawalpur, hire a 4x4 jeep to Derawar Fort (~100 km on desert tracks). A standard car cannot navigate the terrain.', 'Transport');
 
-INSERT INTO EmergencyInfo (destination_id, police_number, ambulance_number, tourist_helpline, nearest_hospital)
+-- ── Safety Guidelines (UC15 — extended safety data for destinations 1–5) ─────
+-- NOTE: These supplement the existing guidelines above. Do NOT run UC15_EmergencyData.sql
+-- separately as it uses bare DELETE statements that wipe the TravelGuidelines table.
+INSERT INTO TravelGuidelines (destination_id, title, content, category)
 VALUES
-(1, '15', '1122', '051-111-888-444', 'District Hospital Gilgit'),
-(2, '15', '1122', '051-111-888-444', 'CMH Murree'),
-(3, '15', '1122', '0946-9230401', 'Saidu Teaching Hospital');
+-- Hunza Valley (1)
+(1, 'Altitude Sickness Prevention', 'Hunza sits above 2,400m. Ascend slowly — max 500m gain per day. Drink 3-4 litres of water daily. Severe headache, nausea or confusion means descend immediately and seek help at DHQ Gilgit.', 'Safety'),
+(1, 'NOC Requirements', 'Foreign nationals require a No Objection Certificate for areas beyond Karimabad including Khunjerab Pass. Obtain it from the Deputy Commissioner office in Gilgit before travel.', 'Safety'),
+(1, 'Road Safety on KKH', 'The Karakoram Highway has narrow sections with steep drops. Travel only during daylight. Avoid driving after rain as landslides are common. Keep an emergency supply kit in your vehicle.', 'Safety'),
+(1, 'Communication in Remote Areas', 'Mobile signal is weak or absent in many valleys beyond Karimabad. Inform someone of your route and expected return time. Satellite communicators are recommended for remote treks.', 'Safety'),
 
+-- Murree (2)
+(2, 'Hypothermia Risk', 'Temperatures fall below -10C in winter. Wear layered clothing, waterproof boots and gloves. If someone shows confusion or stops shivering, seek medical help immediately at THQ Murree.', 'Safety'),
+(2, 'Flash Flood Warning', 'During monsoon July to August, heavy rain causes flash floods and landslides on mountain roads. Monitor PMD weather alerts. Do not camp near river banks during monsoon season.', 'Safety'),
+(2, 'Crowd Safety', 'Murree gets extremely crowded during winter holidays. Plan your visit on weekdays. Keep a close eye on children in crowded areas. Avoid parking on roadsides as it blocks emergency vehicle access.', 'Safety'),
+
+-- Swat Valley (3)
+(3, 'River Safety', 'Do not swim in the Swat River during monsoon season July to August. Currents become dangerously fast. Keep children away from river banks. Only use designated safe areas for river activities.', 'Safety'),
+(3, 'Medical Facilities', 'Saidu Teaching Hospital 0946-9230300 is the main hospital. Carry a basic first aid kit for remote valleys. Edhi Ambulance 115 covers most of the valley.', 'Safety'),
+(3, 'Emergency in Kalam', 'Kalam is a remote area with very limited medical resources. The nearest hospital is THQ Bahrain. Carry all prescription medications, altitude sickness tablets, and a comprehensive first aid kit.', 'Safety'),
+
+-- Skardu (4)
+(4, 'Flight Cancellation Risk', 'Skardu airport flights are frequently cancelled due to bad weather. Always carry 2-3 extra days of cash, food and medications in case you are stranded. Book refundable tickets when possible.', 'Safety'),
+(4, 'Altitude and Acclimatisation', 'Skardu is at 2,228m. Spend 1-2 days acclimatising before trekking higher. Common symptoms of altitude sickness are headache, nausea and shortness of breath. Descend immediately if symptoms worsen.', 'Safety'),
+(4, 'Extreme Weather Conditions', 'Summer days can be warm at 25C but nights drop to 5-10C. Winters are extreme and the area is inaccessible October to May. Carry sunscreen as UV radiation is intense at high altitude.', 'Safety'),
+(4, 'Carry Cash Only', 'ATMs are limited and frequently out of service in Skardu. Carry sufficient PKR cash for the entire trip. Credit cards are rarely accepted. Nearest reliable banking is in Gilgit city.', 'Safety'),
+
+-- Naran Kaghan (5)
+(5, 'Seasonal Access Window', 'Naran is accessible only June to September. Babusar Top pass at 4,173m closes the rest of the year due to heavy snow. Always verify pass conditions with local police before attempting to cross.', 'Safety'),
+(5, 'Cold Night Temperatures', 'Even in peak summer, night temperatures near Saif-ul-Malook Lake drop to 0C or below. Pack a warm sleeping bag, thermal undergarments, and a weatherproof jacket. Do not underestimate the cold.', 'Safety'),
+(5, 'Flash Flood Risk', 'The trail to Lake Saif-ul-Malook is steep and dangerous after rain. Only take the jeep trail — do not attempt on foot alone. Always hire a local guide for high-altitude treks.', 'Safety'),
+(5, 'Vehicle Requirements', 'Beyond Naran town, roads are unpaved, steep and rocky. Only 4x4 vehicles should be used — standard cars will get stranded. Hire a local jeep driver who knows the routes well.', 'Safety');
+
+-- ── Emergency Info (complete data for all 5 destinations) ────────────────────
+-- Uses UC15 verified local numbers. Covers police, ambulance, fire, tourist helpline,
+-- nearest hospital and embassy contact for all 5 main destinations.
+INSERT INTO EmergencyInfo (destination_id, police_number, ambulance_number, fire_service_number, tourist_helpline, nearest_hospital, embassy_contact)
+VALUES
+(1, '05811-920070', '1122', '16', '1422', 'DHQ Hospital Gilgit',     '051-2279770'),
+(2, '051-3465010',  '1122', '16', '1422', 'THQ Hospital Murree',     '051-2279770'),
+(3, '0946-9230100', '1122', '16', '1422', 'Saidu Teaching Hospital', '051-2279770'),
+(4, '05815-920070', '1122', '16', '1422', 'DHQ Hospital Skardu',     '051-2279770'),
+(5, '0997-360011',  '1122', '16', '1422', 'THQ Hospital Mansehra',   '051-2279770');
+
+-- ── Souvenirs ─────────────────────────────────────────────────────────────────
 INSERT INTO Souvenirs (destination_id, name, description, price, vendor_name)
 VALUES
-(1, 'Hunza Cap', 'Traditional woolen cap', 500, 'Karimabad Handicrafts'),
-(1, 'Apricot Jam', 'Local organic apricot jam', 300, 'Hunza Organic'),
-(2, 'Shawls', 'Handmade woolen shawls', 2000, 'Murree Crafts'),
-(3, 'Emerald Stone', 'Natural emerald from Swat', 5000, 'Swat Gems');
+(1, 'Hunza Cap',    'Traditional woolen cap',       500,  'Karimabad Handicrafts'),
+(1, 'Apricot Jam',  'Local organic apricot jam',    300,  'Hunza Organic'),
+(2, 'Shawls',       'Handmade woolen shawls',       2000, 'Murree Crafts'),
+(3, 'Emerald Stone','Natural emerald from Swat',    5000, 'Swat Gems');
 
-INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost)
-VALUES
-(1, 4, 15.5, 30.2, 1, 18000),
-(1, 5, 20.3, 25.5, 1, 20000),
-(1, 6, 25.1, 15.3, 1, 22000),
-(1, 7, 28.5, 10.2, 1, 25000),
-(1, 8, 27.8, 12.5, 1, 24000),
-(1, 9, 22.4, 18.7, 1, 20000),
-(1, 10, 16.2, 25.3, 0, 15000);
+-- ── Seasonal Data — full 12 months for all 5 destinations ────────────────────
+-- Source: SeasonalData_AllDests.sql
 
+-- Hunza Valley (id=1)
+INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost) VALUES
+(1,  1,  -5.0,  15.0, 0,  8000),
+(1,  2,  -2.0,  20.0, 0,  9000),
+(1,  3,   5.0,  35.0, 0, 12000),
+(1,  4,  15.5,  30.2, 1, 18000),
+(1,  5,  20.3,  25.5, 1, 20000),
+(1,  6,  25.1,  15.3, 1, 22000),
+(1,  7,  28.5,  10.2, 1, 25000),
+(1,  8,  27.8,  12.5, 1, 24000),
+(1,  9,  22.4,  18.7, 1, 20000),
+(1, 10,  16.2,  25.3, 0, 15000),
+(1, 11,   5.0,  20.0, 0, 10000),
+(1, 12,  -3.0,  12.0, 0,  8000);
+
+-- Murree (id=2)
+INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost) VALUES
+(2,  1,   2.0,  80.0, 1, 12000),
+(2,  2,   3.0,  75.0, 1, 11000),
+(2,  3,   8.0,  90.0, 0,  8000),
+(2,  4,  13.0,  85.0, 0,  9000),
+(2,  5,  17.0,  60.0, 0, 10000),
+(2,  6,  21.0,  55.0, 0, 11000),
+(2,  7,  22.0, 100.0, 1, 18000),
+(2,  8,  21.0,  95.0, 1, 17000),
+(2,  9,  18.0,  65.0, 1, 15000),
+(2, 10,  13.0,  45.0, 0, 12000),
+(2, 11,   8.0,  50.0, 0,  9000),
+(2, 12,   4.0,  70.0, 1, 13000);
+
+-- Swat Valley (id=3)
+INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost) VALUES
+(3,  1,   5.0,  45.0, 0,  8000),
+(3,  2,   8.0,  50.0, 0,  8500),
+(3,  3,  14.0,  55.0, 0, 10000),
+(3,  4,  19.0,  40.0, 1, 14000),
+(3,  5,  24.0,  25.0, 1, 16000),
+(3,  6,  29.0,  15.0, 1, 18000),
+(3,  7,  31.0,  30.0, 0, 15000),
+(3,  8,  30.0,  35.0, 0, 14000),
+(3,  9,  26.0,  20.0, 1, 16000),
+(3, 10,  20.0,  15.0, 1, 14000),
+(3, 11,  13.0,  30.0, 0, 10000),
+(3, 12,   7.0,  40.0, 0,  8000);
+
+-- Skardu (id=4)
+INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost) VALUES
+(4,  1,  -8.0,   8.0, 0,  7000),
+(4,  2,  -5.0,  10.0, 0,  7500),
+(4,  3,   2.0,  15.0, 0,  9000),
+(4,  4,  10.0,  20.0, 0, 12000),
+(4,  5,  16.0,  15.0, 1, 18000),
+(4,  6,  21.0,  10.0, 1, 22000),
+(4,  7,  25.0,   8.0, 1, 25000),
+(4,  8,  24.0,  10.0, 1, 24000),
+(4,  9,  18.0,  12.0, 1, 20000),
+(4, 10,  10.0,  15.0, 0, 15000),
+(4, 11,   1.0,  12.0, 0,  9000),
+(4, 12,  -5.0,  10.0, 0,  7000);
+
+-- Naran Kaghan (id=5)
+INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, peak_season, avg_hotel_cost) VALUES
+(5,  1, -10.0,  20.0, 0,  6000),
+(5,  2,  -8.0,  25.0, 0,  6500),
+(5,  3,  -2.0,  30.0, 0,  8000),
+(5,  4,   5.0,  35.0, 0, 10000),
+(5,  5,  12.0,  30.0, 1, 15000),
+(5,  6,  18.0,  20.0, 1, 20000),
+(5,  7,  22.0,  15.0, 1, 24000),
+(5,  8,  21.0,  18.0, 1, 23000),
+(5,  9,  15.0,  22.0, 1, 18000),
+(5, 10,   8.0,  28.0, 0, 12000),
+(5, 11,   0.0,  25.0, 0,  7000),
+(5, 12,  -8.0,  20.0, 0,  5500);
+
+-- ── System Settings ───────────────────────────────────────────────────────────
 INSERT INTO SystemSettings (setting_key, setting_value, description)
 VALUES
-('BASE_TRAVEL_COST_PER_DAY', '5000', 'Base cost per person per day for trip calculation'),
-('WEATHER_API_KEY', 'your_api_key_here', 'OpenWeatherMap API Key'),
-('GOOGLE_MAPS_API_KEY', 'your_api_key_here', 'Google Maps API Key');
+('BASE_TRAVEL_COST_PER_DAY', '5000',            'Base cost per person per day for trip calculation'),
+('WEATHER_API_KEY',          'your_api_key_here','OpenWeatherMap API Key'),
+('GOOGLE_MAPS_API_KEY',      'your_api_key_here','Google Maps API Key');
 
+SELECT 'TripifyDB setup complete!' AS Status;
 
-SELECT 'Database setup complete!' AS Status;
-
-UPDATE Users
-SET password_hash = '$2a$10$UBSS3mzzbjAmJvwSRZTaKOniKif8HJ/.plSnztlOXtD81TYJmV5I6'
-WHERE email = 'admin@tripify.com';
-
-SELECT *FROM USERS;
-SELECT *FROM Destinations;
-SELECT *FROM UserPreferences;
-ALTER TABLE Reviews ADD COLUMN review_text TEXT;
-ALTER TABLE Trips ADD COLUMN status ENUM('PLANNED','COMPLETED') NOT NULL DEFAULT 'PLANNED';
-
-
-
-
-
-
-
+SELECT *FROM Users;

@@ -239,12 +239,12 @@ button { font-family: var(--font); cursor: pointer; }
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 9px;
-    color: var(--t2);
+    color: var(--t1);
     display: flex; align-items: center; justify-content: center;
     transition: var(--ease);
     position: relative;
 }
-.topbar-btn:hover { background: var(--surface-2); color: var(--t1); }
+.topbar-btn:hover { background: var(--surface-2); color: var(--white); }
 .notif-dot {
     position: absolute; top: 6px; right: 6px;
     width: 7px; height: 7px;

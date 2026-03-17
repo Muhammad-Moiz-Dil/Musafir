@@ -65,5 +65,12 @@ const ENDPOINTS = {
         UNREAD_COUNT: `${API_CONFIG.BASE_URL}/weather/unread-count`,
         MARK_READ:    (id) => `${API_CONFIG.BASE_URL}/weather/notifications/${id}/read`,
         MARK_ALL_READ:`${API_CONFIG.BASE_URL}/weather/notifications/read-all`,
+        LOOKUP:       (name) => `${API_CONFIG.BASE_URL}/weather/lookup?name=${encodeURIComponent(name)}`,
+    },
+    NOTIFICATIONS: {
+        LIST:         `${API_CONFIG.BASE_URL}/notifications`,
+        UNREAD_COUNT: `${API_CONFIG.BASE_URL}/notifications/unread-count`,
+        MARK_READ:    (id) => `${API_CONFIG.BASE_URL}/notifications/${id}/read`,
+        MARK_ALL_READ:`${API_CONFIG.BASE_URL}/notifications/read-all`,
     },
 };

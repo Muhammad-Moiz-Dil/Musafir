@@ -84,6 +84,76 @@
 }
 .wish-empty span { font-size: 32px; display: block; margin-bottom: 8px; }
 .wish-empty p { font-size: 13px; }
+
+/* ── Notification Bell ── */
+.notif-wrap { position: relative; }
+.notif-btn  { position: relative; }
+.notif-badge {
+    position: absolute; top: -4px; right: -4px;
+    background: #ef4444; color: #fff; font-size: 9px; font-weight: 700;
+    min-width: 16px; height: 16px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 3px; pointer-events: none; border: 2px solid var(--bg);
+}
+.notif-panel {
+    position: absolute; right: 0; top: calc(100% + 10px);
+    width: 360px; max-height: 480px;
+    background: #0e1d30;
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: var(--r-xl); z-index: 600;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.75);
+    display: none; flex-direction: column; overflow: hidden;
+}
+.notif-panel.open { display: flex; }
+.notif-panel-hdr {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); flex-shrink: 0;
+    background: #0a1624;
+}
+.notif-panel-title { font-size: 14px; font-weight: 700; color: var(--white); }
+.notif-mark-all { font-size: 11.5px; color: var(--accent); background: none; border: none; cursor: pointer; padding: 0; }
+.notif-panel-body { flex: 1; overflow-y: auto; }
+.notif-loading { padding: 28px 16px; text-align: center; color: var(--t3); font-size: 13px; }
+.notif-item {
+    display: flex; gap: 11px; align-items: flex-start;
+    padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    cursor: pointer; transition: background 0.2s;
+}
+.notif-item:hover { background: rgba(255,255,255,0.06); }
+.notif-item.unread { background: rgba(245,166,35,0.07); }
+.notif-item-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: rgba(245,166,35,0.12);
+    display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;
+}
+.notif-item-body  { flex: 1; min-width: 0; }
+.notif-item-title { font-size: 12.5px; font-weight: 600; color: var(--white); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif-item-msg   { font-size: 11.5px; color: var(--t2); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.notif-item-time  { font-size: 10.5px; color: var(--t3); margin-top: 3px; }
+.notif-unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 4px; }
+.notif-empty { padding: 32px 16px; text-align: center; color: var(--t3); font-size: 13px; }
+.notif-empty span { font-size: 32px; display: block; margin-bottom: 8px; }
+.notif-error {
+    margin: 10px; padding: 12px 14px; border-radius: var(--r);
+    background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+    color: #fca5a5; font-size: 12.5px; text-align: center;
+}
+.notif-panel-footer { padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center; flex-shrink: 0; background: #0a1624; }
+.notif-view-all { font-size: 12.5px; color: var(--accent); text-decoration: none; }
+.notif-view-all:hover { text-decoration: underline; }
+
+/* ── Dashboard Inline Alerts ── */
+.dash-alert-item {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(245,166,35,0.07); border: 1px solid rgba(245,166,35,0.2);
+    border-radius: var(--r); padding: 11px 14px; margin-bottom: 8px;
+}
+.dash-alert-icon  { font-size: 20px; flex-shrink: 0; }
+.dash-alert-body  { flex: 1; min-width: 0; }
+.dash-alert-title { font-size: 13px; font-weight: 600; color: var(--white); }
+.dash-alert-msg   { font-size: 12px; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dash-alert-close { background: none; border: none; color: var(--t3); cursor: pointer; font-size: 14px; padding: 4px; transition: color 0.2s; }
+.dash-alert-close:hover { color: var(--t1); }
 </style>
 </head>
 <body>
@@ -176,6 +246,26 @@
         <input type="text" placeholder="Search destinations..." id="topSearch">
     </div>
     <div class="topbar-actions">
+        <!-- Notification Bell -->
+        <div class="notif-wrap" id="notifWrap">
+            <button class="topbar-btn notif-btn" id="bellBtn" onclick="toggleNotifPanel()" aria-label="Notifications">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+            </button>
+            <!-- Dropdown Panel -->
+            <div class="notif-panel" id="notifPanel">
+                <div class="notif-panel-hdr">
+                    <span class="notif-panel-title">🔔 Notifications</span>
+                    <button class="notif-mark-all" onclick="markAllNotifRead()">Mark all read</button>
+                </div>
+                <div class="notif-panel-body" id="notifPanelBody">
+                    <div class="notif-loading">Loading…</div>
+                </div>
+                <div class="notif-panel-footer">
+                    <a href="weather-alerts.html" class="notif-view-all">View Weather Alerts →</a>
+                </div>
+            </div>
+        </div>
         <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'" title="Profile">AT</div>
     </div>
 </header>
@@ -237,6 +327,15 @@
                 <div class="stat-chg chg-up" id="statVisitedChg">Loading...</div>
             </div>
         </div>
+    </div>
+
+    <!-- Notification Alerts (UC17) -->
+    <div id="dashAlerts" style="display:none;margin-bottom:22px">
+        <div class="sec-hdr">
+            <h2>🔔 Recent Alerts</h2>
+            <button onclick="dismissAllDashAlerts()" style="font-size:12px;color:var(--t2);background:none;border:none;cursor:pointer;padding:0">Dismiss all</button>
+        </div>
+        <div id="dashAlertsList"></div>
     </div>
 
     <!-- Recommended -->
@@ -310,6 +409,7 @@
 
 <script src="../../../js/config/api.js"></script>
 <script src="../../../js/services/authService.js"></script>
+<script src="../../../js/services/notificationService.js"></script>
 <script>
 // ── Auth guard ─────────────────────────────────────────────
 const token = localStorage.getItem('tripify_token');
@@ -589,6 +689,169 @@ async function loadStats() {
         });
     }
 }
+// ── UC17: Notifications ─────────────────────────────────────
+let notifData = [];
+let notifPanelOpen = false;
+
+function toggleNotifPanel() {
+    notifPanelOpen = !notifPanelOpen;
+    document.getElementById('notifPanel').classList.toggle('open', notifPanelOpen);
+    if (notifPanelOpen) fetchAndRenderPanel();
+}
+document.addEventListener('click', e => {
+    if (notifPanelOpen && !document.getElementById('notifWrap').contains(e.target)) {
+        notifPanelOpen = false;
+        document.getElementById('notifPanel').classList.remove('open');
+    }
+});
+
+async function fetchAndRenderPanel() {
+    const body = document.getElementById('notifPanelBody');
+    body.innerHTML = '<div class="notif-loading">Loading…</div>';
+    try {
+        const res = await fetch(ENDPOINTS.NOTIFICATIONS.LIST, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.status === 401) { AuthService.logout(); return; }
+        if (!res.ok) throw new Error(res.status);
+        const data = await res.json();
+        notifData = data.notifications || [];
+        renderPanel(notifData);
+        updateBadge(data.unreadCount || 0);
+    } catch (_) {
+        body.innerHTML = '<div class="notif-error">Unable to load details. Please try again later.</div>';
+    }
+}
+
+function renderPanel(items) {
+    const body = document.getElementById('notifPanelBody');
+    if (!items.length) {
+        body.innerHTML = '<div class="notif-empty"><span>🔔</span><p>No notifications yet.<br>Weather alerts and travel updates<br>will appear here.</p></div>';
+        return;
+    }
+    body.innerHTML = items.map(n => `
+    <div class="notif-item ${!n.isRead ? 'unread' : ''}" onclick="onNotifClick(${n.notificationId},'${n.type}')">
+        <div class="notif-item-icon">${notifIcon(n.type, n.title)}</div>
+        <div class="notif-item-body">
+            <div class="notif-item-title">${escHtml(n.title)}</div>
+            <div class="notif-item-msg">${escHtml(n.message)}</div>
+            <div class="notif-item-time">${timeAgo(n.createdAt)}</div>
+        </div>
+        ${!n.isRead ? '<div class="notif-unread-dot"></div>' : ''}
+    </div>`).join('');
+}
+
+async function onNotifClick(id, type) {
+    try {
+        await fetch(ENDPOINTS.NOTIFICATIONS.MARK_READ(id), {
+            method: 'PUT', headers: { 'Authorization': 'Bearer ' + token }
+        });
+    } catch (_) {}
+    const n = notifData.find(x => x.notificationId === id);
+    if (n) n.isRead = true;
+    renderPanel(notifData);
+    updateBadge(notifData.filter(x => !x.isRead).length);
+    if (type === 'WEATHER_ALERT') {
+        notifPanelOpen = false;
+        document.getElementById('notifPanel').classList.remove('open');
+        location.href = 'weather-alerts.html';
+    }
+}
+
+async function markAllNotifRead() {
+    try {
+        await fetch(ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ, {
+            method: 'PUT', headers: { 'Authorization': 'Bearer ' + token }
+        });
+        notifData.forEach(n => n.isRead = true);
+        renderPanel(notifData);
+        updateBadge(0);
+        dismissAllDashAlerts();
+    } catch (_) {}
+}
+
+function updateBadge(count) {
+    const badge = document.getElementById('notifBadge');
+    if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.style.display = 'flex'; }
+    else badge.style.display = 'none';
+}
+
+function notifIcon(type, title) {
+    if (title) {
+        if (title.includes('⛈️')) return '⛈️';
+        if (title.includes('❄️')) return '❄️';
+        if (title.includes('🌡️')) return '🌡️';
+        if (title.includes('🌧️')) return '🌧️';
+        if (title.includes('💨')) return '💨';
+        if (title.includes('🥶')) return '🥶';
+        if (title.includes('🌪️')) return '🌪️';
+        if (title.includes('🌫️')) return '🌫️';
+    }
+    const map = { WEATHER_ALERT:'🌤️', BOOKING_REMINDER:'🏨', TRAVEL_WARNING:'⚠️', TRIP_UPDATE:'🗺️' };
+    return map[type] || '🔔';
+}
+
+function timeAgo(iso) {
+    if (!iso) return '';
+    const m = Math.floor((Date.now() - new Date(iso)) / 60000);
+    if (m < 1) return 'Just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h / 24)}d ago`;
+}
+
+function escHtml(s) {
+    return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Dashboard inline alerts
+async function loadDashAlerts() {
+    try {
+        const res = await fetch(ENDPOINTS.NOTIFICATIONS.LIST, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        notifData = data.notifications || [];
+        updateBadge(data.unreadCount || 0);
+        const unread = notifData.filter(n => !n.isRead).slice(0, 3);
+        if (!unread.length) return;
+        document.getElementById('dashAlerts').style.display = 'block';
+        document.getElementById('dashAlertsList').innerHTML = unread.map(n => `
+        <div class="dash-alert-item" id="da-${n.notificationId}">
+            <div class="dash-alert-icon">${notifIcon(n.type, n.title)}</div>
+            <div class="dash-alert-body">
+                <div class="dash-alert-title">${escHtml(n.title)}</div>
+                <div class="dash-alert-msg">${escHtml(n.message)}</div>
+            </div>
+            <button class="dash-alert-close" onclick="dismissDashAlert(${n.notificationId})" title="Dismiss">✕</button>
+        </div>`).join('');
+    } catch (_) {}
+}
+
+async function dismissDashAlert(id) {
+    document.getElementById('da-' + id)?.remove();
+    if (!document.getElementById('dashAlertsList').children.length)
+        document.getElementById('dashAlerts').style.display = 'none';
+    try {
+        await fetch(ENDPOINTS.NOTIFICATIONS.MARK_READ(id), {
+            method: 'PUT', headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const n = notifData.find(x => x.notificationId === id);
+        if (n) n.isRead = true;
+        updateBadge(notifData.filter(x => !x.isRead).length);
+    } catch (_) {}
+}
+
+function dismissAllDashAlerts() {
+    document.getElementById('dashAlerts').style.display = 'none';
+}
+
+loadDashAlerts();
+
+// ── End UC17 ─────────────────────────────────────────────────
+
 loadStats();
 loadRecommendations().then(async () => {
     // Sync wishlist from backend so the preview matches what the user actually saved

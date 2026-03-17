@@ -47,6 +47,15 @@ public class WeatherAlertController {
         return ResponseEntity.ok(Map.of("message", "Marked as read"));
     }
 
+    /** Lookup live weather for any destination by name (search) */
+    @GetMapping("/lookup")
+    public ResponseEntity<?> lookupWeather(@RequestParam String name, Authentication auth) {
+        if (auth == null) return ResponseEntity.status(401).build();
+        if (name == null || name.isBlank())
+            return ResponseEntity.badRequest().body(Map.of("message", "Destination name is required"));
+        return ResponseEntity.ok(weatherAlertService.lookupWeatherByName(name.trim()));
+    }
+
     /** Mark all weather notifications as read */
     @PutMapping("/notifications/read-all")
     public ResponseEntity<?> markAllRead(Authentication auth) {

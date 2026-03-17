@@ -34,6 +34,9 @@ public class EmergencyInfo {
     @Column(name = "embassy_contact", length = 255)
     private String embassyContact;
 
+    @Column(name = "covid_rules", columnDefinition = "TEXT")
+    private String covidRules;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -76,6 +79,9 @@ public class EmergencyInfo {
 
     public String getEmbassyContact()                        { return embassyContact; }
     public void setEmbassyContact(String embassyContact)     { this.embassyContact = embassyContact; }
+
+    public String getCovidRules()                            { return covidRules; }
+    public void setCovidRules(String covidRules)             { this.covidRules = covidRules; }
 
     public LocalDateTime getCreatedAt()                      { return createdAt; }
     public LocalDateTime getUpdatedAt()                      { return updatedAt; }

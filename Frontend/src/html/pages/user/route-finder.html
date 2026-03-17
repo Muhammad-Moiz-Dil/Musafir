@@ -353,7 +353,7 @@ function initMap() {
     window._mapsReady = true;
 }
 
-// ── Geocode with Nominatim (free, no key needed) ──
+// ── Geocode with Nominatim ──
 async function geocode(query) {
     const url = 'https://nominatim.openstreetmap.org/search?q=' +
         encodeURIComponent(query) + '&format=json&limit=1&accept-language=en';
@@ -361,18 +361,37 @@ async function geocode(query) {
     if (!res.ok) throw new Error('geocode-failed');
     const data = await res.json();
     if (!data.length) return null;
-    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon), label: data[0].display_name };
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
 }
 
-// ── Route with OSRM (free, no key needed) ──
-async function getOsrmRoute(origCoords, destCoords, profile) {
+// ── Route with OSRM ──
+async function getOsrmRoute(orig, dest, profile) {
     const url = 'https://router.project-osrm.org/route/v1/' + profile + '/' +
-        origCoords.lng + ',' + origCoords.lat + ';' +
-        destCoords.lng + ',' + destCoords.lat +
+        orig.lng + ',' + orig.lat + ';' +
+        dest.lng + ',' + dest.lat +
         '?steps=true&overview=full&geometries=geojson&alternatives=true';
     const res = await fetch(url);
     if (!res.ok) throw new Error('osrm-failed');
     return res.json();
+}
+
+// ── Duration display ──
+// DRIVING  → OSRM driving profile (accurate car time)
+// WALKING  → OSRM foot profile   (accurate walk time)
+// TRANSIT  → OSRM driving route shown on map; transit time = driving * 1.45
+//            (Pakistan buses/wagons avg ~45% slower than cars — no free transit API covers PK)
+const TRANSIT_FACTOR = 1.45;
+
+function formatDuration(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.round((seconds % 3600) / 60);
+    if (h === 0) return m + ' min';
+    return h + ' hr ' + (m > 0 ? m + ' min' : '');
+}
+
+function displayDuration(rawSeconds) {
+    const secs = travelMode === 'TRANSIT' ? rawSeconds * TRANSIT_FACTOR : rawSeconds;
+    return formatDuration(secs);
 }
 
 // ── Clear previous route drawings ──
@@ -383,7 +402,6 @@ function clearMap() {
     activeMarkers   = [];
 }
 
-// ── Draw a single route on the map ──
 function drawPolyline(coords, color, weight, opacity) {
     const path = coords.map(c => ({ lat: c[1], lng: c[0] }));
     const poly = new google.maps.Polyline({ path, map, strokeColor: color, strokeWeight: weight, strokeOpacity: opacity });
@@ -399,26 +417,15 @@ function placeMarker(latlng, title, color) {
     activeMarkers.push(m);
 }
 
-// ── Build step instruction text from OSRM maneuver ──
+// ── Build step text from OSRM maneuver ──
 function buildInstruction(step) {
-    const type = step.maneuver.type;
-    const mod  = step.maneuver.modifier || '';
-    const name = step.name || 'unnamed road';
-    const instructions = {
-        'depart':     'Start on',
-        'arrive':     'Arrive at',
-        'turn':       'Turn ' + mod + ' onto',
-        'new name':   'Continue onto',
-        'continue':   'Continue ' + (mod ? mod + ' on' : 'on'),
-        'merge':      'Merge onto',
-        'on ramp':    'Take ramp onto',
-        'off ramp':   'Take exit onto',
-        'fork':       'Keep ' + mod + ' toward',
-        'roundabout': 'Enter roundabout',
-        'rotary':     'Enter rotary',
-        'end of road':'At end of road turn ' + mod + ' onto',
-    };
-    return (instructions[type] || 'Continue onto') + ' ' + name;
+    const type = step.maneuver.type, mod = step.maneuver.modifier || '', name = step.name || 'unnamed road';
+    const map_ = { 'depart':'Start on', 'arrive':'Arrive at', 'turn':'Turn '+mod+' onto',
+        'new name':'Continue onto', 'continue':'Continue '+(mod?mod+' on':'on'),
+        'merge':'Merge onto', 'on ramp':'Take ramp onto', 'off ramp':'Take exit onto',
+        'fork':'Keep '+mod+' toward', 'roundabout':'Enter roundabout', 'rotary':'Enter rotary',
+        'end of road':'At end of road turn '+mod+' onto' };
+    return (map_[type] || 'Continue onto') + ' ' + name;
 }
 
 // ── Find Route ──
@@ -426,22 +433,10 @@ async function findRoute() {
     const originText = document.getElementById('originInput').value.trim();
     const destText   = document.getElementById('destInput').value.trim();
 
-    if (!originText && !destText) {
-        showToast('⚠️', 'Please enter both a starting point and a destination.');
-        return;
-    }
-    if (!originText) {
-        showToast('⚠️', 'Please enter a starting location (From).');
-        return;
-    }
-    if (!destText) {
-        showToast('⚠️', 'Please enter a destination (To).');
-        return;
-    }
-    if (!window._mapsReady) {
-        showToast('❌', 'Map is not ready yet. Please wait a moment.', 3000);
-        return;
-    }
+    if (!originText && !destText) { showToast('⚠️', 'Please enter both a starting point and a destination.'); return; }
+    if (!originText) { showToast('⚠️', 'Please enter a starting location (From).'); return; }
+    if (!destText)   { showToast('⚠️', 'Please enter a destination (To).'); return; }
+    if (!window._mapsReady) { showToast('❌', 'Map is not ready yet. Please wait a moment.', 3000); return; }
 
     const btn = document.getElementById('findBtn');
     btn.disabled = true;
@@ -449,19 +444,11 @@ async function findRoute() {
     showToast('🗺️', 'Finding route…', 2500);
 
     try {
-        // 1. Geocode both locations
         const [orig, dest] = await Promise.all([geocode(originText), geocode(destText)]);
+        if (!orig) { showToast('❌', 'Could not find "' + originText + '". Try adding ", Pakistan".', 4500); return; }
+        if (!dest) { showToast('❌', 'Could not find "' + destText + '". Try adding ", Pakistan".', 4500); return; }
 
-        if (!orig) {
-            showToast('❌', 'Could not find "' + originText + '". Try adding ", Pakistan".', 4500);
-            return;
-        }
-        if (!dest) {
-            showToast('❌', 'Could not find "' + destText + '". Try adding ", Pakistan".', 4500);
-            return;
-        }
-
-        // 2. Get route from OSRM (driving / foot — no transit)
+        // TRANSIT uses the driving road network on the map (buses follow roads)
         const profile = travelMode === 'WALKING' ? 'foot' : 'driving';
         const data    = await getOsrmRoute(orig, dest, profile);
 
@@ -471,9 +458,11 @@ async function findRoute() {
         }
 
         allRoutes = data.routes;
+        window._routeOrig = orig;
+        window._routeDest = dest;
         clearMap();
         applyRoute(0, orig, dest);
-        renderAlternatives(orig, dest);
+        renderAlternatives();
         showToast('✅', 'Route found! ' + allRoutes.length + ' option' + (allRoutes.length > 1 ? 's' : '') + ' available');
 
     } catch (e) {
@@ -485,94 +474,66 @@ async function findRoute() {
 }
 
 function applyRoute(idx, orig, dest) {
+    orig = orig || window._routeOrig;
+    dest = dest || window._routeDest;
     clearMap();
     const route = allRoutes[idx];
 
-    // Draw all alt routes faintly first, then active on top
     allRoutes.forEach((r, i) => {
         if (i !== idx) drawPolyline(r.geometry.coordinates, '#4a6480', 4, 0.35);
     });
     const path = drawPolyline(route.geometry.coordinates, '#f5a623', 5, 0.9);
 
-    // Markers
     placeMarker({ lat: orig.lat, lng: orig.lng }, 'Start', 'green');
     placeMarker({ lat: dest.lat, lng: dest.lng }, 'End',   'red');
 
-    // Fit bounds
     const bounds = new google.maps.LatLngBounds();
     path.forEach(p => bounds.extend(p));
     map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
 
-    // Summary stats
-    const distKm  = (route.distance / 1000).toFixed(1);
+    const distKm = (route.distance / 1000).toFixed(1);
     document.getElementById('statDist').textContent = distKm + ' km';
-    document.getElementById('statTime').textContent = formatDuration(route.duration);
-    document.getElementById('statMode').textContent = { DRIVING:'🚗 Driving', WALKING:'🚶 Walking', TRANSIT:'🚗 Driving' }[travelMode];
+    document.getElementById('statTime').textContent = displayDuration(route.duration);
+    document.getElementById('statMode').textContent = { DRIVING:'🚗 Driving', WALKING:'🚶 Walking', TRANSIT:'🚌 Transit' }[travelMode];
     document.getElementById('routeSummary').style.display = 'block';
 
-    // Turn-by-turn steps
     let html = '', n = 1;
     (route.legs || []).forEach(leg => {
         (leg.steps || []).forEach(step => {
-            const dist = step.distance >= 1000 ? (step.distance/1000).toFixed(1) + ' km' : Math.round(step.distance) + ' m';
-            const dur  = formatDuration(step.duration);
-            html += '<div class="step-item"><div class="step-num">' + n++ + '</div><div>' +
-                    '<div class="step-text">' + buildInstruction(step) + '</div>' +
-                    '<div class="step-dist">' + dist + ' · ' + dur + '</div>' +
+            const dist = step.distance >= 1000 ? (step.distance/1000).toFixed(1)+' km' : Math.round(step.distance)+' m';
+            html += '<div class="step-item"><div class="step-num">'+n+++'</div><div>' +
+                    '<div class="step-text">'+buildInstruction(step)+'</div>' +
+                    '<div class="step-dist">'+dist+' · '+formatDuration(step.duration)+'</div>' +
                     '</div></div>';
         });
     });
     document.getElementById('stepsContainer').innerHTML = html;
 
-    // Highlight active alt card
     document.querySelectorAll('.alt-route').forEach((el, i) => el.classList.toggle('active', i === idx));
 }
 
-function renderAlternatives(orig, dest) {
+function renderAlternatives() {
     const wrap = document.getElementById('alternativesWrap');
     if (allRoutes.length <= 1) { wrap.style.display = 'none'; return; }
     wrap.style.display = 'block';
     document.getElementById('alternativesList').innerHTML = allRoutes.map((r, i) => {
         const distKm = (r.distance / 1000).toFixed(1);
-        return '<div class="alt-route ' + (i === 0 ? 'active' : '') + '" id="alt-' + i + '" onclick="switchRoute(' + i + ',origRef,destRef)">' +
-            '<div><div class="alt-label">Route ' + (i+1) + (i===0?' (Fastest)':'') + '</div>' +
-            '<div class="alt-detail">' + distKm + ' km · ' + formatDuration(r.duration) + '</div></div>' +
-            '<span class="alt-badge ' + (i===0?'best':'alt') + '">' + (i===0?'Best':'Alt') + '</span>' +
-            '</div>';
-    }).join('');
-
-    // Store coords on window so onclick can reach them
-    window._routeOrig = orig;
-    window._routeDest = dest;
-
-    // Re-render with proper onclick
-    document.getElementById('alternativesList').innerHTML = allRoutes.map((r, i) => {
-        const distKm = (r.distance / 1000).toFixed(1);
-        return '<div class="alt-route ' + (i === 0 ? 'active' : '') + '" id="alt-' + i + '" onclick="switchRoute(' + i + ')">' +
-            '<div><div class="alt-label">Route ' + (i+1) + (i===0?' (Fastest)':'') + '</div>' +
-            '<div class="alt-detail">' + distKm + ' km · ' + formatDuration(r.duration) + '</div></div>' +
-            '<span class="alt-badge ' + (i===0?'best':'alt') + '">' + (i===0?'Best':'Alt') + '</span>' +
+        return '<div class="alt-route '+(i===0?'active':'')+'" id="alt-'+i+'" onclick="switchRoute('+i+')">' +
+            '<div><div class="alt-label">Route '+(i+1)+(i===0?' (Fastest)':'')+'</div>' +
+            '<div class="alt-detail">'+distKm+' km · '+displayDuration(r.duration)+'</div></div>' +
+            '<span class="alt-badge '+(i===0?'best':'alt')+'">'+(i===0?'Best':'Alt')+'</span>' +
             '</div>';
     }).join('');
 }
 
 function switchRoute(idx) {
-    if (!window._routeOrig || !window._routeDest) return;
-    applyRoute(idx, window._routeOrig, window._routeDest);
+    applyRoute(idx);
     showToast('🗺️', 'Switched to Route ' + (idx + 1));
 }
 
 function toggleSteps() {
     const w = document.getElementById('stepsWrap');
     w.style.display = w.style.display === 'none' ? 'block' : 'none';
-}
-
-// ── Helpers ──
-function formatDuration(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.round((seconds % 3600) / 60);
-    if (h === 0) return m + ' min';
-    return h + ' hr ' + (m > 0 ? m + ' min' : '');
 }
 
 // ── Google Maps error handler (called by Maps when key is invalid/rejected) ──

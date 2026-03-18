@@ -78,12 +78,33 @@ CREATE TABLE Hotels (
 );
 
 -- ============================================
+-- 3b. ROOM TYPES TABLE
+-- ============================================
+CREATE TABLE RoomTypes (
+    room_type_id INT PRIMARY KEY AUTO_INCREMENT,
+    hotel_id INT NOT NULL,
+    type_name VARCHAR(100) NOT NULL,
+    capacity INT NOT NULL DEFAULT 2,
+    price_per_night DECIMAL(10,2) NOT NULL,
+    total_rooms INT NOT NULL DEFAULT 1,
+    available_rooms INT NOT NULL DEFAULT 1,
+    amenities TEXT,
+    description TEXT,
+    image_url VARCHAR(500),
+    created_at DATETIME DEFAULT NOW(),
+    updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
+    is_active TINYINT(1) DEFAULT 1,
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE
+);
+
+-- ============================================
 -- 4. BOOKINGS TABLE
 -- ============================================
 CREATE TABLE Bookings (
     booking_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     hotel_id INT NOT NULL,
+    room_type_id INT,
     check_in_date DATE NOT NULL,
     check_out_date DATE NOT NULL,
     number_of_guests INT NOT NULL,
@@ -95,7 +116,8 @@ CREATE TABLE Bookings (
     created_at DATETIME DEFAULT NOW(),
     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
-    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE
+    FOREIGN KEY (hotel_id) REFERENCES Hotels(hotel_id) ON DELETE CASCADE,
+    FOREIGN KEY (room_type_id) REFERENCES RoomTypes(room_type_id) ON DELETE SET NULL
 );
 
 -- ============================================
@@ -315,8 +337,11 @@ CREATE INDEX idx_destinations_country ON Destinations(country);
 CREATE INDEX idx_destinations_name ON Destinations(name);
 CREATE INDEX idx_hotels_destination ON Hotels(destination_id);
 CREATE INDEX idx_hotels_manager ON Hotels(manager_id);
+CREATE INDEX idx_roomtypes_hotel ON RoomTypes(hotel_id);
+CREATE INDEX idx_roomtypes_active ON RoomTypes(is_active);
 CREATE INDEX idx_bookings_user ON Bookings(user_id);
 CREATE INDEX idx_bookings_hotel ON Bookings(hotel_id);
+CREATE INDEX idx_bookings_roomtype ON Bookings(room_type_id);
 CREATE INDEX idx_bookings_dates ON Bookings(check_in_date, check_out_date);
 CREATE INDEX idx_bookings_payment ON Bookings(payment_status);
 CREATE INDEX idx_favorites_user ON Favorites(user_id);
@@ -396,13 +421,114 @@ VALUES
  'Derawar Fort, Bahawalpur, camel safari, jeep rally, Yazman, Fort Abbas, Dingarh Fort, Marot, Islamgarh, desert camp, Cholistan rally, Abbasi');
 
 -- ── Hotels ───────────────────────────────────────────────────────────────────
-INSERT INTO Hotels (destination_id, hotel_name, address, contact_number, star_rating, price_per_night, total_rooms, available_rooms, amenities)
+INSERT INTO Hotels (destination_id, hotel_name, address, contact_number, star_rating, price_per_night, total_rooms, available_rooms, amenities, image_url, description, average_rating, total_reviews)
 VALUES
-(1, 'Hunza Serena Inn', 'Karimabad, Hunza', '03451234567', 4, 15000, 50, 45, 'WiFi, Restaurant, Parking'),
-(2, 'Pearl Continental Bhurban', 'Bhurban Road, Murree', '03451234568', 5, 25000, 100, 90, 'WiFi, Pool, Spa, Restaurant'),
-(3, 'Swat Serena Hotel', 'Saidu Sharif, Swat', '03451234569', 4, 18000, 60, 55, 'WiFi, Restaurant, Garden'),
-(4, 'Skardu Inn', 'Main Bazaar, Skardu', '03451234570', 3, 8000, 30, 28, 'WiFi, Restaurant'),
-(5, 'Naran Pines Hotel', 'Naran Valley', '03451234571', 3, 10000, 40, 35, 'WiFi, Restaurant, Parking');
+(1, 'Eagle Nest Hotel',   'Duikar Heights, Hunza',       '03451234567', 4, 8500,  25, 12, 'WiFi,Parking,Restaurant,Mountain View',              'Eagle nest hotel.jpeg',     'Perched on a hilltop with panoramic views of Rakaposhi peak.',                          4.60,  89),
+(1, 'Serena Hunza',       'Karimabad, Hunza',             '03451234568', 5, 18000, 80, 30, 'WiFi,Spa,Pool,Restaurant,Gym,Mountain View',          'serena hunza.jpeg',         'Pakistan''s most iconic 5-star luxury hotel in the heart of Hunza.',                   4.90, 134),
+(1, 'Hunza Inn',          'Old Hunza Road, Karimabad',    '03451234569', 3, 4000,  20, 15, 'WiFi,Breakfast,Garden',                               'Hunza Inn.jpeg',            'Cozy budget-friendly guesthouse with warm Hunzai hospitality.',                         4.20,  62),
+(2, 'Shangrila Resort',   'Mall Road, Murree',            '03451234570', 4, 7000,  40, 18, 'WiFi,Restaurant,Parking,Fireplace',                   'shengrilla resort.jpeg',    'Nestled in pine trees, just a short walk from Mall Road.',                              4.40,  78),
+(2, 'Mall Hotel',         'The Mall, Murree',             '03451234571', 3, 3500,  30, 20, 'WiFi,Breakfast,Cable TV',                             'mall hotel.jpeg',           'Budget-friendly stay in the heart of Murree town.',                                     4.10,  55),
+(3, 'Serena Swat',        'Saidu Sharif, Swat',           '03451234572', 5, 15000, 70, 25, 'WiFi,Pool,Spa,Restaurant,Garden,Room Service',        'sarena swat.jpg',           'Award-winning 5-star resort on the banks of the Swat River.',                          4.70, 101),
+(3, 'Kalam Valley Hotel', 'Kalam, Upper Swat',            '03451234573', 3, 3000,  25, 18, 'WiFi,Parking,River View',                             'kalam valley hotel.jpeg',   'Simple mountain hotel with stunning river views in Kalam.',                             4.20,  44),
+(4, 'Serena Skardu',      'Katpana, Skardu',              '03451234574', 5, 20000, 60, 20, 'WiFi,Spa,Restaurant,Mountain View,Library',           'sarena skardu.jpeg',        'Luxury property surrounded by 8000m peaks in Skardu valley.',                          4.80,  97),
+(4, 'K2 Motel',           'Main Bazaar, Skardu',          '03451234575', 3, 4500,  25, 15, 'WiFi,Parking,Meals',                                  'k2 motel.jpeg',             'No-frills clean stay, perfect base for K2 trekkers.',                                  4.00,  38),
+(5, 'Pine Park Hotel',    'Naran Valley Road, Naran',     '03451234576', 4, 6500,  35, 22, 'WiFi,Restaurant,Garden,River View',                   'pine park hotel.jpeg',      'Charming hotel overlooking the Kunhar River in Naran valley.',                          4.30,  67),
+(5, 'Kaghan Resort',      'Kaghan Village, Kaghan',       '03451234577', 3, 3200,  20, 14, 'WiFi,Breakfast,Campfire',                             'kaghan resort.jpg',         'Rustic mountain resort perfect for adventure travellers.',                              4.00,  41),
+-- Lahore (6)
+(6,  'Pearl Continental Lahore',  'Shahrah-e-Quaid-e-Azam, Lahore',   '042-111505505', 5, 22000, 150, 60, 'WiFi,Pool,Spa,Restaurant,Gym,Valet Parking',            'PC hotel.webp',       'Lahore''s most prestigious 5-star hotel in the heart of the city.',                  4.80, 210),
+(6,  'Avari Towers Lahore',       'Fatima Jinnah Road, Lahore',        '042-111282747', 5, 16000,  90, 40, 'WiFi,Restaurant,Pool,Conference Rooms',                  'Avari.webp',          'Iconic 5-star hotel offering luxury stays near Lahore''s top attractions.',            4.60, 155),
+(6,  'Faletti''s Hotel',          'Egerton Road, Lahore',              '042-36304751',  4,  9500,  60, 25, 'WiFi,Restaurant,Garden,Heritage Architecture',           'falettis.webp',       'Heritage hotel established in 1880 — a slice of colonial Lahore.',                   4.40,  88),
+-- Islamabad (7)
+(7,  'Serena Islamabad',          'Khayaban-e-Suhrawardy, Islamabad',  '051-111133133', 5, 24000, 180, 70, 'WiFi,Pool,Spa,Restaurant,Gym,Business Centre',           'islamabad.jpeg',      'Islamabad''s landmark luxury hotel set in lush greenery.',                            4.85, 230),
+(7,  'Marriott Islamabad',        'Aga Khan Road, Islamabad',          '051-2826121',   5, 20000, 160, 65, 'WiFi,Pool,Restaurant,Conference,Valet Parking',          'islamabad.jpeg',      'Classic 5-star hotel in the diplomatic enclave of Islamabad.',                        4.70, 198),
+-- Fairy Meadows (8)
+(8,  'Fairy Meadows Hut',         'Fairy Meadows, Diamer, GB',         '03001234580',   2,  3500,  12,  8, 'Meals,Bonfire,Mountain View,Trekking Support',           'fairyMeadows.jpeg',   'Basic wooden huts at the base of Nanga Parbat — a trekker''s paradise.',              4.50,  73),
+(8,  'Raikot Bridge Camp',        'Raikot Bridge, Chilas Road, GB',    '03001234581',   2,  2500,  10,  7, 'Meals,Parking,River View',                               'fairyMeadows.jpeg',   'Simple guesthouse at the start of the Fairy Meadows trail.',                          4.20,  41),
+-- Mohenjo Daro (9)
+(9,  'Moenjodaro Rest House',     'Near Site Museum, Mohenjo Daro',    '0743-470012',   2,  2800,   8,  5, 'Meals,Parking,Archaeological Site Access',               'mohenjodaro.jpeg',    'Government rest house for visitors to the Indus Valley Civilization site.',            4.10,  29),
+-- Cholistan Desert (10)
+(10, 'Fort Derawar Desert Camp',  'Near Derawar Fort, Cholistan',      '03001234583',   3,  6000,  15, 10, 'Meals,Campfire,Camel Safari,Jeep Safari',                'cholistanDesert.jpeg','Luxury desert camp with breathtaking views of Derawar Fort.',                         4.50,  52),
+(10, 'Cholistan Oasis Resort',    'Yazman Road, Bahawalpur',           '03001234584',   3,  4500,  20, 12, 'WiFi,Meals,Pool,Parking,Desert Tours',                   'cholistanDesert.jpeg','Modern resort serving as the best base for Cholistan Desert exploration.',             4.30,  38);
+
+-- ── Room Types ────────────────────────────────────────────────────────────────
+-- 2-3 room types per hotel; available_rooms < total_rooms to show realistic occupancy
+INSERT INTO RoomTypes (hotel_id, type_name, capacity, price_per_night, total_rooms, available_rooms, amenities, description)
+VALUES
+-- Eagle Nest Hotel (1) ─────────────────────────────────────────────────────
+(1, 'Standard Room',        2, 7000,  10, 6,  'WiFi,Mountain View,Attached Bath',       'Comfortable room with stunning Rakaposhi views.'),
+(1, 'Deluxe Double',        2, 9500,   8, 4,  'WiFi,Mountain View,Attached Bath,AC,TV', 'Spacious deluxe room with floor-to-ceiling mountain views.'),
+(1, 'Family Suite',         4, 16000,  4, 2,  'WiFi,Mountain View,Attached Bath,AC,TV,Mini Bar', 'Ideal for families — two bedrooms with panoramic views.'),
+-- Serena Hunza (2) ────────────────────────────────────────────────────────
+(2, 'Superior Room',        2, 16000, 30,12,  'WiFi,Spa Access,Breakfast,AC,TV,Mountain View',    'Elegant room with modern furnishings and valley views.'),
+(2, 'Deluxe Suite',         2, 22000, 15, 6,  'WiFi,Spa,Pool Access,Breakfast,AC,TV,Balcony',     'Luxury suite with private balcony overlooking Hunza Valley.'),
+(2, 'Presidential Suite',   4, 38000,  3, 1,  'WiFi,Private Pool,Butler,Breakfast,Full Board',    'Ultimate luxury — two bedrooms, private pool and butler.'),
+-- Hunza Inn (3) ───────────────────────────────────────────────────────────
+(3, 'Single Room',          1, 2800,   8, 6,  'WiFi,Breakfast,Shared Bath',             'Cozy single room perfect for solo travellers.'),
+(3, 'Standard Double',      2, 4200,   9, 7,  'WiFi,Breakfast,Attached Bath,Garden View','Double room with garden views and Hunzai hospitality.'),
+(3, 'Triple Room',          3, 5800,   3, 3,  'WiFi,Breakfast,Attached Bath,Garden View','Spacious triple room for small groups or families.'),
+-- Shangrila Resort (4) ────────────────────────────────────────────────────
+(4, 'Standard Room',        2, 6000,  15, 8,  'WiFi,Parking,TV,Attached Bath',          'Warm and comfortable room surrounded by pine trees.'),
+(4, 'Deluxe Room',          2, 8000,  15,10,  'WiFi,Restaurant Access,TV,Fireplace',    'Cozy deluxe room with a wood fireplace — perfect for winters.'),
+(4, 'Family Room',          4, 13000,  5, 3,  'WiFi,Restaurant Access,TV,Fireplace,Parking','Spacious family room sleeping up to 4 guests.'),
+-- Mall Hotel (5) ──────────────────────────────────────────────────────────
+(5, 'Single Room',          1, 2500,  12,10,  'WiFi,Breakfast,Cable TV',               'Budget single room right on Mall Road Murree.'),
+(5, 'Standard Double',      2, 3800,  15,12,  'WiFi,Breakfast,Cable TV,Attached Bath', 'Comfortable double room for couples or friends.'),
+-- Serena Swat (6) ─────────────────────────────────────────────────────────
+(6, 'Superior Garden Room', 2, 13000, 25,10,  'WiFi,Pool,Spa,Restaurant,Garden View',  'Elegant room with lush garden views along the Swat River.'),
+(6, 'Deluxe River View',    2, 17000, 20, 8,  'WiFi,Pool,Spa,Restaurant,River View,Balcony','Deluxe room with private balcony overlooking the Swat River.'),
+(6, 'Family Suite',         4, 27000,  5, 2,  'WiFi,Pool,Spa,Restaurant,Butler,River View','Luxury family suite — two bedrooms with river and mountain views.'),
+-- Kalam Valley Hotel (7) ──────────────────────────────────────────────────
+(7, 'Standard Room',        2, 3200,  12, 9,  'WiFi,River View,Attached Bath',          'Simple clean room with stunning river views.'),
+(7, 'Family Room',          4, 5500,   6, 4,  'WiFi,River View,Attached Bath,Balcony', 'Family room with balcony directly overlooking the river.'),
+-- Serena Skardu (8) ───────────────────────────────────────────────────────
+(8, 'Deluxe Mountain View', 2, 18000, 25, 9,  'WiFi,Spa,Restaurant,Mountain View,AC,TV','Breathtaking views of K2 and surrounding 8000m peaks.'),
+(8, 'Luxury Suite',         2, 24000, 10, 4,  'WiFi,Spa,Restaurant,Balcony,Mini Bar',  'Elegant suite with private sitting area and mountain panorama.'),
+(8, 'Presidential Suite',   4, 42000,  2, 1,  'WiFi,Butler,Full Board,Private Terrace,Mountain View','Exclusive two-bedroom suite — the pinnacle of Skardu luxury.'),
+-- K2 Motel (9) ───────────────────────────────────────────────────────────
+(9, 'Standard Room',        2, 4000,  14,10,  'WiFi,Meals Included,Attached Bath',      'Clean no-frills room — ideal base for K2 trekkers.'),
+(9, 'Double Room',          2, 5000,   8, 6,  'WiFi,Meals Included,Attached Bath,TV',  'Slightly larger double room with TV.'),
+-- Pine Park Hotel (10) ────────────────────────────────────────────────────
+(10,'Standard Room',        2, 5500,  15,10,  'WiFi,River View,Restaurant,Attached Bath','Comfortable room with lovely Kunhar River views.'),
+(10,'Deluxe River View',    2, 7500,  12, 7,  'WiFi,River View,Restaurant,Balcony,TV', 'Upgraded room with private balcony over the river.'),
+(10,'Family Room',          4,12000,   5, 3,  'WiFi,River View,Restaurant,Balcony,TV', 'Spacious family room — garden and river on both sides.'),
+-- Kaghan Resort (11) ──────────────────────────────────────────────────────
+(11,'Standard Room',        2, 3000,  12, 9,  'WiFi,Campfire Access,Breakfast,Attached Bath','Rustic mountain room with access to evening campfire.'),
+(11,'Family Room',          4, 5200,   5, 4,  'WiFi,Campfire Access,Breakfast,Attached Bath','Family room sleeping 4 — perfect for adventure groups.'),
+-- Pearl Continental Lahore (12) ──────────────────────────────────────────
+(12,'Executive Room',       2, 20000, 60,25,  'WiFi,Pool,Spa,Gym,Restaurant,AC,TV,Mini Bar','Refined room in Lahore''s most prestigious address.'),
+(12,'Deluxe Suite',         2, 28000, 25,10,  'WiFi,Pool,Spa,Gym,Lounge Access,Butler', 'Spacious suite with exclusive lounge access.'),
+(12,'Presidential Suite',   4, 50000,  5, 2,  'WiFi,Private Pool,Butler,Full Board,City View','The ultimate Lahore luxury experience — full city panorama.'),
+-- Avari Towers Lahore (13) ────────────────────────────────────────────────
+(13,'Superior Room',        2, 14000, 40,18,  'WiFi,Pool,Restaurant,AC,TV,City View',   'Classic superior room with skyline views.'),
+(13,'Deluxe Suite',         2, 20000, 20, 8,  'WiFi,Pool,Restaurant,Lounge Access,City View','Expansive suite with floor-to-ceiling windows.'),
+-- Faletti''s Hotel (14) ───────────────────────────────────────────────────
+(14,'Heritage Room',        2,  8500, 25,12,  'WiFi,Restaurant,Garden View,AC,TV',      'Classic room in a beautifully preserved colonial building.'),
+(14,'Deluxe Heritage Room', 2, 10500, 20, 9,  'WiFi,Restaurant,Garden View,AC,TV,Mini Bar','Upgraded heritage room with garden-facing balcony.'),
+(14,'Family Suite',         4, 17000,  6, 3,  'WiFi,Restaurant,Garden View,AC,TV,Lounge','Elegant suite with two bedrooms in heritage style.'),
+-- Serena Islamabad (15) ───────────────────────────────────────────────────
+(15,'Deluxe Room',          2, 22000, 70,28,  'WiFi,Pool,Spa,Gym,Restaurant,Business Centre','Refined room in Islamabad''s landmark hotel.'),
+(15,'Executive Suite',      2, 28000, 25,10,  'WiFi,Pool,Spa,Lounge,Butler,City View',  'Luxurious suite with panoramic Margalla Hills views.'),
+(15,'Presidential Suite',   4, 52000,  3, 1,  'WiFi,Private Butler,Full Board,Private Terrace','Exceptional two-bedroom suite — unrivalled Islamabad luxury.'),
+-- Marriott Islamabad (16) ─────────────────────────────────────────────────
+(16,'Superior Room',        2, 18000, 65,30,  'WiFi,Pool,Restaurant,AC,TV,City View',   'Classic superior room in the diplomatic enclave.'),
+(16,'Deluxe Suite',         2, 23000, 25,10,  'WiFi,Pool,Restaurant,Lounge,City View',  'Spacious suite with excellent Islamabad city views.'),
+-- Fairy Meadows Hut (17) ──────────────────────────────────────────────────
+(17,'Wooden Hut (2 pax)',   2,  3500,   6, 5,  'Meals Included,Bonfire,Mountain View,Trekking Support','Cozy wooden hut at the base of Nanga Parbat — surreal views.'),
+(17,'Wooden Hut (4 pax)',   4,  6000,   4, 3,  'Meals Included,Bonfire,Mountain View,Trekking Support','Larger hut for families or groups — epic Nanga Parbat backdrop.'),
+-- Raikot Bridge Camp (18) ─────────────────────────────────────────────────
+(18,'Basic Room',           2,  2500,   6, 5,  'Meals Included,Parking,River View',      'Simple clean room at the trailhead of Fairy Meadows.'),
+(18,'Triple Room',          3,  3500,   4, 3,  'Meals Included,Parking,River View',      'Slightly larger room for small groups.'),
+-- Moenjodaro Rest House (19) ──────────────────────────────────────────────
+(19,'Standard Room',        2,  2800,   5, 4,  'Meals,Parking,Archaeological Site Access','Government rest house — best base for exploring the ancient ruins.'),
+(19,'Family Room',          4,  4800,   2, 1,  'Meals,Parking,Archaeological Site Access','Larger room for family visits to the UNESCO heritage site.'),
+-- Fort Derawar Desert Camp (20) ───────────────────────────────────────────
+(20,'Luxury Desert Tent',   2,  5000,   8, 6,  'Meals,Campfire,Camel Safari,Stargazing', 'Comfortable air-cooled tent with breathtaking Derawar Fort views.'),
+(20,'Deluxe Tent',          4,  8000,   4, 3,  'Meals,Campfire,Camel Safari,Jeep Safari,Stargazing','Larger deluxe tent with attached washroom — perfect for families.'),
+(20,'Desert Cabin',         6, 12000,   2, 1,  'Meals,Private Campfire,Jeep Safari,Camel Safari','Private cabin sleeping 6 — ideal for groups and premium experiences.'),
+-- Cholistan Oasis Resort (21) ─────────────────────────────────────────────
+(21,'Standard Room',        2,  4200,  10, 7,  'WiFi,Pool,Meals,Parking',               'Clean comfortable room — perfect base for Cholistan exploration.'),
+(21,'Deluxe Room',          2,  5500,   7, 5,  'WiFi,Pool,Meals,Parking,Desert View',   'Upgraded room with desert views and pool access.'),
+(21,'Family Room',          4,  8500,   3, 2,  'WiFi,Pool,Meals,Parking,Desert View,Balcony','Spacious family room with a private balcony facing the desert.');
 
 -- ── Travel Guidelines (all categories for all 10 destinations) ───────────────
 INSERT INTO TravelGuidelines (destination_id, title, content, category)
@@ -632,4 +758,44 @@ VALUES
 
 SELECT 'TripifyDB setup complete!' AS Status;
 
-SELECT *FROM Users;
+-- ============================================
+-- MIGRATION: Hotels data fix (2026-03-18)
+-- ============================================
+-- Replaced 5 placeholder hotel rows (no images, wrong names) with
+-- 11 correct hotels matching the frontend HOTELS array.
+-- Each hotel now has: image_url, description, average_rating, total_reviews.
+-- Run this block ONLY on an existing DB (no DROP needed).
+-- ─────────────────────────────────────────────────────────────
+-- DELETE FROM Hotels WHERE hotel_id IN (1,2,3,4,5);
+-- ALTER TABLE Hotels AUTO_INCREMENT = 1;
+-- INSERT INTO Hotels (destination_id, hotel_name, address, contact_number, star_rating, price_per_night, total_rooms, available_rooms, amenities, image_url, description, average_rating, total_reviews)
+-- VALUES
+-- (1, 'Eagle Nest Hotel',   'Duikar Heights, Hunza',       '03451234567', 4, 8500,  25, 12, 'WiFi,Parking,Restaurant,Mountain View',              'Eagle nest hotel.jpeg',     'Perched on a hilltop with panoramic views of Rakaposhi peak.',                        4.60,  89),
+-- (1, 'Serena Hunza',       'Karimabad, Hunza',             '03451234568', 5, 18000, 80, 30, 'WiFi,Spa,Pool,Restaurant,Gym,Mountain View',          'serena hunza.jpeg',         'Pakistan''s most iconic 5-star luxury hotel in the heart of Hunza.',                 4.90, 134),
+-- (1, 'Hunza Inn',          'Old Hunza Road, Karimabad',    '03451234569', 3, 4000,  20, 15, 'WiFi,Breakfast,Garden',                               'Hunza Inn.jpeg',            'Cozy budget-friendly guesthouse with warm Hunzai hospitality.',                       4.20,  62),
+-- (2, 'Shangrila Resort',   'Mall Road, Murree',            '03451234570', 4, 7000,  40, 18, 'WiFi,Restaurant,Parking,Fireplace',                   'shengrilla resort.jpeg',    'Nestled in pine trees, just a short walk from Mall Road.',                            4.40,  78),
+-- (2, 'Mall Hotel',         'The Mall, Murree',             '03451234571', 3, 3500,  30, 20, 'WiFi,Breakfast,Cable TV',                             'mall hotel.jpeg',           'Budget-friendly stay in the heart of Murree town.',                                   4.10,  55),
+-- (3, 'Serena Swat',        'Saidu Sharif, Swat',           '03451234572', 5, 15000, 70, 25, 'WiFi,Pool,Spa,Restaurant,Garden,Room Service',        'sarena swat.jpg',           'Award-winning 5-star resort on the banks of the Swat River.',                        4.70, 101),
+-- (3, 'Kalam Valley Hotel', 'Kalam, Upper Swat',            '03451234573', 3, 3000,  25, 18, 'WiFi,Parking,River View',                             'kalam valley hotel.jpeg',   'Simple mountain hotel with stunning river views in Kalam.',                           4.20,  44),
+-- (4, 'Serena Skardu',      'Katpana, Skardu',              '03451234574', 5, 20000, 60, 20, 'WiFi,Spa,Restaurant,Mountain View,Library',           'sarena skardu.jpeg',        'Luxury property surrounded by 8000m peaks in Skardu valley.',                        4.80,  97),
+-- (4, 'K2 Motel',           'Main Bazaar, Skardu',          '03451234575', 3, 4500,  25, 15, 'WiFi,Parking,Meals',                                  'k2 motel.jpeg',             'No-frills clean stay, perfect base for K2 trekkers.',                                 4.00,  38),
+-- (5, 'Pine Park Hotel',    'Naran Valley Road, Naran',     '03451234576', 4, 6500,  35, 22, 'WiFi,Restaurant,Garden,River View',                   'pine park hotel.jpeg',      'Charming hotel overlooking the Kunhar River in Naran valley.',                        4.30,  67),
+-- (5, 'Kaghan Resort',      'Kaghan Village, Kaghan',       '03451234577', 3, 3200,  20, 14, 'WiFi,Breakfast,Campfire',                             'kaghan resort.jpg',         'Rustic mountain resort perfect for adventure travellers.',                             4.00,  41);
+-- STATUS: Already applied on 2026-03-18 via CLI — no action needed on fresh run.
+
+-- Assign hotels to HotelManagers by email (update emails to match registered accounts)
+-- UPDATE Hotels SET manager_id = (SELECT user_id FROM Users WHERE email = 'shahzaib@example.com') WHERE destination_id IN (1,2,3,4,5,6);
+-- UPDATE Hotels SET manager_id = (SELECT user_id FROM Users WHERE email = 'manager2@example.com') WHERE destination_id IN (7,8,9,10);
+
+
+SELECT user_id, full_name, email, user_type FROM Users WHERE user_type = 'HotelManager';
+
+  SET SQL_SAFE_UPDATES = 0;
+  UPDATE Hotels SET manager_id = 3  WHERE destination_id IN (1,2,3,4,5,6);
+  SET SQL_SAFE_UPDATES = 1;
+
+  (If there's a second hotel manager for destinations 7–10, run a separate UPDATE with that user's ID.)
+UPDATE Hotels SET manager_id = 4  WHERE destination_id IN (7,8,9,10);
+  Step 3 — Verify:
+  SELECT hotel_id, hotel_name, manager_id FROM Hotels;
+  All of Shahzaib's hotels should now show his user_id in manager_id.

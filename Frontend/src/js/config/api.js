@@ -73,4 +73,28 @@ const ENDPOINTS = {
         MARK_READ:    (id) => `${API_CONFIG.BASE_URL}/notifications/${id}/read`,
         MARK_ALL_READ:`${API_CONFIG.BASE_URL}/notifications/read-all`,
     },
+    HOTELS: {
+        ALL:   `${API_CONFIG.BASE_URL}/hotels`,
+        MY:    `${API_CONFIG.BASE_URL}/hotels/my`,
+        BY_ID: (id) => `${API_CONFIG.BASE_URL}/hotels/${id}`,
+    },
+    ROOMS: {
+        BY_HOTEL: (hotelId) => `${API_CONFIG.BASE_URL}/rooms/hotel/${hotelId}`,
+        MY:       `${API_CONFIG.BASE_URL}/rooms/my`,
+        ADD:      `${API_CONFIG.BASE_URL}/rooms`,
+        UPDATE:   (id) => `${API_CONFIG.BASE_URL}/rooms/${id}`,
+        DELETE:   (id) => `${API_CONFIG.BASE_URL}/rooms/${id}`,
+    },
+    BOOKINGS: {
+        CREATE:  `${API_CONFIG.BASE_URL}/bookings`,
+        MY:      `${API_CONFIG.BASE_URL}/bookings/my`,
+        ALL:     `${API_CONFIG.BASE_URL}/bookings/all`,
+        CONFIRM: (id) => `${API_CONFIG.BASE_URL}/bookings/${id}/confirm`,
+        CANCEL:  (id) => `${API_CONFIG.BASE_URL}/bookings/${id}/cancel`,
+    },
+    HOTEL_REVIEWS: {
+        SUBMIT:   `${API_CONFIG.BASE_URL}/hotel-reviews`,
+        BY_HOTEL: (id) => `${API_CONFIG.BASE_URL}/hotel-reviews/hotel/${id}`,
+        MINE:     `${API_CONFIG.BASE_URL}/hotel-reviews/mine`,
+    },
 };

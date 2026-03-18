@@ -1147,8 +1147,8 @@ tbody tr:hover { background: #F8FAFC; }
 'use strict';
 
 // ── Auth guard ───────────────────────────────────────
-const token = localStorage.getItem('tripify_token');
-const user  = JSON.parse(localStorage.getItem('tripify_user') || '{"fullName":"Super Admin","userType":"Admin"}');
+const token = sessionStorage.getItem('tripify_token');
+const user  = JSON.parse(sessionStorage.getItem('tripify_user') || '{"fullName":"Super Admin","userType":"Admin"}');
 
 if (!token) { window.location.href = '../auth/admin-login.html'; return; }
 if (user.userType !== 'Admin') { window.location.href = '../auth/admin-login.html'; return; }
@@ -1262,7 +1262,7 @@ new Chart(document.getElementById('lineChart'), {
 // ── Logout ──────────────────────────────────────────
 window.doLogout = function() {
     showToast('👋', 'Signing out...');
-    setTimeout(()=>{ localStorage.removeItem('tripify_token'); localStorage.removeItem('tripify_user'); window.location.href='../auth/admin-login.html'; }, 1200);
+    setTimeout(()=>{ sessionStorage.removeItem('tripify_token'); sessionStorage.removeItem('tripify_user'); window.location.href='../auth/admin-login.html'; }, 1200);
 };
 
 // ── Toast ───────────────────────────────────────────

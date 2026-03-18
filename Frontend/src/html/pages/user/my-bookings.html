@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Bookings — Tripify</title>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../css/pages/dashboard.css">
+<style>
+/* ─ Filter tabs ─ */
+.filter-tabs { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:22px; }
+.ftab {
+    padding:7px 18px; border-radius:20px; font-size:12.5px; font-weight:600; cursor:pointer;
+    border:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.04);
+    color:var(--t2); transition:var(--ease);
+}
+.ftab:hover { background:rgba(255,255,255,0.08); color:var(--t1); }
+.ftab.active { background:var(--accent); border-color:var(--accent); color:#000; }
+
+/* ─ Booking card ─ */
+.bk-card {
+    background:var(--surface-1); border:1px solid rgba(255,255,255,0.07);
+    border-radius:var(--r-xl); overflow:hidden; margin-bottom:14px;
+    transition:var(--ease);
+}
+.bk-card:hover { border-color:rgba(255,255,255,0.14); }
+.bk-main { display:flex; gap:16px; align-items:flex-start; padding:18px 20px; }
+.bk-img {
+    width:80px; height:80px; border-radius:var(--r); object-fit:cover; flex-shrink:0;
+    background:rgba(255,255,255,0.06);
+}
+.bk-img-placeholder { width:80px; height:80px; border-radius:var(--r); flex-shrink:0; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:28px; }
+.bk-info { flex:1; min-width:0; }
+.bk-hotel { font-size:15px; font-weight:700; color:var(--white); margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bk-room  { font-size:12px; color:var(--t2); margin-bottom:8px; }
+.bk-meta  { display:flex; flex-wrap:wrap; gap:14px; }
+.bk-meta-item { font-size:12px; color:var(--t3); }
+.bk-meta-item strong { color:var(--t1); font-weight:500; }
+.bk-right { display:flex; flex-direction:column; align-items:flex-end; gap:10px; flex-shrink:0; }
+.bk-cost  { font-size:15px; font-weight:700; color:var(--accent); }
+.bk-nights{ font-size:11.5px; color:var(--t3); }
+.bk-status {
+    font-size:11px; font-weight:700; padding:4px 12px; border-radius:12px; text-transform:uppercase; letter-spacing:.6px;
+}
+.bk-status.Pending   { background:rgba(251,191,36,.15); color:#fbbf24; border:1px solid rgba(251,191,36,.25); }
+.bk-status.Confirmed { background:rgba(52,211,153,.15); color:#34d399; border:1px solid rgba(52,211,153,.25); }
+.bk-status.Completed { background:rgba(99,102,241,.15); color:#818cf8; border:1px solid rgba(99,102,241,.25); }
+.bk-status.Cancelled { background:rgba(248,113,113,.15); color:#f87171; border:1px solid rgba(248,113,113,.25); }
+
+/* ─ Review section (inline expand) ─ */
+.bk-review-bar {
+    border-top:1px solid rgba(255,255,255,0.06);
+    padding:12px 20px;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+}
+.bk-already-reviewed { font-size:12.5px; color:var(--t2); display:flex; align-items:center; gap:6px; }
+.bk-already-reviewed .stars { color:#f59e0b; font-size:14px; }
+.btn-review {
+    padding:7px 18px; border-radius:20px; font-size:12.5px; font-weight:600;
+    background:rgba(245,166,35,.15); color:var(--accent); border:1px solid rgba(245,166,35,.35);
+    cursor:pointer; transition:var(--ease);
+}
+.btn-review:hover { background:rgba(245,166,35,.28); }
+
+.rev-inline {
+    border-top:1px solid rgba(255,255,255,0.06);
+    padding:16px 20px; background:rgba(255,255,255,0.02);
+}
+.rev-inline-title { font-size:12.5px; font-weight:700; color:var(--white); margin-bottom:10px; }
+.star-row { display:flex; gap:6px; margin-bottom:10px; }
+.star-row span {
+    font-size:26px; cursor:pointer; color:rgba(255,255,255,0.18);
+    transition:color .15s; line-height:1;
+}
+.star-row span.lit { color:#f59e0b; }
+.rev-textarea {
+    width:100%; box-sizing:border-box;
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    border-radius:var(--r); padding:10px 12px;
+    color:var(--white); font-size:13px; font-family:var(--font);
+    resize:vertical; min-height:68px; outline:none; margin-bottom:10px;
+}
+.rev-textarea::placeholder { color:var(--t3); }
+.rev-err { font-size:11.5px; color:#f87171; margin-bottom:8px; display:none; }
+.rev-actions { display:flex; gap:8px; }
+.btn-submit-rev {
+    padding:8px 22px; border-radius:20px; font-size:13px; font-weight:600;
+    background:var(--accent); color:#000; border:none; cursor:pointer; transition:var(--ease);
+}
+.btn-submit-rev:hover { background:var(--accent-dk); }
+.btn-submit-rev:disabled { opacity:.5; cursor:not-allowed; }
+.btn-cancel-rev {
+    padding:8px 16px; border-radius:20px; font-size:13px; font-weight:500;
+    background:transparent; color:var(--t2); border:1px solid rgba(255,255,255,0.1);
+    cursor:pointer; transition:var(--ease);
+}
+.btn-cancel-rev:hover { color:var(--t1); }
+
+/* ─ Empty / loading ─ */
+.bk-empty { text-align:center; padding:60px 20px; color:var(--t3); }
+.bk-empty .icon { font-size:40px; margin-bottom:12px; }
+.bk-empty p { font-size:14px; }
+.bk-loading { text-align:center; padding:40px; color:var(--t3); font-size:14px; }
+
+@media(max-width:640px){
+    .bk-main { flex-direction:column; }
+    .bk-right { flex-direction:row; align-items:center; }
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar-overlay" id="overlay"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">✈</div><span class="logo-text">Tripify</span></div>
+    <nav class="sidebar-nav">
+        <span class="nav-section-label">Main</span>
+        <a href="dashboard.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+            <span>Dashboard</span>
+        </a>
+        <a href="destinations.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
+            <span>Explore</span>
+        </a>
+        <a href="my-trips.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>
+            <span>My Trips</span>
+        </a>
+        <a href="my-bookings.html" class="nav-item active">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+            <span>My Bookings</span>
+        </a>
+        <a href="trip-cost.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span>
+            <span>Trip Cost</span>
+        </a>
+        <a href="route-finder.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg></span>
+            <span>Route Finder</span>
+        </a>
+        <span class="nav-section-label">Discover</span>
+        <a href="hotels.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+            <span>Hotels</span>
+        </a>
+        <a href="wishlist.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></span>
+            <span>Wishlist</span>
+        </a>
+        <a href="travel-guidelines.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>
+            <span>Travel Guidelines</span>
+        </a>
+        <a href="souvenirs.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></span><span>Souvenirs</span></a>
+        <a href="seasonal-insights.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span>Seasonal</span></a>
+        <a href="weather-alerts.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/></svg></span><span>Weather Alerts</span></a>
+        <div class="nav-divider"></div>
+        <a href="emergency.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+            <span>Emergency</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+            <span>Profile</span>
+        </a>
+    </nav>
+    <div class="sidebar-footer">
+        <div class="user-card" onclick="location.href='profile.html'">
+            <div class="user-avatar" id="sidebarAvatar">T</div>
+            <div><div class="user-name" id="sidebarName">Loading...</div><div class="user-role">Tourist</div></div>
+        </div>
+    </div>
+</aside>
+
+<!-- TOPBAR -->
+<header class="topbar">
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <span class="topbar-title">My Bookings</span>
+    <div class="topbar-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" placeholder="Search destinations..." onkeydown="if(event.key==='Enter')location.href='destinations.html?q='+this.value">
+    </div>
+    <div class="topbar-actions">
+        <div class="topbar-avatar" id="topbarAvatar" onclick="location.href='profile.html'" title="Profile">T</div>
+    </div>
+</header>
+
+<!-- MAIN -->
+<div class="main-wrap">
+<div class="page-content page-enter">
+
+    <div class="page-header">
+        <span class="page-tag">Bookings</span>
+        <div class="page-title">My <span>Bookings</span></div>
+        <div class="page-sub">View your hotel bookings and share your experience</div>
+    </div>
+
+    <!-- Filter tabs -->
+    <div class="filter-tabs">
+        <div class="ftab active" data-filter="All">All</div>
+        <div class="ftab" data-filter="Pending">Pending</div>
+        <div class="ftab" data-filter="Confirmed">Confirmed</div>
+        <div class="ftab" data-filter="Completed">Completed</div>
+        <div class="ftab" data-filter="Cancelled">Cancelled</div>
+    </div>
+
+    <!-- Bookings list -->
+    <div id="bookingsList">
+        <div class="bk-loading">Loading your bookings...</div>
+    </div>
+
+</div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="../../../js/config/api.js"></script>
+<script src="../../../js/services/authService.js"></script>
+<script>
+(function () {
+'use strict';
+
+// ── Auth guard ─────────────────────────────────────────────
+const token = sessionStorage.getItem('tripify_token');
+if (!token) { window.location.href = '../auth/login.html'; return; }
+
+// ── State ──────────────────────────────────────────────────
+let allBookings   = [];
+let reviewedMap   = {};   // hotelId → { rating, comment }
+let activeFilter  = 'All';
+let openFormId    = null; // bookingId whose review form is open
+let starRatings   = {};   // bookingId → chosen star value
+
+// ── Toast ──────────────────────────────────────────────────
+function toast(icon, msg) {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast'; t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+    c.appendChild(t);
+    setTimeout(() => t.classList.add('show'), 10);
+    setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+}
+
+// ── Sidebar / topbar user ──────────────────────────────────
+function populateUserUI() {
+    const u = JSON.parse(sessionStorage.getItem('tripify_user') || '{}');
+    const ini = (u.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('sidebarName').textContent = u.fullName || '—';
+    if (u.profilePicture) {
+        const img = `<img src="http://localhost:8080${u.profilePicture}?t=${Date.now()}" alt="Avatar" onerror="this.parentElement.textContent='${ini}'">`;
+        document.getElementById('sidebarAvatar').innerHTML = img;
+        document.getElementById('topbarAvatar').innerHTML  = img;
+    } else {
+        document.getElementById('sidebarAvatar').textContent = ini;
+        document.getElementById('topbarAvatar').textContent  = ini;
+    }
+}
+populateUserUI();
+
+// ── Fetch my reviews (to know which hotels already reviewed) ─
+async function fetchMyReviews() {
+    try {
+        const res = await fetch(ENDPOINTS.HOTEL_REVIEWS.MINE, {
+            headers: { Authorization: 'Bearer ' + token }
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        reviewedMap = {};
+        data.forEach(r => { reviewedMap[r.hotelId] = r; });
+    } catch { /* ignore */ }
+}
+
+// ── Fetch bookings ─────────────────────────────────────────
+async function loadBookings() {
+    try {
+        const res = await fetch(ENDPOINTS.BOOKINGS.MY, {
+            headers: { Authorization: 'Bearer ' + token }
+        });
+        if (res.status === 401) { AuthService.logout(); return; }
+        if (!res.ok) throw new Error();
+        allBookings = await res.json();
+        render();
+    } catch {
+        document.getElementById('bookingsList').innerHTML =
+            '<div class="bk-empty"><div class="icon">⚠️</div><p>Could not load bookings. Please try again.</p></div>';
+    }
+}
+
+// ── Render ─────────────────────────────────────────────────
+function render() {
+    const list = activeFilter === 'All'
+        ? allBookings
+        : allBookings.filter(b => b.bookingStatus === activeFilter);
+
+    const el = document.getElementById('bookingsList');
+    if (!list.length) {
+        el.innerHTML = `<div class="bk-empty"><div class="icon">🏨</div><p>${activeFilter === 'All' ? "You haven't made any bookings yet." : 'No ' + activeFilter.toLowerCase() + ' bookings.'}</p></div>`;
+        return;
+    }
+
+    el.innerHTML = list.map(b => bookingCard(b)).join('');
+}
+
+function fmtDate(d) {
+    return d ? new Date(d).toLocaleDateString('en-PK', { day:'numeric', month:'short', year:'numeric' }) : '—';
+}
+
+function bookingCard(b) {
+    const imgHtml = b.imageUrl
+        ? `<img class="bk-img" src="${b.imageUrl}" alt="${b.hotelName || ''}" onerror="this.style.display='none'">`
+        : `<div class="bk-img-placeholder">🏨</div>`;
+
+    const reviewBar = buildReviewBar(b);
+
+    return `
+    <div class="bk-card" id="bkcard-${b.bookingId}">
+        <div class="bk-main">
+            ${imgHtml}
+            <div class="bk-info">
+                <div class="bk-hotel">${b.hotelName || 'Hotel'}</div>
+                <div class="bk-room">${b.roomTypeName ? b.roomTypeName : 'Standard Room'} &nbsp;·&nbsp; ${b.numberOfGuests || 1} guest${(b.numberOfGuests || 1) !== 1 ? 's' : ''}</div>
+                <div class="bk-meta">
+                    <div class="bk-meta-item">Check-in <strong>${fmtDate(b.checkInDate)}</strong></div>
+                    <div class="bk-meta-item">Check-out <strong>${fmtDate(b.checkOutDate)}</strong></div>
+                    <div class="bk-meta-item">Booking <strong>#${b.bookingId}</strong></div>
+                </div>
+            </div>
+            <div class="bk-right">
+                <span class="bk-status ${b.bookingStatus}">${b.bookingStatus}</span>
+                <div>
+                    <div class="bk-cost">Rs. ${parseFloat(b.totalCost || 0).toLocaleString()}</div>
+                    <div class="bk-nights">${b.nights || 1} night${(b.nights || 1) !== 1 ? 's' : ''}</div>
+                </div>
+            </div>
+        </div>
+        ${reviewBar}
+        <div id="revform-${b.bookingId}" style="display:none"></div>
+    </div>`;
+}
+
+function buildReviewBar(b) {
+    const canReview = (b.bookingStatus === 'Confirmed' || b.bookingStatus === 'Completed');
+    if (!canReview) return '';
+
+    const existing = reviewedMap[b.hotelId];
+    if (existing) {
+        const stars = '★'.repeat(existing.rating) + '☆'.repeat(5 - existing.rating);
+        return `<div class="bk-review-bar">
+            <div class="bk-already-reviewed"><span class="stars">${stars}</span> Your review for ${b.hotelName || 'this hotel'}</div>
+        </div>`;
+    }
+
+    return `<div class="bk-review-bar">
+        <span style="font-size:12.5px;color:var(--t3)">How was your stay?</span>
+        <button class="btn-review" onclick="toggleReviewForm(${b.bookingId}, ${b.hotelId}, '${(b.hotelName || '').replace(/'/g, "\\'")}')">Rate &amp; Review</button>
+    </div>`;
+}
+
+// ── Toggle review form ─────────────────────────────────────
+window.toggleReviewForm = function(bookingId, hotelId, hotelName) {
+    const formEl = document.getElementById('revform-' + bookingId);
+    if (openFormId === bookingId) {
+        formEl.style.display = 'none';
+        openFormId = null;
+        return;
+    }
+    // close any previously open form
+    if (openFormId) {
+        const prev = document.getElementById('revform-' + openFormId);
+        if (prev) prev.style.display = 'none';
+    }
+    openFormId = bookingId;
+    starRatings[bookingId] = 0;
+    formEl.innerHTML = reviewFormHtml(bookingId, hotelId, hotelName);
+    formEl.style.display = 'block';
+};
+
+function reviewFormHtml(bookingId, hotelId, hotelName) {
+    return `
+    <div class="rev-inline">
+        <div class="rev-inline-title">Review — ${hotelName}</div>
+        <div class="star-row" id="stars-${bookingId}">
+            <span onclick="pickStar(${bookingId},1)">★</span>
+            <span onclick="pickStar(${bookingId},2)">★</span>
+            <span onclick="pickStar(${bookingId},3)">★</span>
+            <span onclick="pickStar(${bookingId},4)">★</span>
+            <span onclick="pickStar(${bookingId},5)">★</span>
+        </div>
+        <textarea class="rev-textarea" id="revtxt-${bookingId}" placeholder="Share your experience (optional)…"></textarea>
+        <div class="rev-err" id="reverr-${bookingId}"></div>
+        <div class="rev-actions">
+            <button class="btn-submit-rev" id="revbtn-${bookingId}" onclick="submitReview(${bookingId},${hotelId})">Submit Review</button>
+            <button class="btn-cancel-rev" onclick="toggleReviewForm(${bookingId},${hotelId},'')">Cancel</button>
+        </div>
+    </div>`;
+}
+
+// ── Star picker ────────────────────────────────────────────
+window.pickStar = function(bookingId, val) {
+    starRatings[bookingId] = val;
+    document.querySelectorAll(`#stars-${bookingId} span`).forEach((s, i) => {
+        s.classList.toggle('lit', i < val);
+    });
+};
+
+// ── Submit review ──────────────────────────────────────────
+window.submitReview = async function(bookingId, hotelId) {
+    const rating  = starRatings[bookingId] || 0;
+    const comment = (document.getElementById('revtxt-' + bookingId).value || '').trim();
+    const errEl   = document.getElementById('reverr-' + bookingId);
+    const btn     = document.getElementById('revbtn-' + bookingId);
+
+    errEl.style.display = 'none';
+    if (!rating) { errEl.textContent = 'Please select a star rating.'; errEl.style.display = 'block'; return; }
+
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    try {
+        const res = await fetch(ENDPOINTS.HOTEL_REVIEWS.SUBMIT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ hotelId, rating, comment: comment || null })
+        });
+        if (res.status === 401) { AuthService.logout(); return; }
+        const data = await res.json();
+        if (!res.ok) {
+            errEl.textContent = data.message || 'Failed to submit. Try again.';
+            errEl.style.display = 'block';
+            btn.disabled = false; btn.textContent = 'Submit Review';
+            return;
+        }
+
+        // Update local state
+        reviewedMap[hotelId] = { rating, comment };
+        openFormId = null;
+
+        // Rebuild just this card
+        const booking = allBookings.find(b => b.bookingId === bookingId);
+        if (booking) {
+            const cardEl = document.getElementById('bkcard-' + bookingId);
+            if (cardEl) cardEl.outerHTML = bookingCard(booking);
+        }
+
+        toast('⭐', data.message || 'Review submitted!');
+    } catch {
+        errEl.textContent = 'Network error. Please try again.';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Submit Review';
+    }
+};
+
+// ── Filter tabs ────────────────────────────────────────────
+document.querySelectorAll('.ftab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.ftab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeFilter = tab.dataset.filter;
+        openFormId = null;
+        render();
+    });
+});
+
+// ── Sidebar toggle ─────────────────────────────────────────
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('overlay');
+document.getElementById('menuToggle').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('show');
+});
+overlay.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+});
+
+// ── Init ───────────────────────────────────────────────────
+(async function init() {
+    await fetchMyReviews();
+    await loadBookings();
+})();
+
+})();
+</script>
+</body>
+</html>

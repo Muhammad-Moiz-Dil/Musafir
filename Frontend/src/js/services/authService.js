@@ -27,8 +27,8 @@ const AuthService = {
         const data = await res.json();
         if (!res.ok) throw { status: res.status, ...data };
 
-        localStorage.setItem('tripify_token', data.token);
-        localStorage.setItem('tripify_user', JSON.stringify(data.user));
+        sessionStorage.setItem('tripify_token', data.token);
+        sessionStorage.setItem('tripify_user', JSON.stringify(data.user));
         return data;
     },
 
@@ -42,23 +42,23 @@ const AuthService = {
         const data = await res.json();
         if (!res.ok) throw { status: res.status, ...data };
 
-        localStorage.setItem('tripify_token', data.token);
-        localStorage.setItem('tripify_user', JSON.stringify(data.user));
+        sessionStorage.setItem('tripify_token', data.token);
+        sessionStorage.setItem('tripify_user', JSON.stringify(data.user));
         return data;
     },
 
     logout() {
-        localStorage.removeItem('tripify_token');
-        localStorage.removeItem('tripify_user');
+        sessionStorage.removeItem('tripify_token');
+        sessionStorage.removeItem('tripify_user');
         window.location.href = '/src/html/pages/auth/login.html';
     },
 
     getToken() {
-        return localStorage.getItem('tripify_token');
+        return sessionStorage.getItem('tripify_token');
     },
 
     getCurrentUser() {
-        const raw = localStorage.getItem('tripify_user');
+        const raw = sessionStorage.getItem('tripify_user');
         return raw ? JSON.parse(raw) : null;
     },
 

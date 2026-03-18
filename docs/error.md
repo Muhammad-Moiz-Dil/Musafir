@@ -246,6 +246,26 @@ Never hardcode the Google Maps API key (or any API key) in HTML/JS frontend file
 
 ---
 
+## HM-BOOKING-001 — Hotel Booking Feature
+**Date:** 2026-03-18
+**Files:** `Hotel.java`, `Booking.java`, `HotelRepository.java`, `BookingRepository.java`, `HotelController.java`, `BookingController.java`, `hotels.html`, `hm-dashboard.html`, `api.js`, `TripifyDB_MySQL.sql`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/hotels` returns all active hotels ordered by star rating desc, with `destinationName` resolved from Destinations table.
+- `POST /api/bookings` accepts `{hotelId, checkInDate, checkOutDate, numberOfGuests}`, calculates total from hotel's `price_per_night × nights`, saves with status=Pending.
+- `GET /api/bookings/my` — Tourist's own bookings, newest first.
+- `GET /api/bookings/all` — HotelManager only; returns all bookings with `totalCount` and `pendingCount`.
+- `PUT /api/bookings/{id}/confirm` and `/cancel` — HotelManager only.
+- Tourist hotels page: destination filter (text search + dropdown) removed; destination pills remain. Prices removed from hotel cards. Hotel data fetched from API; booking modal submits to backend.
+- HM dashboard: favicon fixed (`../../../../../` → `../../../../`), pending bookings grid populated from API, all-bookings table populated from API, stats (total/pending) updated from API, Accept/Decline buttons call the confirm/cancel endpoints and refresh.
+- DB Hotels table updated from 5 hardcoded rows to 11 rows matching frontend images and names.
+
+### Rule
+`@Table(name="Hotels")` and `@Table(name="Bookings")` — PascalCase as per project convention. Re-run `TripifyDB_MySQL.sql` from scratch to get the updated 11-hotel dataset.
+
+---
+
 ## UC16-NOTE-001 — Push Weather Alerts (Weather API + Notifications)
 **Date:** 2026-03-17
 **Files:** `WeatherAlertService.java`, `WeatherAlertController.java`, `Notification.java`, `NotificationRepository.java`, `weather-alerts.html`

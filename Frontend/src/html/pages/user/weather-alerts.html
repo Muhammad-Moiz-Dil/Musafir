@@ -232,6 +232,10 @@
             <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span>
             <span>My Trips</span>
         </a>
+        <a href="my-bookings.html" class="nav-item">
+            <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+            <span>My Bookings</span>
+        </a>
         <a href="trip-cost.html" class="nav-item">
             <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg></span>
             <span>Trip Cost</span>
@@ -392,7 +396,7 @@
 <script src="../../../js/services/authService.js"></script>
 <script>
 // ── Auth guard ──────────────────────────────────────────────────────────────
-const token = localStorage.getItem('tripify_token');
+const token = sessionStorage.getItem('tripify_token');
 if (!token) { window.location.href = '../auth/login.html'; }
 
 // ── User profile ────────────────────────────────────────────────────────────
@@ -410,7 +414,7 @@ function applyUserProfile(u) {
         topbar.textContent  = ini;
     }
 }
-const storedUser = JSON.parse(localStorage.getItem('tripify_user') || '{}');
+const storedUser = JSON.parse(sessionStorage.getItem('tripify_user') || '{}');
 if (storedUser.fullName) applyUserProfile(storedUser);
 (async () => {
     try {
@@ -419,7 +423,7 @@ if (storedUser.fullName) applyUserProfile(storedUser);
         if (!r.ok) return;
         const u = await r.json();
         const merged = Object.assign({}, storedUser, u);
-        localStorage.setItem('tripify_user', JSON.stringify(merged));
+        sessionStorage.setItem('tripify_user', JSON.stringify(merged));
         applyUserProfile(merged);
     } catch (_) {}
 })();

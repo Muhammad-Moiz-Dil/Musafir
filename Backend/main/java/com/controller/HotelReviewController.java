@@ -2,6 +2,9 @@ package com.controller;
 
 import com.model.*;
 import com.repository.*;
+import com.service.ActivityLogService;
+import com.service.SettingsService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,15 +31,21 @@ public class HotelReviewController {
     private final HotelRepository       hotelRepo;
     private final BookingRepository     bookingRepo;
     private final UserRepository        userRepo;
+    private final ActivityLogService    logService;
+    private final SettingsService       settingsService;
 
     public HotelReviewController(HotelReviewRepository hotelReviewRepo,
                                  HotelRepository hotelRepo,
                                  BookingRepository bookingRepo,
-                                 UserRepository userRepo) {
-        this.hotelReviewRepo = hotelReviewRepo;
-        this.hotelRepo       = hotelRepo;
-        this.bookingRepo     = bookingRepo;
-        this.userRepo        = userRepo;
+                                 UserRepository userRepo,
+                                 ActivityLogService logService,
+                                 SettingsService settingsService) {
+        this.hotelReviewRepo  = hotelReviewRepo;
+        this.hotelRepo        = hotelRepo;
+        this.bookingRepo      = bookingRepo;
+        this.userRepo         = userRepo;
+        this.logService       = logService;
+        this.settingsService  = settingsService;
     }
 
     // ── Helper ───────────────────────────────────────────────
@@ -49,7 +58,11 @@ public class HotelReviewController {
     // ── POST /api/hotel-reviews ──────────────────────────────
     @PostMapping
     @Transactional
-    public ResponseEntity<?> submitReview(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> submitReview(@RequestBody Map<String, Object> body,
+                                          HttpServletRequest request) {
+        if (!settingsService.isEnabled("FEATURE_REVIEWS"))
+            return ResponseEntity.status(503).body(Map.of("message", "Review system is currently disabled."));
+
         User user = currentUser();
 
         Object hotelIdObj = body.get("hotelId");
@@ -102,6 +115,7 @@ public class HotelReviewController {
             review.setBookingId(verifiedBookings.get(0).getBookingId());
         }
         hotelReviewRepo.save(review);
+        logService.log(user.getUserId(), "HOTEL_REVIEW_SUBMITTED", request);
 
         updateHotelRating(hotel);
 
@@ -169,10 +183,14 @@ public class HotelReviewController {
     // ── Recalculate hotel average rating ─────────────────────
     private void updateHotelRating(Hotel hotel) {
         List<HotelReview> all = hotelReviewRepo.findByHotelIdOrderByCreatedAtDesc(hotel.getHotelId());
-        if (all.isEmpty()) return;
-        double avg = all.stream().mapToInt(HotelReview::getRating).average().orElse(0);
-        hotel.setAverageRating(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
-        hotel.setTotalReviews(all.size());
+        if (all.isEmpty()) {
+            hotel.setAverageRating(null);
+            hotel.setTotalReviews(0);
+        } else {
+            double avg = all.stream().mapToInt(HotelReview::getRating).average().orElse(0);
+            hotel.setAverageRating(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
+            hotel.setTotalReviews(all.size());
+        }
         hotelRepo.save(hotel);
     }
 }

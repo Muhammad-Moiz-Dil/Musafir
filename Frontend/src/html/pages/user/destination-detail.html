@@ -93,13 +93,23 @@
 
 /* Souvenir item */
 .souvenir-item {
-    display:flex; align-items:center; justify-content:space-between;
+    display:flex; align-items:center; gap:10px; justify-content:space-between;
     padding:10px 0; border-bottom:1px solid var(--border);
 }
 .souvenir-item:last-child { border-bottom:none; }
 .souvenir-name { font-size:13px; font-weight:600; color:var(--white); }
 .souvenir-vendor { font-size:11px; color:var(--t3); }
 .souvenir-price { font-size:13px; font-weight:700; color:var(--accent); }
+
+/* Climate table */
+.climate-table { width:100%; border-collapse:collapse; font-size:12.5px; }
+.climate-table th { padding:8px 10px; text-align:left; color:var(--t3); font-weight:600; font-size:11.5px; border-bottom:1px solid var(--border); }
+.climate-table td { padding:8px 10px; color:var(--t2); border-bottom:1px solid rgba(255,255,255,0.05); }
+.climate-table tr:last-child td { border-bottom:none; }
+.climate-table tr:hover td { background:rgba(255,255,255,0.02); }
+.climate-cur { background:rgba(245,166,35,0.08); }
+.climate-cur td { color:var(--white) !important; font-weight:600; }
+.temp-bar { display:inline-block; height:6px; border-radius:3px; background:linear-gradient(90deg,#3b82f6,#f59e0b); vertical-align:middle; margin-left:6px; opacity:0.7; }
 
 /* Action panel */
 .action-panel {
@@ -157,7 +167,17 @@
     <span class="topbar-title" id="topbarTitle">Destination Details</span>
     <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search destinations..."></div>
     <div class="topbar-actions">
-        <button class="topbar-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="notif-wrap" id="notifWrap">
+            <button class="topbar-btn notif-btn" id="bellBtn" onclick="toggleNotifPanel()" aria-label="Notifications">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+            </button>
+            <div class="notif-panel" id="notifPanel">
+                <div class="notif-panel-hdr"><span class="notif-panel-title">🔔 Notifications</span><button class="notif-mark-all" onclick="markAllNotifRead()">Mark all read</button></div>
+                <div class="notif-panel-body" id="notifPanelBody"><div class="notif-loading">Loading…</div></div>
+                <div class="notif-panel-footer"><a href="weather-alerts.html" class="notif-view-all">View Weather Alerts →</a></div>
+            </div>
+        </div>
         <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
     </div>
 </header>
@@ -218,8 +238,10 @@ const IMG_MAP = {
 };
 function resolveImage(url) {
     if (!url) return IMG_BASE + 'hunza-valley.jpg';
+    if (url.startsWith('/uploads/')) return 'http://localhost:8080' + url;
+    if (url.startsWith('http')) return url;
     if (IMG_MAP[url]) return IMG_MAP[url];
-    if (url.startsWith('http') || url.startsWith('/') || url.startsWith('../')) return url;
+    if (url.startsWith('/') || url.startsWith('../')) return url;
     return IMG_BASE + url;
 }
 
@@ -281,7 +303,7 @@ let currentDestId = null;
 let userRating = 0;
 
 // ── Render page with destination data ─────────────────────
-function renderPage(d, extras) {
+function renderPage(d, extras, seasonalData) {
     const img = resolveImage(d.imageUrl);
     const rating = d.averageRating ? Number(d.averageRating).toFixed(1) : '–';
     const reviews = d.totalReviews || 0;
@@ -323,23 +345,36 @@ function renderPage(d, extras) {
         <p class="desc-text">${d.description || 'A beautiful destination in Pakistan.'}</p>
     </div>
 
-    <div class="section-card">
+    <div class="section-card" id="guidelinesCard">
         <h3>📋 Travel Guidelines</h3>
-        ${extras.guidelines.map(g=>`
-        <div class="guideline-item">
-            <span class="g-icon">${g.icon}</span>
-            <div><div class="g-title">${g.title}</div><div class="g-text">${g.text}</div></div>
-        </div>`).join('')}
+        <div id="guidelinesList"><div style="text-align:center;padding:14px;color:var(--t3);font-size:13px">Loading…</div></div>
     </div>
 
-    <div class="section-card">
+    <div class="section-card" id="souvenirCard">
         <h3>🛍️ Souvenirs &amp; Local Goods</h3>
-        ${extras.souvenirs.map(s=>`
-        <div class="souvenir-item">
-            <div><div class="souvenir-name">${s.name}</div><div class="souvenir-vendor">📍 ${s.vendor}</div></div>
-            <div class="souvenir-price">${s.price}</div>
-        </div>`).join('')}
+        <div id="souvenirList"><div style="text-align:center;padding:14px;color:var(--t3);font-size:13px">Loading…</div></div>
     </div>
+
+    ${seasonalData ? `
+    <div class="section-card">
+        <h3>🌦️ Year-Round Climate</h3>
+        <table class="climate-table">
+            <thead><tr><th>Month</th><th>Avg Temp</th><th>Rainfall</th><th>Avg Hotel/Night</th></tr></thead>
+            <tbody>
+            ${seasonalData.map(row => {
+                const curMonth = new Date().getMonth() + 1;
+                const isCur = row.month === curMonth;
+                const barW = Math.min(100, Math.max(8, ((row.temperature + 10) / 55) * 100));
+                return `<tr class="${isCur ? 'climate-cur' : ''}">
+                    <td>${row.monthName}${isCur ? ' ◀' : ''}</td>
+                    <td>${row.temperature}°C <span class="temp-bar" style="width:${barW}px"></span></td>
+                    <td>${row.rainfall} mm</td>
+                    <td>${row.averagePrice ? 'Rs. ' + Number(row.averagePrice).toLocaleString() : '—'}</td>
+                </tr>`;
+            }).join('')}
+            </tbody>
+        </table>
+    </div>` : ''}
 
     <div class="section-card" id="reviewsCard">
         <h3>⭐ Ratings &amp; Reviews</h3>
@@ -506,6 +541,89 @@ async function submitReview() {
     }
 }
 
+// ── Fetch image → blob URL (bypasses file:// img-src restrictions) ────────────
+async function fetchImageBlob(url) {
+    try {
+        const res = await fetch(url);
+        if (!res.ok) return null;
+        return URL.createObjectURL(await res.blob());
+    } catch (e) { return null; }
+}
+
+// ── Load + render souvenirs ───────────────────────────────
+async function loadSouvenirs(destId, extras) {
+    const list = document.getElementById('souvenirList');
+    if (!list) return;
+    try {
+        const res = await fetch(`http://localhost:8080/api/souvenirs/${destId}`, {
+            headers: { 'Authorization': 'Bearer ' + tripToken }
+        });
+        if (res.ok) {
+            const items = await res.json();
+            if (Array.isArray(items) && items.length) {
+                // Pre-load all images as blob URLs so they work from file:// pages
+                const blobUrls = await Promise.all(items.map(s => {
+                    if (!s.imageUrl || !s.imageUrl.trim()) return Promise.resolve(null);
+                    return fetchImageBlob(resolveImage(s.imageUrl));
+                }));
+
+                list.innerHTML = items.map((s, i) => {
+                    const blobUrl = blobUrls[i];
+                    return `<div class="souvenir-item">
+                        ${blobUrl ? `<img src="${blobUrl}" alt="${escHtml(s.name)}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex-shrink:0">` : ''}
+                        <div style="flex:1;min-width:0">
+                            <div class="souvenir-name">${escHtml(s.name)}</div>
+                            <div class="souvenir-vendor">📍 ${escHtml(s.vendorName || 'Local Markets')}</div>
+                            ${s.description ? `<div style="font-size:11.5px;color:var(--t3);margin-top:2px;line-height:1.5">${escHtml(s.description)}</div>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+                return;
+            }
+        }
+    } catch (e) {}
+    // Fallback to static extras
+    list.innerHTML = extras.souvenirs.map(s => `
+        <div class="souvenir-item">
+            <div style="flex:1"><div class="souvenir-name">${s.name}</div><div class="souvenir-vendor">📍 ${s.vendor}</div></div>
+        </div>`).join('');
+}
+
+// ── Load + render guidelines ──────────────────────────────
+async function loadGuidelines(destId, extras) {
+    const list = document.getElementById('guidelinesList');
+    if (!list) return;
+    const CAT_ICON = {
+        'Safety':'🛡️','Visa':'✈️','Health':'🏥','Transport':'🚗','Food':'🍽️',
+        'Culture':'🕌','Weather':'🌡️','Trekking':'🥾','General':'📌','Emergency':'🚨',
+        'Tips':'💡','Nature':'🌿','History':'🏛️','Currency':'💱','Connectivity':'📱'
+    };
+    try {
+        const res = await fetch(`http://localhost:8080/api/guidelines/${destId}`, {
+            headers: { 'Authorization': 'Bearer ' + tripToken }
+        });
+        if (res.ok) {
+            const items = await res.json();
+            if (Array.isArray(items) && items.length) {
+                list.innerHTML = items.map(g => {
+                    const icon = CAT_ICON[g.category] || '📋';
+                    return `<div class="guideline-item">
+                        <span class="g-icon">${icon}</span>
+                        <div><div class="g-title">${escHtml(g.title)}</div><div class="g-text">${escHtml(g.content)}</div></div>
+                    </div>`;
+                }).join('');
+                return;
+            }
+        }
+    } catch (e) {}
+    // Fallback to static extras
+    list.innerHTML = extras.guidelines.map(g => `
+        <div class="guideline-item">
+            <span class="g-icon">${g.icon}</span>
+            <div><div class="g-title">${g.title}</div><div class="g-text">${g.text}</div></div>
+        </div>`).join('');
+}
+
 // ── Load destination from API ─────────────────────────────
 async function loadDestination() {
     const id = parseInt(new URLSearchParams(location.search).get('id'));
@@ -529,18 +647,36 @@ async function loadDestination() {
             return;
         }
         const d = await res.json();
-        const extras = EXTRAS[id] || DEFAULT_EXTRAS;
+        // Merge DB fields into extras (DB takes priority over static EXTRAS)
+        const base   = EXTRAS[id] || DEFAULT_EXTRAS;
+        const extras = {
+            ...base,
+            altitude:  d.altitude    || base.altitude,
+            bestTime:  d.bestTime    || base.bestTime,
+            budget:    d.budgetLevel || base.budget,
+        };
+
+        // Fetch seasonal data
+        let seasonalData = null;
+        try {
+            const seRes = await fetch(`http://localhost:8080/api/seasonal-data/${encodeURIComponent(d.name)}`, {
+                headers: { 'Authorization': 'Bearer ' + tripToken }
+            });
+            if (seRes.ok) { const seData = await seRes.json(); if (seData.length) seasonalData = seData; }
+        } catch (e) {}
 
         try {
             const favRes = await fetch(ENDPOINTS.FAVORITES.IDS, { headers: { 'Authorization': 'Bearer ' + tripToken } });
             if (favRes.ok) { const ids = await favRes.json(); isFavorited = ids.includes(id); }
         } catch (e) {}
 
-        renderPage(d, extras);
+        renderPage(d, extras, seasonalData);
         const wishBtn = document.getElementById('wishBtn');
         if (wishBtn) wishBtn.textContent = isFavorited ? '❤️' : '🤍';
 
         loadReviews(id);
+        loadSouvenirs(id, extras);
+        loadGuidelines(id, extras);
 
     } catch (e) {
         content.innerHTML = `<div style="text-align:center;padding:60px;color:var(--t2)"><div style="font-size:40px">📶</div><p style="margin-top:14px">Network error. Check your connection.</p><a href="destinations.html" class="btn btn-ghost" style="margin-top:16px">← Go Back</a></div>`;
@@ -548,6 +684,23 @@ async function loadDestination() {
 }
 
 loadDestination();
+</script>
+<script>
+(function(){
+    var _tok=sessionStorage.getItem('tripify_token');
+    var _notifData=[],_notifOpen=false;
+    window.toggleNotifPanel=function(){_notifOpen=!_notifOpen;document.getElementById('notifPanel').classList.toggle('open',_notifOpen);if(_notifOpen)_notifFetch();};
+    document.addEventListener('click',function(e){if(_notifOpen&&!document.getElementById('notifWrap').contains(e.target)){_notifOpen=false;document.getElementById('notifPanel').classList.remove('open');}});
+    async function _notifFetch(){var body=document.getElementById('notifPanelBody');body.innerHTML='<div class="notif-loading">Loading&#8230;</div>';try{var res=await fetch(ENDPOINTS.NOTIFICATIONS.LIST,{headers:{'Authorization':'Bearer '+_tok}});if(!res.ok)throw 0;var d=await res.json();_notifData=d.notifications||[];_notifRender(_notifData);_notifBadge(d.unreadCount||0);}catch(e){body.innerHTML='<div class="notif-error">Unable to load notifications.</div>';}}
+    function _notifRender(items){var body=document.getElementById('notifPanelBody');if(!items||!items.length){body.innerHTML='<div class="notif-empty"><span>&#128276;</span><p>No notifications yet.<br>Weather alerts will appear here.</p></div>';return;}body.innerHTML=items.map(function(n){return'<div class="notif-item '+(n.isRead?'':'unread')+'" data-nid="'+n.notificationId+'" data-ntype="'+(n.type||'')+'" onclick="window._notifItemClick(this)">'+'<div class="notif-item-icon">'+_notifIcon(n.type,n.title)+'</div>'+'<div class="notif-item-body"><div class="notif-item-title">'+_notifEsc(n.title)+'</div><div class="notif-item-msg">'+_notifEsc(n.message)+'</div><div class="notif-item-time">'+_notifAgo(n.createdAt)+'</div></div>'+(n.isRead?'':'<div class="notif-unread-dot"></div>')+'</div>';}).join('');}
+    window._notifItemClick=async function(el){var id=+el.dataset.nid,type=el.dataset.ntype;try{await fetch(ENDPOINTS.NOTIFICATIONS.MARK_READ(id),{method:'PUT',headers:{'Authorization':'Bearer '+_tok}});}catch(e){}var n=_notifData.find(function(x){return x.notificationId===id;});if(n)n.isRead=true;_notifRender(_notifData);_notifBadge(_notifData.filter(function(x){return!x.isRead;}).length);if(type==='WEATHER_ALERT'){_notifOpen=false;document.getElementById('notifPanel').classList.remove('open');location.href='weather-alerts.html';}};
+    window.markAllNotifRead=async function(){try{await fetch(ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ,{method:'PUT',headers:{'Authorization':'Bearer '+_tok}});}catch(e){};_notifData.forEach(function(n){n.isRead=true;});_notifRender(_notifData);_notifBadge(0);};
+    function _notifBadge(n){var b=document.getElementById('notifBadge');if(n>0){b.textContent=n>99?'99+':n;b.style.display='flex';}else b.style.display='none';}
+    function _notifIcon(type,title){var m={WEATHER_ALERT:'&#127780;',BOOKING_REMINDER:'&#127968;',TRAVEL_WARNING:'&#9888;',TRIP_UPDATE:'&#128506;'};return m[type]||'&#128276;';}
+    function _notifAgo(iso){if(!iso)return'';var m=Math.floor((Date.now()-new Date(iso))/60000);if(m<1)return'Just now';if(m<60)return m+'m ago';var h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+    function _notifEsc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    (async function(){if(!_tok)return;try{var r=await fetch(ENDPOINTS.NOTIFICATIONS.LIST,{headers:{'Authorization':'Bearer '+_tok}});if(r.ok){var d=await r.json();_notifBadge(d.unreadCount||0);}}catch(e){}}());
+})();
 </script>
 </body>
 </html>

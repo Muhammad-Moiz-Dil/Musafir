@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Statistics — Tripify Admin</title>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--primary:#2563EB;--primary-dk:#1D4ED8;--primary-lt:#EFF6FF;--secondary:#10B981;--secondary-lt:#ECFDF5;--accent:#F59E0B;--accent-lt:#FFFBEB;--danger:#EF4444;--danger-lt:#FEF2F2;--purple:#8B5CF6;--purple-lt:#F5F3FF;--bg:#F1F5F9;--sidebar:#1E293B;--sidebar-hover:rgba(255,255,255,0.07);--sidebar-active:rgba(37,99,235,0.22);--card:#FFFFFF;--border:#E2E8F0;--text-1:#0F172A;--text-2:#475569;--text-3:#94A3B8;--sidebar-w:260px;--topbar-h:64px;--r-sm:8px;--r:12px;--r-lg:16px;--shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow:0 4px 16px rgba(0,0,0,0.08);--font:'Inter',system-ui,sans-serif;--display:'Playfair Display',Georgia,serif;--ease:all 0.22s ease}
+html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);color:var(--text-1);min-height:100vh;overflow-x:hidden}a{text-decoration:none;color:inherit}img{display:block;max-width:100%}button{font-family:var(--font);cursor:pointer}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar);display:flex;flex-direction:column;z-index:200;overflow:hidden}.sidebar-logo{display:flex;align-items:center;gap:11px;padding:20px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0}.logo-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:transparent}.logo-icon img{width:38px;height:38px;object-fit:contain;border-radius:10px}.logo-text{font-family:var(--display);font-size:21px;font-weight:700;color:#fff;letter-spacing:-0.3px}.logo-badge{font-size:9px;font-weight:700;letter-spacing:1px;background:rgba(37,99,235,0.35);color:#93c5fd;padding:2px 7px;border-radius:20px;text-transform:uppercase;margin-left:auto}.sidebar-nav{flex:1;padding:14px 10px;overflow-y:auto;scrollbar-width:none}.sidebar-nav::-webkit-scrollbar{display:none}.nav-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,0.28);padding:12px 10px 6px}.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-sm);color:rgba(255,255,255,0.6);font-size:13.5px;font-weight:500;transition:var(--ease);position:relative}.nav-item:hover{background:var(--sidebar-hover);color:#fff}.nav-item.active{background:var(--sidebar-active);color:#fff}.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--primary);border-radius:0 3px 3px 0}.nav-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}.nav-badge{margin-left:auto;font-size:10px;font-weight:700;background:var(--danger);color:#fff;padding:1px 6px;border-radius:20px}.nav-divider{height:1px;background:rgba(255,255,255,0.08);margin:10px 10px}.sidebar-footer{padding:12px 10px 16px;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}.user-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm)}.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}.user-name{font-size:12.5px;font-weight:600;color:#fff;line-height:1.2}.user-role{font-size:10.5px;color:rgba(255,255,255,0.38);margin-top:1px}.user-logout{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;padding:4px;border-radius:6px;transition:var(--ease);cursor:pointer}.user-logout:hover{color:var(--danger);background:rgba(239,68,68,0.1)}
+.topbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:var(--topbar-h);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;padding:0 24px;z-index:100}.breadcrumb{font-size:13px;color:var(--text-3);display:flex;align-items:center;gap:6px}.breadcrumb-cur{color:var(--text-1);font-weight:600}.topbar-search{flex:1;max-width:320px;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;margin-left:auto}.topbar-search input{border:none;background:none;outline:none;font-size:13px;color:var(--text-1);width:100%}.topbar-search input::placeholder{color:var(--text-3)}.topbar-actions{display:flex;align-items:center;gap:8px}.topbar-avatar{width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;border:2px solid var(--border)}
+.main-wrap{margin-left:var(--sidebar-w);padding-top:var(--topbar-h);min-height:100vh}.page-body{padding:28px}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}.page-title{font-size:22px;font-weight:700}.page-subtitle{font-size:13px;color:var(--text-3);margin-top:2px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-sm)}.stat-icon{width:44px;height:44px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}.stat-val{font-size:22px;font-weight:800;line-height:1}.stat-lbl{font-size:12px;color:var(--text-3);margin-top:4px}.stat-change{font-size:11px;font-weight:600;margin-top:4px}.up{color:var(--secondary)}.down{color:var(--danger)}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}.chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px;box-shadow:var(--shadow-sm)}.chart-card.full{grid-column:1/-1}.chart-title{font-size:15px;font-weight:700;color:var(--text-1);margin-bottom:4px}.chart-sub{font-size:12px;color:var(--text-3);margin-bottom:18px}.chart-wrap{position:relative;height:240px}
+.top-list{margin-top:8px}.top-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}.top-item:last-child{border-bottom:none}.top-rank{width:22px;height:22px;border-radius:50%;background:var(--primary-lt);color:var(--primary);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}.top-name{flex:1;font-size:13px;font-weight:600;color:var(--text-1)}.top-bar-wrap{flex:2;height:6px;background:var(--border);border-radius:3px;overflow:hidden}.top-bar{height:100%;border-radius:3px;background:var(--primary)}.top-val{font-size:12.5px;font-weight:700;color:var(--text-2);min-width:40px;text-align:right}
+.btn-outline{display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:var(--r-sm);font-size:13px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--text-2);cursor:pointer;transition:var(--ease)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
+.btn-primary{display:inline-flex;align-items:center;gap:7px;padding:7px 16px;border-radius:var(--r-sm);font-size:13px;font-weight:600;border:none;background:var(--primary);color:#fff;cursor:pointer;transition:var(--ease)}.btn-primary:hover{background:var(--primary-dk)}.btn-primary:disabled{opacity:0.55;cursor:not-allowed}
+.filter-bar{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:20px;padding:16px 20px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-sm)}.filter-group{display:flex;flex-direction:column;gap:5px}.filter-label{font-size:11px;font-weight:700;letter-spacing:0.8px;text-transform:uppercase;color:var(--text-3)}.filter-input{padding:7px 11px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:13px;color:var(--text-1);background:var(--bg);outline:none;font-family:var(--font)}.filter-input:focus{border-color:var(--primary);background:var(--card)}
+.no-data-banner{display:none;align-items:center;gap:10px;padding:14px 18px;border-radius:var(--r);background:var(--accent-lt);border:1px solid var(--accent);color:#92400e;font-size:13.5px;font-weight:500;margin-bottom:20px}
+.spinner-wrap{display:flex;justify-content:center;align-items:center;padding:40px;grid-column:1/-1}@keyframes spin{to{transform:rotate(360deg)}}.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin 0.7s linear infinite}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="logo-icon"><img src="../../../../public/assets/images/favicon.png" alt="Tripify"/></div><span class="logo-text">Tripify</span><span class="logo-badge">Admin</span></div>
+  <nav class="sidebar-nav">
+    <span class="nav-label">Overview</span>
+    <a href="admin-dashboard.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span><span>Dashboard</span></a>
+    <span class="nav-label">Management</span>
+    <a href="admin-users.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span>Users &amp; Logs</span></a>
+    <a href="admin-destinations.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span><span>Destinations</span></a>
+    <a href="admin-hotels.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span>Partner Listings</span></a>
+    <a href="admin-bookings.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span>Bookings</span></a>
+    <span class="nav-label">Insights</span>
+    <a href="admin-analytics.html" class="nav-item active"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>Statistics</span></a>
+    <a href="admin-moderation.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Moderation</span><span class="nav-badge" id="moderationBadge">5</span></a>
+    <div class="nav-divider"></div>
+    <a href="admin-settings.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>System Settings</span></a>
+  </nav>
+</aside>
+
+<header class="topbar">
+  <div class="breadcrumb"><span>Tripify</span><span>›</span><span>Admin</span><span>›</span><span class="breadcrumb-cur">Statistics</span></div>
+  <div class="topbar-actions">
+    <button class="btn-outline"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Last 30 Days</button>
+    <a href="admin-profile.html"><div class="topbar-avatar" id="topbarInitials">SA</div></a>
+  </div>
+</header>
+
+<main class="main-wrap"><div class="page-body">
+  <div class="page-header">
+    <div><div class="page-title">Statistics</div><div class="page-subtitle" id="pageSubtitle">Platform performance overview</div></div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <div class="filter-group">
+      <label class="filter-label" for="filterStart">From</label>
+      <input type="date" id="filterStart" class="filter-input"/>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label" for="filterEnd">To</label>
+      <input type="date" id="filterEnd" class="filter-input"/>
+    </div>
+    <button class="btn-primary" id="applyFilter">Apply Filter</button>
+    <button class="btn-outline" id="resetFilter">Reset</button>
+  </div>
+
+  <!-- Alternate flow: no data for selected range -->
+  <div class="no-data-banner" id="noDataBanner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    No data available for the selected date range. Please choose a different date range.
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-icon" style="background:#EFF6FF"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div><div><div class="stat-val" id="statTotalUsers">–</div><div class="stat-lbl">Total Users</div><div class="stat-change" id="statUsersChange">–</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#ECFDF5"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div><div class="stat-val" id="statTotalBookings">–</div><div class="stat-lbl">Total Bookings</div><div class="stat-change" id="statBookingsChange">–</div></div></div>
+    <div class="stat-card"><div class="stat-icon" style="background:#F5F3FF"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div><div class="stat-val" id="statRevenue" style="font-size:18px">–</div><div class="stat-lbl">Revenue (in range)</div><div class="stat-change" id="statRevenueChange">–</div></div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card full">
+      <div class="chart-title">Monthly Bookings & Revenue</div>
+      <div class="chart-sub">Bookings count and revenue trend over the past 6 months</div>
+      <div class="chart-wrap"><canvas id="bookingsChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Top Destinations</div>
+      <div class="chart-sub">Most booked destinations this month</div>
+      <div class="top-list" id="topDestsList">
+        <div class="spinner-wrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">User Growth</div>
+      <div class="chart-sub">New registrations per month</div>
+      <div class="chart-wrap"><canvas id="usersChart"></canvas></div>
+    </div>
+  </div>
+</div></main>
+
+<script src="../../../js/config/api.js"></script>
+<script src="../../../js/services/authService.js"></script>
+<script>
+(function(){
+  // ── Auth guard ────────────────────────────────────────────────────────────
+  const token = sessionStorage.getItem('tripify_token');
+  const user  = JSON.parse(sessionStorage.getItem('tripify_user') || '{}');
+  if (!token || user.userType !== 'Admin') {
+    window.location.href = '../auth/admin-login.html'; return;
+  }
+  const ini = (user.fullName || 'SA').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+  document.getElementById('topbarInitials').textContent  = ini;
+  window.doLogout = function(){
+    sessionStorage.removeItem('tripify_token');
+    sessionStorage.removeItem('tripify_user');
+    window.location.href = '../auth/admin-login.html';
+  };
+
+  // ── Chart instances ───────────────────────────────────────────────────────
+  let bookingsChartInst = null, usersChartInst = null;
+  const BAR_COLORS = ['#2563EB','#10B981','#8B5CF6','#F59E0B','#EF4444'];
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function fmtRevenue(val) {
+    if (val >= 1_000_000) return 'PKR ' + (val / 1_000_000).toFixed(1) + 'M';
+    if (val >= 1_000)     return 'PKR ' + (val / 1_000).toFixed(0)     + 'K';
+    return 'PKR ' + val;
+  }
+
+  function toDateStr(d) {
+    return d.toISOString().slice(0, 10);
+  }
+
+  // ── Default date range: last 6 complete months ───────────────────────────
+  function setDefaultRange() {
+    const end   = new Date();
+    const start = new Date(end);
+    start.setMonth(start.getMonth() - 6);
+    start.setDate(1);
+    document.getElementById('filterStart').value = toDateStr(start);
+    document.getElementById('filterEnd').value   = toDateStr(end);
+  }
+  setDefaultRange();
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  function renderStats(data) {
+    const noDataBanner = document.getElementById('noDataBanner');
+
+    if (!data.hasData) {
+      noDataBanner.style.display = 'flex';
+    } else {
+      noDataBanner.style.display = 'none';
+    }
+
+    // Stat cards
+    document.getElementById('statTotalUsers').textContent    = data.totalUsers.toLocaleString();
+    document.getElementById('statUsersChange').textContent   = `${data.totalTourists} tourists · ${data.totalHMs} hotel managers`;
+    document.getElementById('statUsersChange').className     = 'stat-change';
+
+    document.getElementById('statTotalBookings').textContent = data.totalBookings.toLocaleString();
+    document.getElementById('statBookingsChange').textContent= `In selected range`;
+    document.getElementById('statBookingsChange').className  = 'stat-change';
+
+    document.getElementById('statRevenue').textContent       = fmtRevenue(data.totalRevenue);
+    document.getElementById('statRevenueChange').textContent = `${data.newUsersInRange} new registrations in range`;
+    document.getElementById('statRevenueChange').className   = 'stat-change';
+
+    // Update subtitle
+    const months = data.monthly;
+    if (months.length > 0) {
+      document.getElementById('pageSubtitle').textContent =
+        `${months[0].month} – ${months[months.length - 1].month}`;
+    }
+
+    // ── Charts ──────────────────────────────────────────────────────────────
+    const labels  = months.map(m => m.month);
+    const bCounts = months.map(m => m.bookings);
+    const revs    = months.map(m => Math.round(m.revenue / 1000)); // PKR 000s
+    const users   = months.map(m => m.users);
+
+    if (bookingsChartInst) bookingsChartInst.destroy();
+    bookingsChartInst = new Chart(document.getElementById('bookingsChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Bookings', data: bCounts, backgroundColor: 'rgba(37,99,235,0.15)',
+            borderColor: '#2563EB', borderWidth: 2, borderRadius: 6, yAxisID: 'y' },
+          { type: 'line', label: 'Revenue (PKR 000s)', data: revs, borderColor: '#10B981',
+            backgroundColor: 'rgba(16,185,129,0.08)', borderWidth: 2.5, tension: 0.4,
+            pointRadius: 4, pointBackgroundColor: '#10B981', yAxisID: 'y1' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+          y:  { position: 'left',  beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+          y1: { position: 'right', beginAtZero: true, grid: { display: false } }
+        }
+      }
+    });
+
+    if (usersChartInst) usersChartInst.destroy();
+    usersChartInst = new Chart(document.getElementById('usersChart'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{ label: 'New Users', data: users, borderColor: '#8B5CF6',
+          backgroundColor: 'rgba(139,92,246,0.1)', borderWidth: 2.5, tension: 0.4,
+          pointRadius: 4, pointBackgroundColor: '#8B5CF6', fill: true }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+                  x: { grid: { display: false } } }
+      }
+    });
+
+    // ── Top destinations ────────────────────────────────────────────────────
+    const list = document.getElementById('topDestsList');
+    if (!data.topDestinations || data.topDestinations.length === 0) {
+      list.innerHTML = '<p style="padding:16px 0;font-size:13px;color:var(--text-3);text-align:center">No booking data for this period.</p>';
+    } else {
+      list.innerHTML = data.topDestinations.map((d, i) => `
+        <div class="top-item">
+          <div class="top-rank">${i + 1}</div>
+          <div class="top-name">${d.name}</div>
+          <div class="top-bar-wrap"><div class="top-bar" style="width:${d.pct}%;background:${BAR_COLORS[i] || '#2563EB'}"></div></div>
+          <div class="top-val">${d.count}</div>
+        </div>`).join('');
+    }
+  }
+
+  // ── Fetch statistics ──────────────────────────────────────────────────────
+  function loadStats(start, end) {
+    const btn = document.getElementById('applyFilter');
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+
+    const url = start && end
+      ? ENDPOINTS.ADMIN.STATISTICS(start, end)
+      : ENDPOINTS.ADMIN.STATISTICS(null, null);
+
+    fetch(url, { headers: { 'Authorization': 'Bearer ' + token } })
+      .then(res => {
+        if (res.status === 401) { window.location.href = '../auth/admin-login.html'; return; }
+        if (res.status === 403) { alert('Access denied.'); return; }
+        if (!res.ok) return res.json().then(e => { throw new Error(e.message || 'Server error'); });
+        return res.json();
+      })
+      .then(data => { if (data) renderStats(data); })
+      .catch(err => {
+        document.getElementById('noDataBanner').style.display = 'flex';
+        document.getElementById('noDataBanner').querySelector('svg').nextSibling.textContent =
+          ' Failed to load statistics: ' + err.message + '. Please try again.';
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = 'Apply Filter';
+      });
+  }
+
+  // ── Initial load ──────────────────────────────────────────────────────────
+  loadStats(
+    document.getElementById('filterStart').value,
+    document.getElementById('filterEnd').value
+  );
+
+  // ── Filter events ─────────────────────────────────────────────────────────
+  document.getElementById('applyFilter').addEventListener('click', function() {
+    const s = document.getElementById('filterStart').value;
+    const e = document.getElementById('filterEnd').value;
+    if (!s || !e) { alert('Please select both a start and end date.'); return; }
+    if (s > e)    { alert('Start date must be before end date.'); return; }
+    loadStats(s, e);
+  });
+
+  document.getElementById('resetFilter').addEventListener('click', function() {
+    setDefaultRange();
+    loadStats(
+      document.getElementById('filterStart').value,
+      document.getElementById('filterEnd').value
+    );
+  });
+
+})();
+</script>
+</body>
+</html>

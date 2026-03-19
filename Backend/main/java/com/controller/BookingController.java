@@ -8,7 +8,10 @@ import com.repository.BookingRepository;
 import com.repository.HotelRepository;
 import com.repository.RoomTypeRepository;
 import com.repository.UserRepository;
+import com.service.ActivityLogService;
 import com.service.NotificationService;
+import com.service.SettingsService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -22,28 +25,38 @@ import java.util.*;
 @RequestMapping("/api/bookings")
 public class BookingController {
 
-    private final BookingRepository  bookingRepo;
-    private final HotelRepository    hotelRepo;
-    private final UserRepository     userRepo;
-    private final RoomTypeRepository roomTypeRepo;
+    private final BookingRepository   bookingRepo;
+    private final HotelRepository     hotelRepo;
+    private final UserRepository      userRepo;
+    private final RoomTypeRepository  roomTypeRepo;
     private final NotificationService notificationService;
+    private final ActivityLogService  logService;
+    private final SettingsService     settingsService;
 
     public BookingController(BookingRepository bookingRepo,
                              HotelRepository hotelRepo,
                              UserRepository userRepo,
                              RoomTypeRepository roomTypeRepo,
-                             NotificationService notificationService) {
+                             NotificationService notificationService,
+                             ActivityLogService logService,
+                             SettingsService settingsService) {
         this.bookingRepo         = bookingRepo;
         this.hotelRepo           = hotelRepo;
         this.userRepo            = userRepo;
         this.roomTypeRepo        = roomTypeRepo;
         this.notificationService = notificationService;
+        this.logService          = logService;
+        this.settingsService     = settingsService;
     }
 
     // Tourist: create a booking
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody Map<String, Object> body,
-                                           Authentication auth) {
+                                           Authentication auth,
+                                           HttpServletRequest request) {
+        if (!settingsService.isEnabled("FEATURE_BOOKING"))
+            return ResponseEntity.status(503).body(Map.of("message", "Booking system is currently disabled."));
+
         User user = userRepo.findByEmail(auth.getName()).orElse(null);
         if (user == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
 
@@ -101,6 +114,7 @@ public class BookingController {
         booking.setTotalCost(total);
 
         Booking saved = bookingRepo.save(booking);
+        logService.log(user.getUserId(), "BOOKING_CREATED", request);
 
         // ── Decrement available rooms ─────────────────────────────
         if (roomType != null) {
@@ -145,6 +159,18 @@ public class BookingController {
         return ResponseEntity.ok(buildBookingList(bookings));
     }
 
+    // Admin: view ALL bookings across the platform
+    @GetMapping("/admin/all")
+    public ResponseEntity<?> allBookingsAdmin(Authentication auth) {
+        User user = userRepo.findByEmail(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
+        if (user.getUserType() != User.UserType.Admin)
+            return ResponseEntity.status(403).body(Map.of("message", "Access denied"));
+
+        List<Booking> bookings = bookingRepo.findAllByOrderByCreatedAtDesc();
+        return ResponseEntity.ok(buildBookingList(bookings));
+    }
+
     // HotelManager: view bookings for their assigned hotels only
     @GetMapping("/all")
     public ResponseEntity<?> allBookings(Authentication auth) {
@@ -173,23 +199,26 @@ public class BookingController {
 
     // HotelManager: confirm a booking (must own the hotel)
     @PutMapping("/{id}/confirm")
-    public ResponseEntity<?> confirmBooking(@PathVariable Integer id, Authentication auth) {
+    public ResponseEntity<?> confirmBooking(@PathVariable Integer id, Authentication auth,
+                                            HttpServletRequest request) {
         User user = userRepo.findByEmail(auth.getName()).orElse(null);
         if (user == null || user.getUserType() != User.UserType.HotelManager)
             return ResponseEntity.status(403).body(Map.of("message", "Access denied"));
-        return setStatus(id, Booking.BookingStatus.Confirmed, user.getUserId());
+        return setStatus(id, Booking.BookingStatus.Confirmed, user.getUserId(), request);
     }
 
     // HotelManager: cancel a booking (must own the hotel)
     @PutMapping("/{id}/cancel")
-    public ResponseEntity<?> cancelBooking(@PathVariable Integer id, Authentication auth) {
+    public ResponseEntity<?> cancelBooking(@PathVariable Integer id, Authentication auth,
+                                           HttpServletRequest request) {
         User user = userRepo.findByEmail(auth.getName()).orElse(null);
         if (user == null || user.getUserType() != User.UserType.HotelManager)
             return ResponseEntity.status(403).body(Map.of("message", "Access denied"));
-        return setStatus(id, Booking.BookingStatus.Cancelled, user.getUserId());
+        return setStatus(id, Booking.BookingStatus.Cancelled, user.getUserId(), request);
     }
 
-    private ResponseEntity<?> setStatus(Integer bookingId, Booking.BookingStatus status, Integer managerId) {
+    private ResponseEntity<?> setStatus(Integer bookingId, Booking.BookingStatus status,
+                                        Integer managerId, HttpServletRequest request) {
         Booking booking = bookingRepo.findById(bookingId).orElse(null);
         if (booking == null) return ResponseEntity.notFound().build();
 
@@ -200,6 +229,9 @@ public class BookingController {
         Booking.BookingStatus oldStatus = booking.getBookingStatus();
         booking.setBookingStatus(status);
         bookingRepo.save(booking);
+        logService.log(managerId,
+                status == Booking.BookingStatus.Confirmed ? "BOOKING_CONFIRMED" : "BOOKING_CANCELLED",
+                request);
 
         // ── If cancelled and had a room type, restore availability ─
         if (status == Booking.BookingStatus.Cancelled

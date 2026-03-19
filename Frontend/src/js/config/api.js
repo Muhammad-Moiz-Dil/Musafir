@@ -74,9 +74,17 @@ const ENDPOINTS = {
         MARK_ALL_READ:`${API_CONFIG.BASE_URL}/notifications/read-all`,
     },
     HOTELS: {
-        ALL:   `${API_CONFIG.BASE_URL}/hotels`,
-        MY:    `${API_CONFIG.BASE_URL}/hotels/my`,
-        BY_ID: (id) => `${API_CONFIG.BASE_URL}/hotels/${id}`,
+        ALL:          `${API_CONFIG.BASE_URL}/hotels`,
+        MY:           `${API_CONFIG.BASE_URL}/hotels/my`,
+        BY_ID:        (id) => `${API_CONFIG.BASE_URL}/hotels/${id}`,
+        ADMIN_ALL:    `${API_CONFIG.BASE_URL}/hotels/admin/all`,
+        MANAGERS:     `${API_CONFIG.BASE_URL}/hotels/managers`,
+        CREATE:       `${API_CONFIG.BASE_URL}/hotels`,
+        UPDATE:       (id) => `${API_CONFIG.BASE_URL}/hotels/${id}`,
+        UPLOAD_IMAGE:     (id) => `${API_CONFIG.BASE_URL}/hotels/${id}/image`,
+        UPDATE_DESC:      (id) => `${API_CONFIG.BASE_URL}/hotels/${id}/description`,
+        UPDATE_AMENITIES: (id) => `${API_CONFIG.BASE_URL}/hotels/${id}/amenities`,
+        UPDATE_INFO:      (id) => `${API_CONFIG.BASE_URL}/hotels/${id}/info`,
     },
     ROOMS: {
         BY_HOTEL: (hotelId) => `${API_CONFIG.BASE_URL}/rooms/hotel/${hotelId}`,
@@ -86,15 +94,36 @@ const ENDPOINTS = {
         DELETE:   (id) => `${API_CONFIG.BASE_URL}/rooms/${id}`,
     },
     BOOKINGS: {
-        CREATE:  `${API_CONFIG.BASE_URL}/bookings`,
-        MY:      `${API_CONFIG.BASE_URL}/bookings/my`,
-        ALL:     `${API_CONFIG.BASE_URL}/bookings/all`,
-        CONFIRM: (id) => `${API_CONFIG.BASE_URL}/bookings/${id}/confirm`,
-        CANCEL:  (id) => `${API_CONFIG.BASE_URL}/bookings/${id}/cancel`,
+        CREATE:    `${API_CONFIG.BASE_URL}/bookings`,
+        MY:        `${API_CONFIG.BASE_URL}/bookings/my`,
+        ALL:       `${API_CONFIG.BASE_URL}/bookings/all`,
+        ADMIN_ALL: `${API_CONFIG.BASE_URL}/bookings/admin/all`,
+        CONFIRM:   (id) => `${API_CONFIG.BASE_URL}/bookings/${id}/confirm`,
+        CANCEL:    (id) => `${API_CONFIG.BASE_URL}/bookings/${id}/cancel`,
     },
     HOTEL_REVIEWS: {
         SUBMIT:   `${API_CONFIG.BASE_URL}/hotel-reviews`,
         BY_HOTEL: (id) => `${API_CONFIG.BASE_URL}/hotel-reviews/hotel/${id}`,
         MINE:     `${API_CONFIG.BASE_URL}/hotel-reviews/mine`,
+    },
+    ADMIN: {
+        STATISTICS: (start, end) =>
+            start && end
+                ? `${API_CONFIG.BASE_URL}/admin/statistics?startDate=${start}&endDate=${end}`
+                : `${API_CONFIG.BASE_URL}/admin/statistics`,
+        USERS:    `${API_CONFIG.BASE_URL}/admin/users`,
+        LOGS:     (userId, action) => {
+            const p = new URLSearchParams();
+            if (userId) p.set('userId', userId);
+            if (action)  p.set('action',  action);
+            const qs = p.toString();
+            return qs ? `${API_CONFIG.BASE_URL}/admin/logs?${qs}` : `${API_CONFIG.BASE_URL}/admin/logs`;
+        },
+        REVIEWS:         `${API_CONFIG.BASE_URL}/admin/reviews`,
+        FLAG:            `${API_CONFIG.BASE_URL}/admin/flag`,
+        FLAGS:           `${API_CONFIG.BASE_URL}/admin/flags`,
+        FLAG_DISMISS:    (id) => `${API_CONFIG.BASE_URL}/admin/flags/${id}/dismiss`,
+        FLAG_RESOLVE:    (id) => `${API_CONFIG.BASE_URL}/admin/flags/${id}/resolve`,
+        FLAGS_COUNT:     `${API_CONFIG.BASE_URL}/admin/flags/count`,
     },
 };

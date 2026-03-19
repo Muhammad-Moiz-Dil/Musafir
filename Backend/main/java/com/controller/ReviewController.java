@@ -2,6 +2,9 @@ package com.controller;
 
 import com.model.*;
 import com.repository.*;
+import com.service.ActivityLogService;
+import com.service.SettingsService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,17 +31,23 @@ public class ReviewController {
     private final TripDestinationRepository tripDestRepo;
     private final DestinationRepository     destRepo;
     private final UserRepository            userRepo;
+    private final ActivityLogService        logService;
+    private final SettingsService           settingsService;
 
     public ReviewController(ReviewRepository reviewRepo,
                             TripRepository tripRepo,
                             TripDestinationRepository tripDestRepo,
                             DestinationRepository destRepo,
-                            UserRepository userRepo) {
-        this.reviewRepo   = reviewRepo;
-        this.tripRepo     = tripRepo;
-        this.tripDestRepo = tripDestRepo;
-        this.destRepo     = destRepo;
-        this.userRepo     = userRepo;
+                            UserRepository userRepo,
+                            ActivityLogService logService,
+                            SettingsService settingsService) {
+        this.reviewRepo     = reviewRepo;
+        this.tripRepo       = tripRepo;
+        this.tripDestRepo   = tripDestRepo;
+        this.destRepo       = destRepo;
+        this.userRepo       = userRepo;
+        this.logService     = logService;
+        this.settingsService = settingsService;
     }
 
     // ── Helper ───────────────────────────────────────────────
@@ -51,7 +60,11 @@ public class ReviewController {
     // ── POST /api/reviews ────────────────────────────────────
     @PostMapping
     @Transactional
-    public ResponseEntity<?> submitReview(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> submitReview(@RequestBody Map<String, Object> body,
+                                          HttpServletRequest request) {
+        if (!settingsService.isEnabled("FEATURE_REVIEWS"))
+            return ResponseEntity.status(503).body(Map.of("message", "Review system is currently disabled."));
+
         User user = currentUser();
 
         // Validate destinationId
@@ -121,6 +134,7 @@ public class ReviewController {
         review.setReviewText(reviewText);
         review.setVerified(isVerified);
         reviewRepo.save(review);
+        logService.log(user.getUserId(), "REVIEW_SUBMITTED", request);
 
         // Recalculate destination average rating
         updateDestinationRating(dest);

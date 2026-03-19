@@ -151,7 +151,17 @@
     <span class="topbar-title">Hotel Reservations</span>
     <div class="topbar-search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input type="text" placeholder="Search hotels..." id="topSearch"></div>
     <div class="topbar-actions">
-        <button class="topbar-btn" onclick="location.href='dashboard.html#notifications'" title="Notifications"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></button>
+        <div class="notif-wrap" id="notifWrap">
+            <button class="topbar-btn notif-btn" id="bellBtn" onclick="toggleNotifPanel()" aria-label="Notifications">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+            </button>
+            <div class="notif-panel" id="notifPanel">
+                <div class="notif-panel-hdr"><span class="notif-panel-title">🔔 Notifications</span><button class="notif-mark-all" onclick="markAllNotifRead()">Mark all read</button></div>
+                <div class="notif-panel-body" id="notifPanelBody"><div class="notif-loading">Loading…</div></div>
+                <div class="notif-panel-footer"><a href="weather-alerts.html" class="notif-view-all">View Weather Alerts →</a></div>
+            </div>
+        </div>
         <div class="topbar-avatar" id="topbarInitials" onclick="location.href='profile.html'">AT</div>
     </div>
 </header>
@@ -216,6 +226,7 @@
             </div>
             <div class="hdl-meta">
                 <span id="mHotelRooms">🛏️ — rooms</span>
+                <span id="mHotelPhone"></span>
                 <span id="mHotelContact"></span>
             </div>
             <div id="mHotelAmenities" class="hdl-amenities"></div>
@@ -401,17 +412,21 @@ function renderHotels() {
             <div class="hotel-img">
                 <img src="${hotelImg(h.imageUrl)}" alt="${h.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/lahore.jpg'">
                 <div class="hotel-img-overlay"></div>
-                ${(h.averageRating && h.totalReviews) ? `<span style="position:absolute;top:10px;right:10px;background:rgba(245,166,35,0.9);color:#1a1a1a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">${'★'.repeat(Math.round(parseFloat(h.averageRating)))}${'☆'.repeat(5-Math.round(parseFloat(h.averageRating)))} ${parseFloat(h.averageRating).toFixed(1)}</span>` : ''}
+                ${h.stars ? `<span style="position:absolute;top:10px;right:10px;background:rgba(245,166,35,0.9);color:#1a1a1a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">${'★'.repeat(h.stars)} ${h.stars}-Star</span>` : ''}
             </div>
             <div class="hotel-body">
                 <div class="hotel-name">${h.name}</div>
                 <div class="hotel-loc">📍 ${h.destinationName || '—'}</div>
-                ${(h.averageRating && h.totalReviews) ? `<div style="display:flex;align-items:center;gap:6px;margin-top:6px;margin-bottom:2px">
-                    <span style="color:#f59e0b;font-size:13px;letter-spacing:1px">${'★'.repeat(Math.round(parseFloat(h.averageRating)))}${'☆'.repeat(5 - Math.round(parseFloat(h.averageRating)))}</span>
+                <div style="margin-top:6px;margin-bottom:2px">
+                    ${h.stars ? `<span style="color:#f59e0b;font-size:13px;letter-spacing:1px">${'★'.repeat(h.stars)}${'☆'.repeat(5 - h.stars)}</span><span style="font-size:11px;color:var(--t3);margin-left:5px">${h.stars}-star hotel</span>` : '<span style="font-size:11px;color:var(--t3)">Unrated hotel</span>'}
+                </div>
+                ${(h.averageRating && h.totalReviews) ? `<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px">
+                    <span style="color:#f59e0b;font-size:12px">★</span>
                     <span style="font-size:12px;font-weight:600;color:var(--t1)">${parseFloat(h.averageRating).toFixed(1)}</span>
                     <span style="font-size:11px;color:var(--t3)">(${h.totalReviews} review${h.totalReviews !== 1 ? 's' : ''})</span>
-                </div>` : `<div style="margin-top:6px;margin-bottom:2px;font-size:11px;color:var(--t3)">No reviews yet</div>`}
+                </div>` : ''}
                 <div class="amenities">${amenities.map(a => `<span class="amenity">${amenityIcons[a] || ''} ${a}</span>`).join('')}</div>
+                ${h.contactNumber ? `<div style="font-size:12px;color:var(--t2);margin-top:8px">📞 ${h.contactNumber}</div>` : ''}
                 <div style="margin-top:10px;text-align:right">
                     <button class="btn btn-primary btn-sm" onclick="openHotelDetail(${h.id})">View Rooms</button>
                 </div>
@@ -442,10 +457,13 @@ function openHotelDetail(id) {
     document.getElementById('mHotelLoc').textContent  = '📍 ' + (currentHotel.destinationName || '');
     const rating = parseFloat(currentHotel.averageRating) || 0;
     const totalRev = currentHotel.totalReviews || 0;
-    document.getElementById('mHotelRating').innerHTML = rating
-        ? `<span style="color:#f59e0b">${'★'.repeat(Math.round(rating))}${'☆'.repeat(5-Math.round(rating))}</span> <strong style="color:var(--t1)">${rating.toFixed(1)}</strong> <span>(${totalRev} review${totalRev !== 1 ? 's' : ''})</span>`
-        : '';
-    document.getElementById('mHotelRooms').textContent = currentHotel.contactNumber ? '📞 ' + currentHotel.contactNumber : '';
+    const stars = currentHotel.stars || 0;
+    const classStr = stars ? `<span style="color:#f59e0b">${'★'.repeat(stars)}${'☆'.repeat(5-stars)}</span> <span style="font-size:12px;color:var(--t3)">${stars}-star hotel</span>` : '';
+    const reviewStr = (rating && totalRev) ? ` &nbsp;|&nbsp; <span style="color:#f59e0b">★</span> <strong style="color:var(--t1)">${rating.toFixed(1)}</strong> <span>(${totalRev} review${totalRev !== 1 ? 's' : ''})</span>` : '';
+    document.getElementById('mHotelRating').innerHTML = classStr + reviewStr;
+    const totalRooms = currentHotel.totalRooms || currentHotel.availableRooms;
+    document.getElementById('mHotelRooms').textContent = totalRooms ? '🛏️ ' + totalRooms + ' rooms' : '';
+    document.getElementById('mHotelPhone').textContent = currentHotel.contactNumber ? '📞 ' + currentHotel.contactNumber : '';
     document.getElementById('mHotelContact').textContent = currentHotel.email ? '✉️ ' + currentHotel.email : '';
     document.getElementById('mHotelDesc').textContent  = currentHotel.description || '';
 
@@ -774,6 +792,23 @@ window.submitHotelReview   = submitHotelReview;
 
 loadHotels();
 
+})();
+</script>
+<script>
+(function(){
+    var _tok=sessionStorage.getItem('tripify_token');
+    var _notifData=[],_notifOpen=false;
+    window.toggleNotifPanel=function(){_notifOpen=!_notifOpen;document.getElementById('notifPanel').classList.toggle('open',_notifOpen);if(_notifOpen)_notifFetch();};
+    document.addEventListener('click',function(e){if(_notifOpen&&!document.getElementById('notifWrap').contains(e.target)){_notifOpen=false;document.getElementById('notifPanel').classList.remove('open');}});
+    async function _notifFetch(){var body=document.getElementById('notifPanelBody');body.innerHTML='<div class="notif-loading">Loading&#8230;</div>';try{var res=await fetch(ENDPOINTS.NOTIFICATIONS.LIST,{headers:{'Authorization':'Bearer '+_tok}});if(!res.ok)throw 0;var d=await res.json();_notifData=d.notifications||[];_notifRender(_notifData);_notifBadge(d.unreadCount||0);}catch(e){body.innerHTML='<div class="notif-error">Unable to load notifications.</div>';}}
+    function _notifRender(items){var body=document.getElementById('notifPanelBody');if(!items||!items.length){body.innerHTML='<div class="notif-empty"><span>&#128276;</span><p>No notifications yet.<br>Weather alerts will appear here.</p></div>';return;}body.innerHTML=items.map(function(n){return'<div class="notif-item '+(n.isRead?'':'unread')+'" data-nid="'+n.notificationId+'" data-ntype="'+(n.type||'')+'" onclick="window._notifItemClick(this)">'+'<div class="notif-item-icon">'+_notifIcon(n.type,n.title)+'</div>'+'<div class="notif-item-body"><div class="notif-item-title">'+_notifEsc(n.title)+'</div><div class="notif-item-msg">'+_notifEsc(n.message)+'</div><div class="notif-item-time">'+_notifAgo(n.createdAt)+'</div></div>'+(n.isRead?'':'<div class="notif-unread-dot"></div>')+'</div>';}).join('');}
+    window._notifItemClick=async function(el){var id=+el.dataset.nid,type=el.dataset.ntype;try{await fetch(ENDPOINTS.NOTIFICATIONS.MARK_READ(id),{method:'PUT',headers:{'Authorization':'Bearer '+_tok}});}catch(e){}var n=_notifData.find(function(x){return x.notificationId===id;});if(n)n.isRead=true;_notifRender(_notifData);_notifBadge(_notifData.filter(function(x){return!x.isRead;}).length);if(type==='WEATHER_ALERT'){_notifOpen=false;document.getElementById('notifPanel').classList.remove('open');location.href='weather-alerts.html';}};
+    window.markAllNotifRead=async function(){try{await fetch(ENDPOINTS.NOTIFICATIONS.MARK_ALL_READ,{method:'PUT',headers:{'Authorization':'Bearer '+_tok}});}catch(e){};_notifData.forEach(function(n){n.isRead=true;});_notifRender(_notifData);_notifBadge(0);};
+    function _notifBadge(n){var b=document.getElementById('notifBadge');if(n>0){b.textContent=n>99?'99+':n;b.style.display='flex';}else b.style.display='none';}
+    function _notifIcon(type,title){var m={WEATHER_ALERT:'&#127780;',BOOKING_REMINDER:'&#127968;',TRAVEL_WARNING:'&#9888;',TRIP_UPDATE:'&#128506;'};return m[type]||'&#128276;';}
+    function _notifAgo(iso){if(!iso)return'';var m=Math.floor((Date.now()-new Date(iso))/60000);if(m<1)return'Just now';if(m<60)return m+'m ago';var h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+    function _notifEsc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+    (async function(){if(!_tok)return;try{var r=await fetch(ENDPOINTS.NOTIFICATIONS.LIST,{headers:{'Authorization':'Bearer '+_tok}});if(r.ok){var d=await r.json();_notifBadge(d.unreadCount||0);}}catch(e){}}());
 })();
 </script>
 </body>

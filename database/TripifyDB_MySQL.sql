@@ -45,6 +45,9 @@ CREATE TABLE Destinations (
     average_rating DECIMAL(3,2) DEFAULT 0.00,
     total_reviews INT DEFAULT 0,
     search_keywords TEXT,
+    altitude VARCHAR(50),
+    best_time VARCHAR(100),
+    budget_level VARCHAR(50),
     created_at DATETIME DEFAULT NOW(),
     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
     is_active TINYINT(1) DEFAULT 1
@@ -61,7 +64,7 @@ CREATE TABLE Hotels (
     address TEXT,
     contact_number VARCHAR(20),
     email VARCHAR(255),
-    star_rating INT CHECK (star_rating BETWEEN 1 AND 5),
+    star_rating INT DEFAULT 0 CHECK (star_rating BETWEEN 0 AND 5),
     price_per_night DECIMAL(10,2) NOT NULL,
     total_rooms INT NOT NULL,
     available_rooms INT NOT NULL,
@@ -73,6 +76,8 @@ CREATE TABLE Hotels (
     created_at DATETIME DEFAULT NOW(),
     updated_at DATETIME DEFAULT NOW() ON UPDATE NOW(),
     is_active TINYINT(1) DEFAULT 1,
+    UNIQUE KEY unique_hotel_name (hotel_name),
+    UNIQUE KEY unique_hotel_phone (contact_number),
     FOREIGN KEY (destination_id) REFERENCES Destinations(destination_id) ON DELETE CASCADE,
     FOREIGN KEY (manager_id) REFERENCES Users(user_id) ON DELETE SET NULL
 );
@@ -367,58 +372,92 @@ INSERT INTO Users (email, password_hash, user_type, full_name, phone_number, cni
 VALUES ('admin@tripify.com', '$2a$10$UBSS3mzzbjAmJvwSRZTaKOniKif8HJ/.plSnztlOXtD81TYJmV5I6', 'Admin', 'System Admin', '03001234567', '12345-1234567-1');
 
 -- ── All 10 destinations (name, country, city, description, lat, lon, image_url, is_active, search_keywords) ─
-INSERT INTO Destinations (name, country, city, description, latitude, longitude, image_url, is_active, search_keywords)
+INSERT INTO Destinations (name, country, city, description, latitude, longitude, image_url, is_active, search_keywords, altitude, best_time, budget_level)
 VALUES
 
 ('Hunza Valley', 'Pakistan', 'Gilgit-Baltistan',
  'A breathtaking mountain valley nestled between Karakoram peaks, famous for ancient Baltit Fort, pristine Attabad Lake, cherry blossoms in spring, and stunning K2 views.',
- 36.3167, 74.6500, 'hunza.jpg', 1,
- 'Baltit Fort, Altit Fort, Attabad Lake, Eagles Nest, Rakaposhi, Karimabad, cherry blossom, Nagar, Duikar, Ganish, Hunzakuts, Gilgit'),
+ 36.3167, 74.6500, 'hunza-valley.jpg', 1,
+ 'Baltit Fort, Altit Fort, Attabad Lake, Eagles Nest, Rakaposhi, Karimabad, cherry blossom, Nagar, Duikar, Ganish, Hunzakuts, Gilgit',
+ '2,438 m', 'Apr–Oct', 'Moderate'),
 
 ('Murree', 'Pakistan', 'Punjab',
  'Pakistan''s most beloved hill station — cool pine forests, colonial Mall Road, chairlift rides, and fresh Kashmiri chai. Only 50 km from Islamabad.',
- 33.9062, 73.3903, 'murree.jpg', 1,
- 'Mall Road, Patriata, New Murree, chairlift, Bhurban, Kashmir Point, Pindi Point, pine forest, Ayubia, Nathiagali'),
+ 33.9062, 73.3903, 'murree.jpeg', 1,
+ 'Mall Road, Patriata, New Murree, chairlift, Bhurban, Kashmir Point, Pindi Point, pine forest, Ayubia, Nathiagali',
+ '2,291 m', 'Apr–Oct', 'Budget'),
 
 ('Swat Valley', 'Pakistan', 'Khyber Pakhtunkhwa',
  'The "Switzerland of Pakistan" — lush green mountains, clear rivers, ancient Buddhist stupas at Butkara, and vibrant bazaars in Mingora.',
  35.2227, 72.4258, 'swat.jpg', 1,
- 'Mingora, Kalam, Malam Jabba, Butkara Stupa, White Palace, Fizagat Park, Bahrain, Mahodand Lake, Ushu Forest, Marghazar'),
+ 'Mingora, Kalam, Malam Jabba, Butkara Stupa, White Palace, Fizagat Park, Bahrain, Mahodand Lake, Ushu Forest, Marghazar',
+ '980 m', 'Apr–Sep', 'Budget'),
 
 ('Skardu', 'Pakistan', 'Gilgit-Baltistan',
  'Gateway to K2 and the world''s highest peaks. Cold desert plateau, turquoise Shangrila lake, and the confluence of Indus and Shigar rivers.',
- 35.2977, 75.6333, 'skardu.jpg', 1,
- 'Shangrila Resort, Satpara Lake, K2 base camp, Shigar Fort, Kharphocho Fort, Deosai Plains, Upper Kachura, Concordia, Baltoro Glacier, Cold Desert'),
+ 35.2977, 75.6333, 'skardu.jpeg', 1,
+ 'Shangrila Resort, Satpara Lake, K2 base camp, Shigar Fort, Kharphocho Fort, Deosai Plains, Upper Kachura, Concordia, Baltoro Glacier, Cold Desert',
+ '2,228 m', 'Jun–Sep', 'Moderate'),
 
 ('Naran Kaghan', 'Pakistan', 'Khyber Pakhtunkhwa',
  'Home to the famous Saif-ul-Malook Lake — a high-altitude alpine lake surrounded by snow-capped peaks, glaciers and wildflower meadows.',
- 34.9042, 73.6519, 'naran.jpg', 1,
- 'Saif ul Malook Lake, Saiful Maluk, Lake Lulusar, Babusar Top, Lalazar, Shogran, Payye Meadows, Ansoo Lake, Batakundi, Mansehra'),
+ 34.9042, 73.6519, 'naran kaghan.jpg', 1,
+ 'Saif ul Malook Lake, Saiful Maluk, Lake Lulusar, Babusar Top, Lalazar, Shogran, Payye Meadows, Ansoo Lake, Batakundi, Mansehra',
+ '2,409 m', 'Jun–Sep', 'Budget'),
 
 ('Lahore', 'Pakistan', 'Punjab',
  'Cultural capital of Pakistan — Mughal-era Badshahi Mosque, Lahore Fort, vibrant Food Street, and the bustling Anarkali Bazaar.',
  31.5497, 74.3436, 'lahore.jpg', 1,
- 'Minar-e-Pakistan, Minare Pakistan, Minar e Pakistan, Badshahi Mosque, Lahore Fort, Shalimar Gardens, Walled City, Anarkali, Data Darbar, Food Street, Wagah Border, Wagah, Jahangir Tomb, Shahi Qila, Noor Jahan, Sunehri Masjid, Liberty Market, Gulberg, Hussain Agahi, Cooco Den, Hafiz Center, Orange Line'),
+ 'Minar-e-Pakistan, Minare Pakistan, Minar e Pakistan, Badshahi Mosque, Lahore Fort, Shalimar Gardens, Walled City, Anarkali, Data Darbar, Food Street, Wagah Border, Wagah, Jahangir Tomb, Shahi Qila, Noor Jahan, Sunehri Masjid, Liberty Market, Gulberg, Hussain Agahi, Cooco Den, Hafiz Center, Orange Line',
+ '217 m', 'Oct–Mar', 'Budget'),
 
 ('Islamabad', 'Pakistan', 'Capital Territory',
  'Pakistan''s modern capital — Faisal Mosque, Margalla Hills hiking trails, Daman-e-Koh viewpoint, and Shakarparian gardens.',
  33.6844, 73.0479, 'islamabad.jpeg', 1,
- 'Faisal Mosque, Margalla Hills, Daman-e-Koh, Shakarparian, Pakistan Monument, Lake View Park, Rawal Lake, Centaurus, Trail 3, Trail 5, F-7, F-6, Saidpur Village, Lok Virsa, PIMS, Zero Point, Melody, Kohsar Market'),
+ 'Faisal Mosque, Margalla Hills, Daman-e-Koh, Shakarparian, Pakistan Monument, Lake View Park, Rawal Lake, Centaurus, Trail 3, Trail 5, F-7, F-6, Saidpur Village, Lok Virsa, PIMS, Zero Point, Melody, Kohsar Market',
+ '507 m', 'Oct–Apr', 'Budget'),
 
 ('Fairy Meadows', 'Pakistan', 'Gilgit-Baltistan',
  'A grassy plateau at the base of Nanga Parbat — the world''s 9th highest peak. Accessible only by jeep and foot, one of Pakistan''s most scenic campsites.',
  35.3850, 74.5891, 'fairyMeadows.jpeg', 1,
- 'Nanga Parbat, Killer Mountain, Raikot Bridge, Tattu Village, Beyal Camp, Diamir, Rupal Face, basecamp, Nanga Parbat base camp, 9th highest peak'),
+ 'Nanga Parbat, Killer Mountain, Raikot Bridge, Tattu Village, Beyal Camp, Diamir, Rupal Face, basecamp, Nanga Parbat base camp, 9th highest peak',
+ '3,300 m', 'Jun–Sep', 'Moderate'),
 
 ('Mohenjo Daro', 'Pakistan', 'Sindh',
  'One of the world''s earliest urban settlements dating back to 2500 BC. UNESCO World Heritage Site with remarkable ancient ruins of the Indus Valley Civilization.',
  27.3244, 68.1376, 'mohenjodaro.jpeg', 1,
- 'Indus Valley Civilization, Great Bath, Dancing Girl, Priest King, Larkana, bronze age, Harappan, Mohenjodaro, Moenjodaro, ancient city, 2500 BC, UNESCO, archaeological site'),
+ 'Indus Valley Civilization, Great Bath, Dancing Girl, Priest King, Larkana, bronze age, Harappan, Mohenjodaro, Moenjodaro, ancient city, 2500 BC, UNESCO, archaeological site',
+ '55 m', 'Nov–Feb', 'Budget'),
 
 ('Cholistan Desert', 'Pakistan', 'Punjab',
  'A vast desert in Bahawalpur with ancient Derawar Fort, camel safaris, and the famous Cholistan Desert Jeep Rally held every year.',
  28.2500, 71.5000, 'cholistanDesert.jpeg', 1,
- 'Derawar Fort, Bahawalpur, camel safari, jeep rally, Yazman, Fort Abbas, Dingarh Fort, Marot, Islamgarh, desert camp, Cholistan rally, Abbasi');
+ 'Derawar Fort, Bahawalpur, camel safari, jeep rally, Yazman, Fort Abbas, Dingarh Fort, Marot, Islamgarh, desert camp, Cholistan rally, Abbasi',
+ '150 m', 'Nov–Feb', 'Budget'),
+
+('Peshawar', 'Pakistan', 'Khyber Pakhtunkhwa',
+ 'One of the oldest living cities in the world — Qissa Khwani Bazaar, historic Bala Hisar Fort, Mahabat Khan Mosque, and the rich Pashtun cultural heritage.',
+ 34.0151, 71.5249, 'peshawer.jpg', 1,
+ 'Qissa Khwani Bazaar, Bala Hisar Fort, Mahabat Khan Mosque, Peshawar Museum, Cunningham Clock Tower, Namak Mandi, Sethi House, Khyber Pass, Jamrud Fort, chappal kebab, Peshawari food',
+ '327 m', 'Oct–Apr', 'Budget'),
+
+('Azad Kashmir', 'Pakistan', 'Azad Jammu & Kashmir',
+ 'A paradise of green mountains, rushing rivers and deep valleys — Neelum Valley, Muzaffarabad, Rawalakot and the turquoise waters of Shounter Lake.',
+ 34.3700, 73.4700, 'kasmir.jpeg', 1,
+ 'Neelum Valley, Muzaffarabad, Rawalakot, Shounter Lake, Kel, Arang Kel, Ratti Gali Lake, Taobat, Dawarian, Athmuqam, AJK, Kashmir, Pir Chinasi, Banjosa Lake',
+ '702 m', 'Apr–Oct', 'Moderate'),
+
+('Karachi', 'Pakistan', 'Sindh',
+ 'Pakistan''s largest city and financial hub — Clifton Beach, Do Darya seafood, Quaid''s Mausoleum, Dolmen Mall, and a vibrant multicultural street food scene.',
+ 24.8607, 67.0011, 'karachi.webp', 1,
+ 'Clifton Beach, Sea View, Quaid Mausoleum, Mazar-e-Quaid, Do Darya, Port Grand, Empress Market, Dolmen Mall, Karachi Zoo, Pakistan Chowk, Defence, Korangi, Burns Road food, biryani, bun kebab',
+ '8 m', 'Nov–Feb', 'Budget'),
+
+('Gwadar', 'Pakistan', 'Balochistan',
+ 'Pakistan''s deep-sea port city on the Arabian Sea — Princess of Hope rock formation, Hammerhead viewpoint, fresh seafood, and the fast-developing CPEC hub.',
+ 25.1264, 62.3225, 'gawadar.jpeg', 1,
+ 'Princess of Hope, Hammerhead, CPEC, Arabian Sea, Gwadar Port, Jiwani, Astola Island, Pishukan Beach, Gwadar Fish Harbour, golden sand, sunset point',
+ '33 m', 'Oct–Mar', 'Budget');
 
 -- ── Hotels ───────────────────────────────────────────────────────────────────
 INSERT INTO Hotels (destination_id, hotel_name, address, contact_number, star_rating, price_per_night, total_rooms, available_rooms, amenities, image_url, description, average_rating, total_reviews)
@@ -752,9 +791,15 @@ INSERT INTO SeasonalData (destination_id, month, avg_temperature, avg_rainfall, 
 -- ── System Settings ───────────────────────────────────────────────────────────
 INSERT INTO SystemSettings (setting_key, setting_value, description)
 VALUES
-('BASE_TRAVEL_COST_PER_DAY', '5000',            'Base cost per person per day for trip calculation'),
-('WEATHER_API_KEY',          'your_api_key_here','OpenWeatherMap API Key'),
-('GOOGLE_MAPS_API_KEY',      'your_api_key_here','Google Maps API Key');
+('BASE_TRAVEL_COST_PER_DAY',        '5000',            'Base cost per person per day for trip calculation'),
+('WEATHER_API_KEY',                 'your_api_key_here','OpenWeatherMap API Key'),
+('GOOGLE_MAPS_API_KEY',             'your_api_key_here','Google Maps API Key'),
+('FEATURE_USER_REGISTRATION',       'true',            'Allow new tourists to sign up'),
+('FEATURE_HM_REGISTRATION',         'true',            'Allow new hotel managers to register'),
+('FEATURE_WEATHER_SCHEDULER',       'true',            'Hourly background job that generates weather alerts'),
+('FEATURE_BOOKING',                 'true',            'Allow tourists to make hotel bookings'),
+('FEATURE_REVIEWS',                 'true',            'Allow tourists to post destination and hotel reviews'),
+('FEATURE_MAINTENANCE_MODE',        'false',           'Show maintenance page to all non-admin users');
 
 SELECT 'TripifyDB setup complete!' AS Status;
 
@@ -788,14 +833,80 @@ SELECT 'TripifyDB setup complete!' AS Status;
 -- UPDATE Hotels SET manager_id = (SELECT user_id FROM Users WHERE email = 'manager2@example.com') WHERE destination_id IN (7,8,9,10);
 
 
-SELECT user_id, full_name, email, user_type FROM Users WHERE user_type = 'HotelManager';
+SELECT *FROM RoomTypes;
+SELECT *FROM Users;
+SELECT *FROM Hotels;
+SELECT *FROM Bookings;
+SELECT *FROM Destinations;
+SELECT *FROM HotelReviews;
+SELECT *FROM EmergencyInfo;
+SELECT *FROM Souvenirs;
+SELECT *FROM SeasonalData;
+SELECT *FROM SystemSettings;
+SELECT *FROM TravelGuidelines;
+SELECT *FROM UserPreferences;
+SELECT *FROM ActivityLogs;
+SELECT *FROM Notifications;
+SELECT *FROM Trips;
+SELECT *FROM TripDestinations;
+SELECT *FROM Reviews;
+SELECT *FROM FlaggedContent;
+SELECT *FROM Favorites;
 
-  SET SQL_SAFE_UPDATES = 0;
-  UPDATE Hotels SET manager_id = 3  WHERE destination_id IN (1,2,3,4,5,6);
-  SET SQL_SAFE_UPDATES = 1;
 
-  (If there's a second hotel manager for destinations 7–10, run a separate UPDATE with that user's ID.)
-UPDATE Hotels SET manager_id = 4  WHERE destination_id IN (7,8,9,10);
-  Step 3 — Verify:
-  SELECT hotel_id, hotel_name, manager_id FROM Hotels;
-  All of Shahzaib's hotels should now show his user_id in manager_id.
+-- ============================================
+-- MIGRATION: Fix NULL ratings (2026-03-18)
+-- ============================================
+-- Run this on any existing DB where destinations were added
+-- without explicit average_rating / total_reviews values.
+SET SQL_SAFE_UPDATES = 0;
+UPDATE Destinations SET average_rating = 0.00 WHERE average_rating IS NULL;
+UPDATE Destinations SET total_reviews  = 0    WHERE total_reviews  IS NULL;
+
+-- ============================================
+-- SEED DATA: ActivityLogs (UC-20 User Logs)
+-- ============================================
+-- user_id = 1 is the Admin (admin@tripify.com).
+-- NULL user_id = action performed before/without a login context.
+INSERT INTO ActivityLogs (user_id, action, ip_address, created_at) VALUES
+(NULL, 'USER_REGISTER',       '103.255.4.22',  '2026-01-10 10:15:00'),
+(NULL, 'USER_LOGIN',          '103.255.4.22',  '2026-01-10 10:20:00'),
+(NULL, 'BOOKING_CREATED',     '103.255.4.22',  '2026-01-10 11:05:00'),
+(1,    'ADMIN_LOGIN',         '192.168.1.10',  '2026-01-15 09:00:00'),
+(NULL, 'USER_REGISTER',       '103.62.11.99',  '2026-02-03 14:30:00'),
+(NULL, 'USER_LOGIN',          '103.62.11.99',  '2026-02-03 14:35:00'),
+(NULL, 'REVIEW_SUBMITTED',    '103.62.11.99',  '2026-02-04 16:20:00'),
+(NULL, 'PROFILE_UPDATED',     '103.255.4.22',  '2026-02-08 09:50:00'),
+(1,    'ADMIN_LOGIN',         '192.168.1.10',  '2026-02-12 08:45:00'),
+(NULL, 'USER_REGISTER',       '117.55.22.10',  '2026-02-20 13:00:00'),
+(NULL, 'USER_LOGIN',          '117.55.22.10',  '2026-02-20 13:05:00'),
+(NULL, 'BOOKING_CREATED',     '117.55.22.10',  '2026-02-21 10:30:00'),
+(NULL, 'BOOKING_CANCELLED',   '103.62.11.99',  '2026-03-02 09:15:00'),
+(1,    'ADMIN_LOGIN',         '192.168.1.10',  '2026-03-05 09:00:00'),
+(NULL, 'USER_REGISTER',       '202.143.9.55',  '2026-03-07 11:20:00'),
+(NULL, 'USER_LOGIN',          '202.143.9.55',  '2026-03-07 11:25:00'),
+(NULL, 'TRIP_CREATED',        '117.55.22.10',  '2026-03-10 15:45:00'),
+(NULL, 'REVIEW_SUBMITTED',    '202.143.9.55',  '2026-03-14 17:00:00'),
+(1,    'ADMIN_LOGIN',         '192.168.1.10',  '2026-03-18 08:30:00'),
+(NULL, 'USER_LOGIN',          '103.255.4.22',  '2026-03-19 10:00:00');
+
+
+-- ── Fix NULL ratings/reviews on Hotels (safety update for existing data) ──────
+UPDATE Hotels SET star_rating   = 0    WHERE star_rating    IS NULL;
+UPDATE Hotels SET average_rating = 0.00 WHERE average_rating IS NULL;
+UPDATE Hotels SET total_reviews  = 0    WHERE total_reviews   IS NULL;
+
+-- ── MIGRATION: Unique hotel name + phone constraints (2026-03-19) ─────────────
+-- Run on existing DB if not already applied (ignore "Duplicate key name" if already done)
+ALTER TABLE Hotels ADD UNIQUE KEY unique_hotel_name (hotel_name);
+ALTER TABLE Hotels ADD UNIQUE KEY unique_hotel_phone (contact_number);
+
+-- ── MIGRATION: Fix destination image_url to match actual asset filenames (2026-03-19) ─
+UPDATE Destinations SET image_url = 'hunza-valley.jpg' WHERE name = 'Hunza Valley';
+UPDATE Destinations SET image_url = 'murree.jpeg'      WHERE name = 'Murree';
+UPDATE Destinations SET image_url = 'skardu.jpeg'      WHERE name = 'Skardu';
+UPDATE Destinations SET image_url = 'naran kaghan.jpg' WHERE name = 'Naran Kaghan';
+UPDATE Destinations SET image_url = 'peshawer.jpg'     WHERE name = 'Peshawar';
+UPDATE Destinations SET image_url = 'kasmir.jpeg'      WHERE name LIKE '%Kashmir%';
+UPDATE Destinations SET image_url = 'karachi.webp'     WHERE name = 'Karachi';
+UPDATE Destinations SET image_url = 'gawadar.jpeg'     WHERE name LIKE '%Gwadar%';

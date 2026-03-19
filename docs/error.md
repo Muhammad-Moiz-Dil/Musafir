@@ -286,6 +286,53 @@ Never hardcode the Google Maps API key (or any API key) in HTML/JS frontend file
 
 ---
 
+## UC19-NOTE-001 — View System Statistics
+**Date:** 2026-03-19
+**Files:** `AdminController.java`, `UserRepository.java`, `BookingRepository.java`, `api.js`, `admin-analytics.html`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/admin/statistics?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD` — both params optional; defaults to last 6 months.
+- Returns `hasData` boolean — frontend shows no-data banner (alternate flow) when `false`.
+- `totalUsers` / `totalTourists` / `totalHMs` are all-time counts; `totalBookings` and `totalRevenue` are scoped to the selected range.
+- Monthly breakdown always covers 6 months ending at `rangeEnd` regardless of filter window.
+- Top destinations computed in Java: Bookings → hotelId → destinationId via Hotels lookup map.
+- Frontend charts (Chart.js) are destroyed and rebuilt on each filter apply to avoid dataset accumulation.
+- Date range filter with Apply + Reset buttons; validates start ≤ end before fetching.
+- `@Table` names: `Users`, `Bookings`, `Hotels` — all PascalCase per project convention.
+
+---
+
+## UC-HM-LISTINGS-002 — Add Hotel Partner Listing (Admin Create)
+**Date:** 2026-03-19
+**Files:** `HotelController.java`, `UserRepository.java`, `api.js`, `admin-hotels.html`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/hotels/managers` — Admin only; returns all `HotelManager` users (id, fullName, email) for the dropdown. Uses new `UserRepository.findByUserType(UserType)`.
+- `POST /api/hotels` — Admin only; required: hotelName, destinationId, managerId, pricePerNight, totalRooms, availableRooms. Optional: starRating, address, contactNumber, email, description, amenities. Validates destination exists and managerId belongs to a `HotelManager` user (not just any user). Returns 201 on success.
+- Manager is **required** — backend rejects the request if managerId is missing or does not resolve to a HotelManager.
+- Destination and Manager dropdowns are fetched in parallel (`Promise.all`) when the Add modal opens; placeholders shown while loading.
+- Double-submit prevented via separate `addSubmitting` flag (independent of edit form state).
+
+---
+
+## UC-HM-LISTINGS-001 — Manage Hotel Partner Listings (Admin Edit)
+**Date:** 2026-03-19
+**Files:** `HotelController.java`, `api.js`, `admin-hotels.html`
+**Status:** Implemented
+
+### Design Decisions
+- `GET /api/hotels/admin/all` — Admin only; returns ALL hotels (active + inactive), sorted newest-first, with resolved `destinationName` and `managerName`.
+- `PUT /api/hotels/{id}` — Admin only; partial update (only keys present in body are applied); validates name non-empty, price/rooms parseable; returns 404 with `message:"Hotel listing not found"` for missing hotel.
+- Frontend fetches from `HOTELS.ADMIN_ALL` on load; table rendered dynamically; stats (total/active/inactive/managers) computed client-side.
+- Edit button opens modal pre-populated with hotel data; blur validation + submit validation; double-submit prevented via `submitting` flag.
+- Deactivate/Activate button uses the same `PUT` endpoint with `{isActive: false/true}` — no separate endpoint needed.
+- Filter pills (All/Active/Inactive) and search box filter the rendered table client-side without extra API calls.
+- `@Table(name="Hotels")` — PascalCase per project convention.
+
+---
+
 ## CLEANUP-001 — Unused imports and unused injected field in ProfileController/ProfileService
 **Date:** 2026-03-14
 **Files:** `ProfileController.java`, `ProfileService.java`

@@ -4,6 +4,7 @@ import com.model.Booking;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -17,4 +18,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
 
     List<Booking> findByUserIdAndHotelIdAndBookingStatusIn(Integer userId, Integer hotelId,
                                                            List<Booking.BookingStatus> statuses);
+
+    List<Booking> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
 }

@@ -778,15 +778,6 @@
     </div>
 </section>
 
-<!-- ══════════════════════════════════════
-     STATS STRIP
-══════════════════════════════════════ -->
-<div class="stats-strip">
-    <div class="stat"><div class="stat-num" data-target="5">0</div><div class="stat-lbl">Destinations</div></div>
-    <div class="stat"><div class="stat-num" data-target="12">0</div><div class="stat-lbl">Partner Hotels</div></div>
-    <div class="stat"><div class="stat-num" data-target="500">0</div><div class="stat-lbl">Travelers Served</div></div>
-    <div class="stat"><div class="stat-num" data-target="200">0</div><div class="stat-lbl">Reviews</div></div>
-</div>
 
 <!-- ══════════════════════════════════════
      FEATURES
@@ -1046,27 +1037,6 @@
     document.querySelectorAll(
         '.reveal, .f-card, .d-card, .step-item'
     ).forEach(el => revealObs.observe(el));
-
-    /* ── Counter animation ─────────────────── */
-    const counterObs = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-            if (!e.isIntersecting) return;
-            const el     = e.target;
-            const target = parseInt(el.dataset.target, 10);
-            const suffix = target >= 100 ? '+' : '';
-            const dur    = 1800;
-            const inc    = target / (dur / 16);
-            let cur      = 0;
-            const timer  = setInterval(() => {
-                cur = Math.min(cur + inc, target);
-                el.textContent = Math.floor(cur) + suffix;
-                if (cur >= target) clearInterval(timer);
-            }, 16);
-            counterObs.unobserve(el);
-        });
-    }, { threshold: 0.5 });
-
-    document.querySelectorAll('[data-target]').forEach(el => counterObs.observe(el));
 
     /* ── Modal ─────────────────────────────── */
     const bg = document.getElementById('modalBg');

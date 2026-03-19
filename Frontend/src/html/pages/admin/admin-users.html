@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Users &amp; Logs — Tripify Admin</title>
+<link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#2563EB;--primary-dk:#1D4ED8;--primary-lt:#EFF6FF;--primary-glow:rgba(37,99,235,0.12);
+  --secondary:#10B981;--secondary-lt:#ECFDF5;
+  --accent:#F59E0B;--accent-lt:#FFFBEB;
+  --danger:#EF4444;--danger-lt:#FEF2F2;
+  --warning:#F59E0B;--purple:#8B5CF6;--purple-lt:#F5F3FF;
+  --bg:#F1F5F9;--sidebar:#1E293B;
+  --sidebar-hover:rgba(255,255,255,0.07);--sidebar-active:rgba(37,99,235,0.22);
+  --card:#FFFFFF;--border:#E2E8F0;
+  --text-1:#0F172A;--text-2:#475569;--text-3:#94A3B8;
+  --sidebar-w:260px;--topbar-h:64px;
+  --r-sm:8px;--r:12px;--r-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.06);
+  --shadow:0 4px 16px rgba(0,0,0,0.08),0 2px 6px rgba(0,0,0,0.05);
+  --font:'Inter',system-ui,sans-serif;--display:'Playfair Display',Georgia,serif;
+  --ease:all 0.22s ease;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text-1);min-height:100vh;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+img{display:block;max-width:100%}
+button{font-family:var(--font);cursor:pointer}
+
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:var(--sidebar-w);background:var(--sidebar);display:flex;flex-direction:column;z-index:200;overflow:hidden}
+.sidebar-logo{display:flex;align-items:center;gap:11px;padding:20px 20px 18px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+.logo-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:transparent}
+.logo-icon img{width:38px;height:38px;object-fit:contain;border-radius:10px}
+.logo-text{font-family:var(--display);font-size:21px;font-weight:700;color:#fff;letter-spacing:-0.3px}
+.logo-badge{font-size:9px;font-weight:700;letter-spacing:1px;background:rgba(37,99,235,0.35);color:#93c5fd;padding:2px 7px;border-radius:20px;text-transform:uppercase;margin-left:auto}
+.sidebar-nav{flex:1;padding:14px 10px;overflow-y:auto;scrollbar-width:none}
+.sidebar-nav::-webkit-scrollbar{display:none}
+.nav-label{display:block;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:rgba(255,255,255,0.28);padding:12px 10px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:var(--r-sm);color:rgba(255,255,255,0.6);font-size:13.5px;font-weight:500;transition:var(--ease);position:relative}
+.nav-item:hover{background:var(--sidebar-hover);color:#fff}
+.nav-item.active{background:var(--sidebar-active);color:#fff}
+.nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:18px;background:var(--primary);border-radius:0 3px 3px 0}
+.nav-icon{width:16px;height:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:10px;font-weight:700;background:var(--danger);color:#fff;padding:1px 6px;border-radius:20px}
+.nav-divider{height:1px;background:rgba(255,255,255,0.08);margin:10px 10px}
+.sidebar-footer{padding:12px 10px 16px;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0}
+.user-card{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-sm)}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.user-name{font-size:12.5px;font-weight:600;color:#fff;line-height:1.2}
+.user-role{font-size:10.5px;color:rgba(255,255,255,0.38);margin-top:1px}
+.user-logout{margin-left:auto;background:none;border:none;color:rgba(255,255,255,0.4);font-size:16px;padding:4px;border-radius:6px;transition:var(--ease);cursor:pointer}
+.user-logout:hover{color:var(--danger);background:rgba(239,68,68,0.1)}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:var(--sidebar-w);right:0;height:var(--topbar-h);background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px;padding:0 24px;z-index:100}
+.menu-toggle{display:none;background:none;border:none;color:var(--text-2);padding:6px;border-radius:var(--r-sm)}
+.breadcrumb{font-size:13px;color:var(--text-3);display:flex;align-items:center;gap:6px}
+.breadcrumb-sep{color:var(--text-3)}
+.breadcrumb-cur{color:var(--text-1);font-weight:600}
+.topbar-search{flex:1;max-width:320px;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:7px 12px;margin-left:auto}
+.topbar-search input{border:none;background:none;outline:none;font-size:13px;color:var(--text-1);width:100%}
+.topbar-search input::placeholder{color:var(--text-3)}
+.topbar-actions{display:flex;align-items:center;gap:8px}
+.topbar-avatar{width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;cursor:pointer;border:2px solid var(--border)}
+.main-wrap{margin-left:var(--sidebar-w);padding-top:var(--topbar-h);min-height:100vh}
+.page-body{padding:28px}
+
+/* PAGE HEADER */
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:22px;font-weight:700;color:var(--text-1)}
+.page-subtitle{font-size:13px;color:var(--text-3);margin-top:2px}
+
+/* TABS */
+.tab-bar{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:4px;margin-bottom:22px;width:fit-content}
+.tab-btn{padding:8px 22px;border-radius:var(--r-sm);border:none;font-size:13.5px;font-weight:600;background:none;color:var(--text-2);cursor:pointer;transition:var(--ease)}
+.tab-btn:hover{color:var(--text-1)}
+.tab-btn.active{background:var(--primary);color:#fff}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-sm)}
+.stat-icon{width:44px;height:44px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stat-val{font-size:24px;font-weight:800;color:var(--text-1);line-height:1}
+.stat-lbl{font-size:12px;color:var(--text-3);margin-top:4px}
+
+/* TOOLBAR */
+.toolbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:8px 14px;min-width:260px}
+.search-box input{border:none;background:none;outline:none;font-size:13px;color:var(--text-1);width:100%}
+.filter-pills{display:flex;gap:6px}
+.fpill{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:12.5px;font-weight:500;color:var(--text-2);cursor:pointer;transition:var(--ease)}
+.fpill:hover{border-color:var(--primary);color:var(--primary)}
+.fpill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 18px;border-radius:var(--r-sm);font-size:13px;font-weight:600;border:none;cursor:pointer;transition:var(--ease)}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover:not(:disabled){background:var(--primary-dk)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed}
+.btn-secondary{background:var(--card);border:1px solid var(--border);color:var(--text-2)}
+.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
+
+/* FILTER BAR (Logs tab) */
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.filter-bar label{font-size:12.5px;font-weight:600;color:var(--text-2)}
+.filter-bar input{border:1px solid var(--border);background:var(--card);border-radius:var(--r-sm);padding:7px 12px;font-size:13px;color:var(--text-1);outline:none;width:130px;font-family:var(--font)}
+.filter-bar input:focus{border-color:var(--primary)}
+
+/* TABLE */
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);overflow:hidden}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+thead th{padding:11px 16px;text-align:left;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:var(--text-3);background:#F8FAFC;border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:var(--ease);cursor:pointer}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#F8FAFC}
+tbody tr.row-selected{background:var(--primary-lt) !important;outline:2px solid var(--primary);outline-offset:-2px}
+td{padding:13px 16px;font-size:13.5px;color:var(--text-2);vertical-align:middle}
+.user-cell{display:flex;align-items:center;gap:10px}
+.u-avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:#fff}
+.u-name{font-size:13.5px;font-weight:600;color:var(--text-1)}
+.u-email{font-size:12px;color:var(--text-3);margin-top:1px}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
+.badge-blue{background:var(--primary-lt);color:var(--primary)}
+.badge-green{background:var(--secondary-lt);color:var(--secondary)}
+.badge-purple{background:var(--purple-lt);color:var(--purple)}
+.badge-yellow{background:var(--accent-lt);color:#B45309}
+.badge-red{background:var(--danger-lt);color:var(--danger)}
+.badge-gray{background:#F1F5F9;color:var(--text-2)}
+.badge-orange{background:#FFF7ED;color:#C2410C}
+.badge-action{font-family:monospace;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px}
+.badge-login{background:#ECFDF5;color:#059669}
+.badge-register{background:#EFF6FF;color:#2563EB}
+.badge-booking{background:#F5F3FF;color:#7C3AED}
+.badge-review{background:#FFFBEB;color:#B45309}
+.badge-admin{background:#FEF2F2;color:#DC2626}
+.badge-other{background:#F1F5F9;color:var(--text-2)}
+.badge-flagged{background:#FFF7ED;color:#C2410C;font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px}
+.actions{display:flex;align-items:center;gap:6px}
+.act-btn{background:none;border:1px solid var(--border);color:var(--text-2);padding:5px 10px;border-radius:var(--r-sm);font-size:12px;font-weight:500;cursor:pointer;transition:var(--ease)}
+.act-btn:hover{border-color:var(--primary);color:var(--primary)}
+.act-btn.danger:hover{border-color:var(--danger);color:var(--danger)}
+.flag-btn{background:none;border:1px solid #FCA5A5;color:#EF4444;padding:4px 10px;border-radius:var(--r-sm);font-size:11.5px;font-weight:600;cursor:pointer;transition:var(--ease);white-space:nowrap}
+.flag-btn:hover:not(:disabled){background:#FEF2F2;border-color:#EF4444}
+.flag-btn:disabled{opacity:.45;cursor:not-allowed}
+.table-footer{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border);background:#FAFBFC}
+.tfoot-info{font-size:12.5px;color:var(--text-3)}
+
+/* STARS */
+.stars{display:inline-flex;gap:1px;align-items:center}
+.stars span{font-size:13px}
+
+/* EMPTY / LOADING STATES */
+.empty-state{padding:52px 24px;text-align:center;color:var(--text-3)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-title{font-size:15px;font-weight:600;color:var(--text-2);margin-bottom:4px}
+.empty-msg{font-size:13px}
+.spinner-wrap{display:flex;justify-content:center;padding:48px}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error-banner{background:var(--danger-lt);border:1px solid #FECACA;border-radius:var(--r);padding:14px 18px;color:var(--danger);font-size:13px;margin-bottom:16px;display:none}
+.error-banner.show{display:block}
+.btn-del{background:none;border:1px solid #FECACA;color:var(--danger);font-size:12px;padding:4px 10px;border-radius:6px;cursor:pointer;transition:all .2s}
+.btn-del:hover{background:var(--danger);color:#fff}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:999;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:#fff;border-radius:16px;padding:28px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,0.15);text-align:center}
+.modal-icon{font-size:40px;margin-bottom:12px}
+.modal-title{font-size:17px;font-weight:700;color:var(--text-1);margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text-2);margin-bottom:24px}
+.modal-actions{display:flex;gap:10px;justify-content:center}
+.modal-actions .btn-cancel{padding:9px 22px;border-radius:8px;border:1px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer}
+.modal-actions .btn-confirm{padding:9px 22px;border-radius:8px;border:none;background:var(--danger);color:#fff;font-size:13px;font-weight:600;cursor:pointer}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:28px;right:28px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:10px;padding:13px 18px;border-radius:var(--r);font-size:13.5px;font-weight:500;box-shadow:var(--shadow);pointer-events:auto;animation:toastIn .3s ease;min-width:260px;max-width:380px}
+.toast-success{background:#ECFDF5;border:1px solid #A7F3D0;color:#065F46}
+.toast-error{background:#FEF2F2;border:1px solid #FECACA;color:#991B1B}
+.toast-icon{font-size:16px;flex-shrink:0}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><img src="../../../../public/assets/images/favicon.png" alt="Tripify"/></div>
+    <span class="logo-text">Tripify</span>
+    <span class="logo-badge">Admin</span>
+  </div>
+  <nav class="sidebar-nav">
+    <span class="nav-label">Overview</span>
+    <a href="admin-dashboard.html" class="nav-item">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+      <span>Dashboard</span>
+    </a>
+    <span class="nav-label">Management</span>
+    <a href="admin-users.html" class="nav-item active">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+      <span>Users &amp; Logs</span>
+    </a>
+    <a href="admin-destinations.html" class="nav-item">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></span>
+      <span>Destinations</span>
+    </a>
+    <a href="admin-hotels.html" class="nav-item">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>
+      <span>Partner Listings</span>
+    </a>
+    <a href="admin-bookings.html" class="nav-item">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+      <span>Bookings</span>
+    </a>
+    <span class="nav-label">Insights</span>
+    <a href="admin-analytics.html" class="nav-item">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+      <span>Statistics</span>
+    </a>
+    <a href="admin-moderation.html" class="nav-item">
+      <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
+      <span>Moderation</span>
+      <span class="nav-badge">5</span>
+    </a>
+    <div class="nav-divider"></div>
+    <a href="admin-settings.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+      <span>System Settings</span>
+    </a>
+  </nav>
+</aside>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="breadcrumb">
+    <span>Tripify</span><span class="breadcrumb-sep">›</span>
+    <span>Admin</span><span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-cur">Users &amp; Logs</span>
+  </div>
+  <div class="topbar-actions">
+    <a href="admin-profile.html"><div class="topbar-avatar" id="topbarInitials">SA</div></a>
+  </div>
+</header>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-box">
+    <div class="modal-icon">⚠️</div>
+    <div class="modal-title">Delete User?</div>
+    <div class="modal-sub" id="deleteModalSub">This will permanently delete the user account.</div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-confirm" id="deleteConfirmBtn" onclick="executeDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main-wrap">
+<div class="page-body">
+
+  <div class="page-header">
+    <div>
+      <div class="page-title">Users &amp; Logs</div>
+      <div class="page-subtitle">Manage accounts, review system activity, and flag inappropriate content</div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('users',   this)">Users</button>
+    <button class="tab-btn"        onclick="switchTab('logs',    this)">Activity Logs</button>
+    <button class="tab-btn"        onclick="switchTab('reviews', this)">Reviews &amp; Comments</button>
+  </div>
+
+  <!-- ═══════════════ USERS TAB ═══════════════ -->
+  <div class="tab-panel active" id="tabUsers">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#EFF6FF"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div><div class="stat-val" id="statTotal">—</div><div class="stat-lbl">Total Users</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#ECFDF5"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div><div class="stat-val" id="statTourists">—</div><div class="stat-lbl">Tourists</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#F5F3FF"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+        <div><div class="stat-val" id="statHMs">—</div><div class="stat-lbl">Hotel Managers</div></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon" style="background:#FFFBEB"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div><div class="stat-val" id="statNew">—</div><div class="stat-lbl">New This Month</div></div>
+      </div>
+    </div>
+
+    <!-- Filter + Table -->
+    <div id="usersError" class="error-banner"></div>
+    <div class="table-card">
+      <div style="padding:16px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+        <div class="search-box" style="flex:1;min-width:200px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Search by name or email…" id="userSearch">
+        </div>
+        <div class="filter-pills">
+          <button class="fpill active" onclick="setUserFilter(this,'all')">All Users</button>
+          <button class="fpill" onclick="setUserFilter(this,'Tourist')">Tourists</button>
+          <button class="fpill" onclick="setUserFilter(this,'HotelManager')">Hotel Managers</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th><th>Role</th><th>Phone</th><th>Joined</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <div class="tfoot-info" id="userFooter">Loading…</div>
+      </div>
+    </div>
+  </div><!-- /tabUsers -->
+
+  <!-- ═══════════════ LOGS TAB ═══════════════ -->
+  <div class="tab-panel" id="tabLogs">
+
+    <div id="logsError" class="error-banner"></div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <label for="logUserId">User ID</label>
+      <input type="number" id="logUserId" placeholder="e.g. 5" min="1">
+      <label for="logAction" style="margin-left:4px">Action</label>
+      <input type="text" id="logAction" placeholder="e.g. LOGIN" style="width:160px">
+      <button class="btn btn-primary" id="btnSearchLogs" onclick="searchLogs()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        Search
+      </button>
+      <button class="btn btn-secondary" onclick="clearLogFilters()">Clear</button>
+    </div>
+
+    <div class="table-card">
+      <div style="padding:12px 20px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-3)">
+        Showing most recent 100 entries. Click a row to select it, then flag if inappropriate.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>User</th><th>Action</th><th>IP Address</th><th>Timestamp</th><th>Flag</th>
+            </tr>
+          </thead>
+          <tbody id="logsBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <div class="tfoot-info" id="logsFooter">Loading…</div>
+      </div>
+    </div>
+  </div><!-- /tabLogs -->
+
+  <!-- ═══════════════ REVIEWS TAB ═══════════════ -->
+  <div class="tab-panel" id="tabReviews">
+
+    <div id="reviewsError" class="error-banner"></div>
+
+    <div class="table-card">
+      <div style="padding:12px 20px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text-3)">
+        All user reviews — destination and hotel. Click a row to select, then flag to mark for moderation.
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>User</th><th>Type</th><th>Target</th><th>Rating</th><th>Comment</th><th>Date</th><th>Flag</th>
+            </tr>
+          </thead>
+          <tbody id="reviewsBody"></tbody>
+        </table>
+      </div>
+      <div class="table-footer">
+        <div class="tfoot-info" id="reviewsFooter">Loading…</div>
+      </div>
+    </div>
+  </div><!-- /tabReviews -->
+
+</div>
+</main>
+
+<script src="../../../js/config/api.js"></script>
+<script src="../../../js/services/authService.js"></script>
+<script>
+(function(){
+  const token = sessionStorage.getItem('tripify_token');
+  const user  = JSON.parse(sessionStorage.getItem('tripify_user') || '{}');
+  if (!token || user.userType !== 'Admin') { window.location.href = '../auth/admin-login.html'; return; }
+
+  const ini = (user.fullName||'SA').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+  document.getElementById('topbarInitials').textContent  = ini;
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    const icon = type === 'success' ? '✅' : '⚠️';
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${msg}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => { toast.style.opacity='0'; toast.style.transform='translateY(12px)'; toast.style.transition='all .3s ease'; }, 2800);
+    setTimeout(() => toast.remove(), 3200);
+  }
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  window.switchTab = function(id, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panelId = 'tab' + id.charAt(0).toUpperCase() + id.slice(1);
+    document.getElementById(panelId).classList.add('active');
+    if (id === 'logs'    && !logsLoaded)    loadLogs();
+    if (id === 'reviews' && !reviewsLoaded) loadReviews();
+  };
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function authHeaders() { return { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }; }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-PK', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  function fmtDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('en-PK', { day:'2-digit', month:'short', year:'numeric' })
+         + ' ' + d.toLocaleTimeString('en-PK', { hour:'2-digit', minute:'2-digit', hour12:true });
+  }
+
+  function avatarColor(name) {
+    const colors = ['#2563EB','#10B981','#8B5CF6','#F59E0B','#EF4444','#0891B2','#EC4899','#6366F1'];
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffffffff;
+    return colors[Math.abs(h) % colors.length];
+  }
+
+  function initials(name) {
+    return (name||'??').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  }
+
+  function actionBadge(action) {
+    const a = (action||'').toUpperCase();
+    let cls = 'badge-other';
+    if (a.includes('LOGIN'))    cls = 'badge-login';
+    else if (a.includes('REGISTER')) cls = 'badge-register';
+    else if (a.includes('BOOKING'))  cls = 'badge-booking';
+    else if (a.includes('REVIEW'))   cls = 'badge-review';
+    else if (a.includes('ADMIN'))    cls = 'badge-admin';
+    return `<span class="badge badge-action ${cls}">${action}</span>`;
+  }
+
+  function starsHtml(rating) {
+    let s = '';
+    for (let i = 1; i <= 5; i++) s += `<span style="color:${i<=rating?'#F59E0B':'#CBD5E1'}">${i<=rating?'★':'☆'}</span>`;
+    return `<div class="stars">${s}</div>`;
+  }
+
+  function rowSelect(tr) {
+    document.querySelectorAll('tbody tr.row-selected').forEach(r => r.classList.remove('row-selected'));
+    tr.classList.add('row-selected');
+  }
+
+  // ── Flag content ───────────────────────────────────────────────────────────
+  window.flagContent = function(contentType, contentId, btn) {
+    btn.disabled = true;
+    btn.textContent = 'Flagging…';
+    fetch(ENDPOINTS.ADMIN.FLAG, {
+      method: 'POST',
+      headers: authHeaders(),
+      body: JSON.stringify({ contentType, contentId })
+    })
+    .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+    .then(({ ok, data }) => {
+      if (ok) {
+        btn.replaceWith(Object.assign(document.createElement('span'), {
+          className: 'badge badge-flagged', textContent: '⚑ Flagged'
+        }));
+        showToast('Content flagged successfully. Marked for review.', 'success');
+      } else if (data.message && data.message.includes('Already flagged')) {
+        btn.replaceWith(Object.assign(document.createElement('span'), {
+          className: 'badge badge-flagged', textContent: '⚑ Flagged'
+        }));
+        showToast('This entry was already flagged.', 'success');
+      } else {
+        btn.disabled = false;
+        btn.textContent = '⚑ Flag';
+        showToast(data.message || 'Failed to flag content.', 'error');
+      }
+    })
+    .catch(() => {
+      btn.disabled = false;
+      btn.textContent = '⚑ Flag';
+      showToast('Connection error. Please try again.', 'error');
+    });
+  };
+
+  // ── USERS tab ──────────────────────────────────────────────────────────────
+  let allUsers = [], currentFilter = 'all';
+
+  function loadUsers() {
+    const body = document.getElementById('usersBody');
+    body.innerHTML = '<tr><td colspan="5"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr>';
+    document.getElementById('usersError').classList.remove('show');
+
+    fetch(ENDPOINTS.ADMIN.USERS, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.message || 'Failed to load users'); }))
+      .then(data => {
+        allUsers = data.users || [];
+        document.getElementById('statTotal').textContent    = data.total        || 0;
+        document.getElementById('statTourists').textContent = data.tourists      || 0;
+        document.getElementById('statHMs').textContent      = data.hotelManagers || 0;
+        document.getElementById('statNew').textContent      = data.newThisMonth  || 0;
+        renderUsers();
+      })
+      .catch(err => {
+        const eb = document.getElementById('usersError');
+        eb.textContent = err.message || 'Failed to load users. Try refreshing.';
+        eb.classList.add('show');
+        body.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load users</div></div></td></tr>';
+        document.getElementById('userFooter').textContent = '—';
+      });
+  }
+
+  function renderUsers() {
+    const q      = document.getElementById('userSearch').value.toLowerCase();
+    const body   = document.getElementById('usersBody');
+    const filtered = allUsers.filter(u => {
+      const matchRole = currentFilter === 'all' || u.userType === currentFilter;
+      const matchQ    = !q || u.fullName.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+      return matchRole && matchQ;
+    });
+
+    if (!filtered.length) {
+      body.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">👤</div><div class="empty-title">No users found</div><div class="empty-msg">Try adjusting your search or filter.</div></div></td></tr>`;
+      document.getElementById('userFooter').textContent = 'No results';
+      return;
+    }
+
+    body.innerHTML = filtered.map(u => {
+      const color     = avatarColor(u.fullName);
+      const ini       = initials(u.fullName);
+      const roleBadge = u.userType === 'Tourist'
+        ? '<span class="badge badge-blue">Tourist</span>'
+        : '<span class="badge badge-purple">Hotel Manager</span>';
+      const statusBadge = u.isActive
+        ? '<span class="badge badge-green">Active</span>'
+        : '<span class="badge badge-red">Inactive</span>';
+      return `<tr onclick="rowSelect(this)" id="user-row-${u.id}">
+        <td><div class="user-cell"><div class="u-avatar" style="background:${color}">${ini}</div><div><div class="u-name">${u.fullName}</div><div class="u-email">${u.email}</div></div></div></td>
+        <td>${roleBadge}</td>
+        <td>${u.phoneNumber || '—'}</td>
+        <td>${fmtDate(u.createdAt)}</td>
+        <td>${statusBadge}</td>
+        <td><button class="btn-del" onclick="event.stopPropagation();confirmDelete(${u.id},'${u.fullName.replace(/'/g,"\\'")}')">🗑 Delete</button></td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('userFooter').textContent =
+      `Showing ${filtered.length} of ${allUsers.length} users`;
+  }
+
+  window.setUserFilter = function(btn, role) {
+    document.querySelectorAll('.fpill').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = role;
+    renderUsers();
+  };
+
+  document.getElementById('userSearch').addEventListener('input', renderUsers);
+
+  // ── LOGS tab ───────────────────────────────────────────────────────────────
+  let logsLoaded = false;
+
+  function loadLogs(userId, action) {
+    const body = document.getElementById('logsBody');
+    body.innerHTML = '<tr><td colspan="6"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr>';
+    document.getElementById('logsError').classList.remove('show');
+    document.getElementById('btnSearchLogs').disabled = true;
+
+    fetch(ENDPOINTS.ADMIN.LOGS(userId || null, action || null), { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.message || 'Failed to load logs'); }))
+      .then(data => {
+        logsLoaded = true;
+        const logs = data.logs || [];
+
+        if (!logs.length) {
+          body.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">No logs found</div><div class="empty-msg">No activity matches your search.</div></div></td></tr>`;
+          document.getElementById('logsFooter').textContent = 'No results';
+          return;
+        }
+
+        body.innerHTML = logs.map(lg => {
+          const flagCell = `<button class="flag-btn" onclick="event.stopPropagation();flagContent('LOG',${lg.logId},this)">⚑ Flag</button>`;
+          return `<tr onclick="rowSelect(this)">
+            <td style="color:var(--text-3);font-size:12px">${lg.logId}</td>
+            <td>${lg.userId ? `<span style="color:var(--text-1);font-weight:600">${lg.userName}</span><br><small style="color:var(--text-3)">ID: ${lg.userId}</small>` : '<span style="color:var(--text-3)">—</span>'}</td>
+            <td>${actionBadge(lg.action)}</td>
+            <td style="font-family:monospace;font-size:12px;color:var(--text-3)">${lg.ipAddress}</td>
+            <td style="font-size:12.5px;color:var(--text-2)">${fmtDateTime(lg.createdAt)}</td>
+            <td>${flagCell}</td>
+          </tr>`;
+        }).join('');
+
+        document.getElementById('logsFooter').textContent = `${logs.length} log${logs.length !== 1 ? 's' : ''} found`;
+      })
+      .catch(err => {
+        logsLoaded = false;
+        const eb = document.getElementById('logsError');
+        eb.textContent = err.message || 'Failed to load logs. Please refresh the page.';
+        eb.classList.add('show');
+        body.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load logs</div><div class="empty-msg">Check your connection and refresh the page.</div></div></td></tr>';
+        document.getElementById('logsFooter').textContent = '—';
+      })
+      .finally(() => { document.getElementById('btnSearchLogs').disabled = false; });
+  }
+
+  window.searchLogs = function() {
+    const userId = document.getElementById('logUserId').value.trim();
+    const action = document.getElementById('logAction').value.trim();
+    logsLoaded = false;
+    loadLogs(userId || null, action || null);
+  };
+
+  window.clearLogFilters = function() {
+    document.getElementById('logUserId').value = '';
+    document.getElementById('logAction').value  = '';
+    logsLoaded = false;
+    loadLogs();
+  };
+
+  // ── REVIEWS tab ────────────────────────────────────────────────────────────
+  let reviewsLoaded = false;
+
+  function loadReviews() {
+    const body = document.getElementById('reviewsBody');
+    body.innerHTML = '<tr><td colspan="7"><div class="spinner-wrap"><div class="spinner"></div></div></td></tr>';
+    document.getElementById('reviewsError').classList.remove('show');
+
+    fetch(ENDPOINTS.ADMIN.REVIEWS, { headers: authHeaders() })
+      .then(r => r.ok ? r.json() : r.json().then(e => { throw new Error(e.message || 'Failed to load reviews'); }))
+      .then(data => {
+        reviewsLoaded = true;
+        const reviews = data.reviews || [];
+
+        if (!reviews.length) {
+          body.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">💬</div><div class="empty-title">No reviews yet</div><div class="empty-msg">Reviews from tourists will appear here.</div></div></td></tr>`;
+          document.getElementById('reviewsFooter').textContent = 'No results';
+          return;
+        }
+
+        body.innerHTML = reviews.map(r => {
+          const color  = avatarColor(r.userName);
+          const ini    = initials(r.userName);
+          const typeBadge = r.type === 'REVIEW'
+            ? '<span class="badge badge-blue" style="font-size:11px">Destination</span>'
+            : '<span class="badge badge-purple" style="font-size:11px">Hotel</span>';
+          const flagCell = r.flagged
+            ? '<span class="badge badge-flagged">⚑ Flagged</span>'
+            : `<button class="flag-btn" onclick="event.stopPropagation();flagContent('${r.type}',${r.id},this)">⚑ Flag</button>`;
+          const text = r.text ? (r.text.length > 80 ? r.text.slice(0,80)+'…' : r.text) : '<span style="color:var(--text-3);font-style:italic">No comment</span>';
+          return `<tr onclick="rowSelect(this)">
+            <td><div class="user-cell"><div class="u-avatar" style="background:${color};width:30px;height:30px;font-size:11px">${ini}</div><div><div class="u-name" style="font-size:13px">${r.userName}</div></div></div></td>
+            <td>${typeBadge}</td>
+            <td style="font-weight:500;color:var(--text-1);font-size:13px">${r.targetName}</td>
+            <td>${starsHtml(r.rating)}</td>
+            <td style="font-size:12.5px;color:var(--text-2);max-width:220px">${text}</td>
+            <td style="font-size:12px;color:var(--text-3)">${fmtDate(r.createdAt)}</td>
+            <td>${flagCell}</td>
+          </tr>`;
+        }).join('');
+
+        document.getElementById('reviewsFooter').textContent =
+          `${reviews.length} review${reviews.length !== 1 ? 's' : ''} total`;
+      })
+      .catch(err => {
+        reviewsLoaded = false;
+        const eb = document.getElementById('reviewsError');
+        eb.textContent = err.message || 'Failed to load reviews. Please refresh the page.';
+        eb.classList.add('show');
+        body.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Could not load reviews</div><div class="empty-msg">Check your connection and refresh the page.</div></div></td></tr>';
+        document.getElementById('reviewsFooter').textContent = '—';
+      });
+  }
+
+  // ── Logout ─────────────────────────────────────────────────────────────────
+  window.doLogout = function() {
+    sessionStorage.removeItem('tripify_token');
+    sessionStorage.removeItem('tripify_user');
+    window.location.href = '../auth/admin-login.html';
+  };
+
+  // ── Delete user ────────────────────────────────────────────────────────────
+  let deleteTargetId = null;
+
+  window.confirmDelete = function(userId, userName) {
+    deleteTargetId = userId;
+    document.getElementById('deleteModalSub').textContent =
+      `Permanently delete "${userName}"? This cannot be undone.`;
+    document.getElementById('deleteModal').classList.add('show');
+  };
+
+  window.closeDeleteModal = function() {
+    document.getElementById('deleteModal').classList.remove('show');
+    deleteTargetId = null;
+  };
+
+  window.executeDelete = async function() {
+    if (!deleteTargetId) return;
+    const btn = document.getElementById('deleteConfirmBtn');
+    btn.disabled = true; btn.textContent = 'Deleting…';
+    try {
+      const res = await fetch(`http://localhost:8080/api/admin/users/${deleteTargetId}`, {
+        method: 'DELETE', headers: authHeaders()
+      });
+      const data = await res.json();
+      if (res.ok) {
+        document.getElementById(`user-row-${deleteTargetId}`)?.remove();
+        allUsers = allUsers.filter(u => u.id !== deleteTargetId);
+        showToast('User deleted successfully', 'success');
+        closeDeleteModal();
+      } else {
+        showToast(data.message || 'Failed to delete user', 'error');
+      }
+    } catch {
+      showToast('Connection error. Please try again.', 'error');
+    }
+    btn.disabled = false; btn.textContent = 'Delete';
+  };
+
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+  });
+
+  // ── Init ───────────────────────────────────────────────────────────────────
+  loadUsers();
+})();
+</script>
+</body>
+</html>

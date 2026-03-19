@@ -90,7 +90,7 @@ button { font-family: var(--font); cursor: pointer; }
 .sidebar-footer { padding: 12px 10px 14px; border-top: 1px solid rgba(255,255,255,0.07); flex-shrink: 0; }
 .user-card { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: var(--r-sm); background: rgba(255,255,255,0.05); cursor: pointer; transition: var(--ease); }
 .user-card:hover { background: rgba(255,255,255,0.09); }
-.user-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#10b981,#0891b2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; border: 2px solid rgba(16,185,129,0.4); }
+.user-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg,#10b981,#0891b2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; border: 2px solid rgba(16,185,129,0.4); overflow: hidden; }
 .user-name  { font-size: 12.5px; font-weight: 600; color: #fff; line-height: 1.2; }
 .user-role  { font-size: 10.5px; color: rgba(255,255,255,0.38); margin-top: 1px; }
 .user-logout { margin-left: auto; background: none; border: none; color: rgba(255,255,255,0.3); font-size: 13px; padding: 4px; transition: var(--ease); border-radius: 4px; }
@@ -119,7 +119,7 @@ button { font-family: var(--font); cursor: pointer; }
 .topbar-btn { width: 36px; height: 36px; background: var(--bg); border: 1px solid var(--border); border-radius: 9px; color: var(--text-2); display: flex; align-items: center; justify-content: center; transition: var(--ease); position: relative; }
 .topbar-btn:hover { background: var(--secondary-lt); border-color: var(--secondary); color: var(--secondary); }
 .notif-dot { position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; background: var(--accent); border-radius: 50%; border: 1.5px solid #fff; }
-.topbar-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#10b981,#0891b2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; cursor: pointer; border: 2px solid #d1fae5; transition: var(--ease); }
+.topbar-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg,#10b981,#0891b2); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; cursor: pointer; border: 2px solid #d1fae5; transition: var(--ease); overflow: hidden; }
 .topbar-avatar:hover { border-color: var(--secondary); box-shadow: var(--shadow-green); }
 
 /* ── MAIN LAYOUT ──────────────────────────────────────── */
@@ -468,7 +468,6 @@ if (new URLSearchParams(location.search).get('section')) {
                 <div class="user-name" id="sidebarName"></div>
                 <div class="user-role">Hotel Manager</div>
             </div>
-            <button class="user-logout" title="Sign out" onclick="doLogout()">⏻</button>
         </div>
     </div>
 </aside>
@@ -511,7 +510,6 @@ if (new URLSearchParams(location.search).get('section')) {
     <!-- Welcome Banner -->
     <div class="welcome-banner">
         <div>
-            <div class="wb-greeting" id="greeting">Good morning,</div>
             <div class="wb-name" id="welcomeName"></div>
             <div class="wb-sub">Manage your hotel listings, bookings, and guest experiences.</div>
         </div>
@@ -849,12 +847,17 @@ if (new URLSearchParams(location.search).get('section')) {
                             <span class="field-error" id="errFullName"></span>
                         </div>
                         <div class="form-group">
+                            <label class="form-label" for="infoEmail">Email Address</label>
+                            <input type="email" class="form-input" id="infoEmail" placeholder="your@email.com" maxlength="255">
+                            <span class="field-error" id="errEmail"></span>
+                        </div>
+                        <div class="form-group">
                             <label class="form-label" for="infoPhone">Phone Number</label>
                             <input type="tel" class="form-input" id="infoPhone" placeholder="03001234567" maxlength="11" oninput="autoFormatPhone(this)">
                             <span class="field-error" id="errPhone"></span>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="infoCnic">CNIC</label>
+                            <label class="form-label" for="infoCnic">CNIC <span style="color:var(--danger)">*</span></label>
                             <input type="text" class="form-input" id="infoCnic" placeholder="XXXXX-XXXXXXX-X" maxlength="15" oninput="autoFormatCnic(this)" onblur="validateHmCnicField()">
                             <span class="field-error" id="errCnic"></span>
                         </div>
@@ -1009,8 +1012,6 @@ document.getElementById('welcomeName').textContent     = (user.fullName || 'Mana
 })();
 
 // ── Greeting ──────────────────────────────────────────────
-const h = new Date().getHours();
-document.getElementById('greeting').textContent = h<12?'Good morning,':h<18?'Good afternoon,':'Good evening,';
 
 // ── Sidebar toggle ────────────────────────────────────────
 const sidebar = document.getElementById('sidebar');
@@ -1563,6 +1564,7 @@ async function loadAccountProfile() {
 
         // Pre-fill edit fields
         document.getElementById('infoFullName').value = data.fullName    || '';
+        document.getElementById('infoEmail').value    = data.email       || '';
         document.getElementById('infoPhone').value    = data.phoneNumber || '';
         document.getElementById('infoCnic').value     = data.cnic        || '';
         document.getElementById('infoAddress').value  = data.address     || '';
@@ -1593,12 +1595,13 @@ window.toggleInfoEdit = function(forceClose) {
 };
 
 window.saveProfile = async function() {
-    ['errFullName','errPhone','errCnic','errAddress'].forEach(id => {
+    ['errFullName','errEmail','errPhone','errCnic','errAddress'].forEach(id => {
         const el = document.getElementById(id); if (el) el.textContent = '';
     });
     document.getElementById('infoSuccessMsg').classList.remove('show');
 
     const fullName = document.getElementById('infoFullName').value.trim();
+    const email    = document.getElementById('infoEmail').value.trim();
     const phone    = document.getElementById('infoPhone').value.trim();
     const cnic     = document.getElementById('infoCnic').value.trim();
     const address  = document.getElementById('infoAddress').value.trim();
@@ -1611,14 +1614,33 @@ window.saveProfile = async function() {
     } else {
         document.getElementById('infoFullName').classList.remove('is-error');
     }
-    if (phone && !/^03[0-9]{9}$/.test(phone)) {
+    if (!email) {
+        document.getElementById('errEmail').textContent = 'Email is required.';
+        document.getElementById('infoEmail').classList.add('is-error');
+        valid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        document.getElementById('errEmail').textContent = 'Enter a valid email address.';
+        document.getElementById('infoEmail').classList.add('is-error');
+        valid = false;
+    } else {
+        document.getElementById('infoEmail').classList.remove('is-error');
+    }
+    if (!phone) {
+        document.getElementById('errPhone').textContent = 'Phone number is required.';
+        document.getElementById('infoPhone').classList.add('is-error');
+        valid = false;
+    } else if (!/^03[0-9]{9}$/.test(phone)) {
         document.getElementById('errPhone').textContent = 'Enter an 11-digit Pakistani number starting with 03 (e.g. 03001234567).';
         document.getElementById('infoPhone').classList.add('is-error');
         valid = false;
     } else {
         document.getElementById('infoPhone').classList.remove('is-error');
     }
-    if (cnic) {
+    if (!cnic) {
+        document.getElementById('errCnic').textContent = 'CNIC is required.';
+        document.getElementById('infoCnic').classList.add('is-error');
+        valid = false;
+    } else {
         const cnicDigits = cnic.replace(/\D/g, '');
         const pc = parseInt(cnicDigits.charAt(0), 10);
         if (cnicDigits.length !== 13) {
@@ -1636,8 +1658,6 @@ window.saveProfile = async function() {
         } else {
             document.getElementById('infoCnic').classList.remove('is-error');
         }
-    } else {
-        document.getElementById('infoCnic').classList.remove('is-error');
     }
     if (!valid) return;
 
@@ -1655,12 +1675,12 @@ window.saveProfile = async function() {
         const res = await fetch(ENDPOINTS.USER.PROFILE, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ fullName, phoneNumber: phone, cnic: cnicFormatted, address })
+            body: JSON.stringify({ fullName, email, phoneNumber: phone, cnic: cnicFormatted, address })
         });
         const data = await res.json();
 
         if (res.status === 422 && data.errors) {
-            const errMap = { fullName:'errFullName', phoneNumber:'errPhone', cnic:'errCnic', address:'errAddress' };
+            const errMap = { fullName:'errFullName', email:'errEmail', phoneNumber:'errPhone', cnic:'errCnic', address:'errAddress' };
             Object.entries(data.errors).forEach(([k,v]) => { const el = document.getElementById(errMap[k]); if (el) el.textContent = v; });
             btn.disabled = false; btn.textContent = '💾 Save Changes';
             return;
@@ -1671,11 +1691,22 @@ window.saveProfile = async function() {
             return;
         }
 
+        // If email changed, update token and stored user so session stays valid
+        if (data.newToken) {
+            const stored = JSON.parse(sessionStorage.getItem('tripify_user') || '{}');
+            stored.email = data.newEmail;
+            sessionStorage.setItem('tripify_user', JSON.stringify(stored));
+            sessionStorage.setItem('tripify_token', data.newToken);
+            token = data.newToken; // update local var for subsequent requests
+        }
+
         document.getElementById('infoViewName').textContent    = fullName        || '—';
+        document.getElementById('infoViewEmail').textContent   = email           || '—';
         document.getElementById('infoViewPhone').textContent   = phone           || '—';
         document.getElementById('infoViewCnic').textContent    = cnicFormatted   || '—';
         document.getElementById('infoViewAddress').textContent = address         || '—';
         document.getElementById('acctProfileName').textContent = fullName;
+        document.getElementById('acctProfileEmail').textContent = email;
         document.getElementById('sidebarName').textContent     = fullName;
 
         if (!document.getElementById('acctAvatar').querySelector('img')) {
@@ -1736,7 +1767,7 @@ window.autoFormatCnic = function(input) {
 window.validateHmCnicField = function() {
     const val    = document.getElementById('infoCnic').value.trim();
     const errEl  = document.getElementById('errCnic');
-    if (!val) { errEl.textContent = ''; return; }
+    if (!val) { errEl.textContent = 'CNIC is required.'; document.getElementById('infoCnic').classList.add('is-error'); return; }
     const digits = val.replace(/\D/g, '');
     const pc     = parseInt(digits.charAt(0), 10);
     if (digits.length !== 13) {

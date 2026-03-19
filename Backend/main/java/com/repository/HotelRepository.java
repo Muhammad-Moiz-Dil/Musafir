@@ -15,4 +15,12 @@ public interface HotelRepository extends JpaRepository<Hotel, Integer> {
     Optional<Hotel> findByHotelIdAndIsActiveTrue(Integer hotelId);
 
     List<Hotel> findByManagerId(Integer managerId);
+
+    boolean existsByHotelNameIgnoreCase(String hotelName);
+
+    boolean existsByHotelNameIgnoreCaseAndHotelIdNot(String hotelName, Integer hotelId);
+
+    boolean existsByContactNumber(String contactNumber);
+
+    boolean existsByContactNumberAndHotelIdNot(String contactNumber, Integer hotelId);
 }

@@ -44,4 +44,11 @@ public class TravelGuideline {
     public String  getCategory()      { return category; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+
+    public void setDestinationId(Integer destinationId) { this.destinationId = destinationId; }
+    public void setTitle(String title)                   { this.title = title; }
+    public void setContent(String content)               { this.content = content; }
+    public void setCategory(String category)             { this.category = category; }
+    public void setCreatedAt(LocalDateTime createdAt)    { this.createdAt = createdAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt)    { this.updatedAt = updatedAt; }
 }

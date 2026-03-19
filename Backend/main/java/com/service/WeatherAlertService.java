@@ -6,6 +6,7 @@ import com.model.Notification;
 import com.repository.DestinationRepository;
 import com.repository.FavoriteRepository;
 import com.repository.NotificationRepository;
+import com.repository.SystemSettingsRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class WeatherAlertService {
     private final FavoriteRepository favoriteRepo;
     private final DestinationRepository destinationRepo;
     private final NotificationRepository notificationRepo;
+    private final SystemSettingsRepository settingsRepo;
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${weather.api-key}")
@@ -32,16 +34,24 @@ public class WeatherAlertService {
 
     public WeatherAlertService(FavoriteRepository favoriteRepo,
                                DestinationRepository destinationRepo,
-                               NotificationRepository notificationRepo) {
-        this.favoriteRepo    = favoriteRepo;
-        this.destinationRepo = destinationRepo;
+                               NotificationRepository notificationRepo,
+                               SystemSettingsRepository settingsRepo) {
+        this.favoriteRepo     = favoriteRepo;
+        this.destinationRepo  = destinationRepo;
         this.notificationRepo = notificationRepo;
+        this.settingsRepo     = settingsRepo;
     }
 
     // ── Scheduled check every hour ─────────────────────────────────────────────
     @Scheduled(fixedRate = 3_600_000, initialDelay = 120_000)
     @Transactional
     public void scheduledWeatherCheck() {
+        // Honour the FEATURE_WEATHER_SCHEDULER toggle
+        boolean enabled = settingsRepo.findBySettingKey("FEATURE_WEATHER_SCHEDULER")
+                .map(s -> "true".equalsIgnoreCase(s.getSettingValue()))
+                .orElse(true);
+        if (!enabled) return;
+
         List<Favorite> allFavs = favoriteRepo.findAll();
 
         // Group destination → list of user IDs so we fetch OWM once per destination

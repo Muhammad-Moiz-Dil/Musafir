@@ -208,31 +208,31 @@ async function loadWishlistIds() {
 
 // ── Image resolver — maps DB filenames to local assets ─
 const IMG_BASE = '../../../../public/assets/images/';
+// Legacy name aliases (old DB values → correct filename)
 const IMG_MAP = {
-    // first 5 — DB filenames differ from actual files
-    'hunza.jpg':            IMG_BASE + 'hunza-valley.jpg',
-    'murree.jpg':           IMG_BASE + 'murree.jpeg',
-    'swat.jpg':             IMG_BASE + 'swat.jpg',
-    'skardu.jpg':           IMG_BASE + 'skardu.jpeg',
-    'naran.jpg':            IMG_BASE + 'naran kaghan.jpg',
-    // new destinations — both pre-UPDATE and post-UPDATE DB values covered
-    'lahore.jpg':           IMG_BASE + 'lahore.jpg',
-    'islamabad.jpg':        IMG_BASE + 'islamabad.jpeg',
-    'islamabad.jpeg':       IMG_BASE + 'islamabad.jpeg',
-    'fairy-meadows.jpg':    IMG_BASE + 'fairyMeadows.jpeg',
-    'fairyMeadows.jpeg':    IMG_BASE + 'fairyMeadows.jpeg',
-    'mohenjo-daro.jpg':     IMG_BASE + 'mohenjodaro.jpeg',
-    'mohenjodaro.jpeg':     IMG_BASE + 'mohenjodaro.jpeg',
-    'cholistan.jpg':        IMG_BASE + 'cholistanDesert.jpeg',
-    'cholistanDesert.jpeg': IMG_BASE + 'cholistanDesert.jpeg',
+    'hunza.jpg':         IMG_BASE + 'hunza-valley.jpg',
+    'murree.jpg':        IMG_BASE + 'murree.jpeg',
+    'skardu.jpg':        IMG_BASE + 'skardu.jpeg',
+    'naran.jpg':         IMG_BASE + 'naran kaghan.jpg',
+    'islamabad.jpg':     IMG_BASE + 'islamabad.jpeg',
+    'fairy-meadows.jpg': IMG_BASE + 'fairyMeadows.jpeg',
+    'mohenjo-daro.jpg':  IMG_BASE + 'mohenjodaro.jpeg',
+    'cholistan.jpg':     IMG_BASE + 'cholistanDesert.jpeg',
+    'peshawar.jpg':      IMG_BASE + 'peshawer.jpg',
+    'kashmir.jpeg':      IMG_BASE + 'kasmir.jpeg',
+    'kashmir.jpg':       IMG_BASE + 'kasmir.jpeg',
+    'karachi.jpg':       IMG_BASE + 'karachi.webp',
+    'gwadar.jpeg':       IMG_BASE + 'gawadar.jpeg',
+    'gwadar.jpg':        IMG_BASE + 'gawadar.jpeg',
 };
-const IMG_FALLBACK = IMG_BASE + 'hunza-valley.jpg';
+const IMG_FALLBACK = IMG_BASE + 'lahore.jpg';
 
 function resolveImage(url) {
     if (!url) return IMG_FALLBACK;
+    if (url.startsWith('/uploads/')) return 'http://localhost:8080' + url;
+    if (url.startsWith('http')) return url;
     if (IMG_MAP[url]) return IMG_MAP[url];
-    if (url.startsWith('http') || url.startsWith('/') || url.startsWith('../')) return url;
-    // try direct path as last resort (for any future destinations admin adds)
+    if (url.startsWith('/') || url.startsWith('../')) return url;
     return IMG_BASE + url;
 }
 
@@ -325,7 +325,7 @@ function renderCard(d) {
     <div class="dest-full-card" onclick="location.href='destination-detail.html?id=${d.id}'">
         <div class="dest-full-img">
             <img src="${img}" alt="${d.name}" loading="lazy"
-                 onerror="this.src='../../../../public/assets/images/hunza-valley.jpg'">
+                 onerror="this.src='../../../../public/assets/images/lahore.jpg'">
             <div class="dest-card-img-overlay"></div>
             <button class="dc-wish ${inWish ? 'active' : ''}"
                     onclick="toggleWish(event,${d.id})">${inWish ? '❤️' : '🤍'}</button>

@@ -281,7 +281,6 @@
     <!-- Welcome -->
     <div class="welcome-banner">
         <div>
-            <div class="welcome-greeting" id="greeting">Good morning</div>
             <div class="welcome-name" id="welcomeName">Ahmed Tariq! 👋</div>
             <div class="welcome-sub">Ready to plan your next adventure across Pakistan?</div>
         </div>
@@ -331,15 +330,6 @@
                 <div class="stat-chg chg-up" id="statVisitedChg">Loading...</div>
             </div>
         </div>
-    </div>
-
-    <!-- Notification Alerts (UC17) -->
-    <div id="dashAlerts" style="display:none;margin-bottom:22px">
-        <div class="sec-hdr">
-            <h2>🔔 Recent Alerts</h2>
-            <button onclick="dismissAllDashAlerts()" style="font-size:12px;color:var(--t2);background:none;border:none;cursor:pointer;padding:0">Dismiss all</button>
-        </div>
-        <div id="dashAlertsList"></div>
     </div>
 
     <!-- Recommended -->
@@ -429,23 +419,27 @@ const FALLBACK_DESTS = [
 ];
 
 const IMG_BASE = '../../../../public/assets/images/';
+// Legacy name aliases (old DB values → correct filename)
 const IMG_MAP = {
-    'hunza.jpg':            IMG_BASE + 'hunza-valley.jpg',
-    'murree.jpg':           IMG_BASE + 'murree.jpeg',
-    'swat.jpg':             IMG_BASE + 'swat.jpg',
-    'skardu.jpg':           IMG_BASE + 'skardu.jpeg',
-    'naran.jpg':            IMG_BASE + 'naran kaghan.jpg',
-    'lahore.jpg':           IMG_BASE + 'lahore.jpg',
-    'islamabad.jpg':        IMG_BASE + 'islamabad.jpeg',
-    'islamabad.jpeg':       IMG_BASE + 'islamabad.jpeg',
-    'fairyMeadows.jpeg':    IMG_BASE + 'fairyMeadows.jpeg',
-    'mohenjodaro.jpeg':     IMG_BASE + 'mohenjodaro.jpeg',
-    'cholistanDesert.jpeg': IMG_BASE + 'cholistanDesert.jpeg',
+    'hunza.jpg':         IMG_BASE + 'hunza-valley.jpg',
+    'murree.jpg':        IMG_BASE + 'murree.jpeg',
+    'skardu.jpg':        IMG_BASE + 'skardu.jpeg',
+    'naran.jpg':         IMG_BASE + 'naran kaghan.jpg',
+    'islamabad.jpg':     IMG_BASE + 'islamabad.jpeg',
+    'fairy-meadows.jpg': IMG_BASE + 'fairyMeadows.jpeg',
+    'mohenjo-daro.jpg':  IMG_BASE + 'mohenjodaro.jpeg',
+    'cholistan.jpg':     IMG_BASE + 'cholistanDesert.jpeg',
+    'peshawar.jpg':      IMG_BASE + 'peshawer.jpg',
+    'kashmir.jpeg':      IMG_BASE + 'kasmir.jpeg',
+    'kashmir.jpg':       IMG_BASE + 'kasmir.jpeg',
+    'karachi.jpg':       IMG_BASE + 'karachi.webp',
+    'gwadar.jpeg':       IMG_BASE + 'gawadar.jpeg',
+    'gwadar.jpg':        IMG_BASE + 'gawadar.jpeg',
 };
 
 function resolveImage(dest) {
     const url = dest.imageUrl;
-    if (!url) return IMG_BASE + 'hunza-valley.jpg';
+    if (!url) return IMG_BASE + 'lahore.jpg';
     if (IMG_MAP[url]) return IMG_MAP[url];
     if (url.startsWith('http') || url.startsWith('/') || url.startsWith('../')) return url;
     return IMG_BASE + url;
@@ -472,7 +466,7 @@ function destCardHtml(d) {
     return `
     <div class="dest-card" onclick="location.href='destination-detail.html?id=${d.id}'">
         <div class="dest-card-img">
-            <img src="${imgSrc}" alt="${d.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/hunza-valley.jpg'">
+            <img src="${imgSrc}" alt="${d.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/lahore.jpg'">
             <div class="dest-card-img-overlay"></div>
             ${reason ? `<span class="dc-badge">✨ ${reason.split(',')[0].trim()}</span>` : ''}
             <button class="dc-wish ${inWish ? 'active' : ''}" onclick="toggleWish(event,${d.id})" title="Wishlist">
@@ -539,7 +533,7 @@ async function renderWishPreview() {
         saveWish();
         c.innerHTML = items.map(d => `
         <div class="wish-card">
-            <div class="wish-img"><img src="${resolveImage(d)}" alt="${d.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/hunza-valley.jpg'"></div>
+            <div class="wish-img"><img src="${resolveImage(d)}" alt="${d.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/lahore.jpg'"></div>
             <div class="wish-body">
                 <div class="wish-name">${d.name}</div>
                 <div class="wish-region">📍 ${d.city || ''}</div>
@@ -555,7 +549,7 @@ async function renderWishPreview() {
         }
         c.innerHTML = items.map(d => `
         <div class="wish-card">
-            <div class="wish-img"><img src="${resolveImage(d)}" alt="${d.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/hunza-valley.jpg'"></div>
+            <div class="wish-img"><img src="${resolveImage(d)}" alt="${d.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/lahore.jpg'"></div>
             <div class="wish-body">
                 <div class="wish-name">${d.name}</div>
                 <div class="wish-region">📍 ${d.city || ''}</div>
@@ -590,9 +584,6 @@ document.getElementById('mainSearch').addEventListener('keydown', e => { if (e.k
 document.getElementById('topSearch').addEventListener('keydown', e => { if (e.key==='Enter') { const q=e.target.value.trim(); if(q) location.href=`destinations.html?q=${encodeURIComponent(q)}`; } });
 
 // Greeting
-const h = new Date().getHours();
-document.getElementById('greeting').textContent = h<12?'Good morning,':h<18?'Good afternoon,':'Good evening,';
-
 // ── User profile ───────────────────────────────────────────
 function applyUserProfile(u) {
     const ini = (u.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -851,8 +842,6 @@ async function dismissDashAlert(id) {
 function dismissAllDashAlerts() {
     document.getElementById('dashAlerts').style.display = 'none';
 }
-
-loadDashAlerts();
 
 // ── End UC17 ─────────────────────────────────────────────────
 

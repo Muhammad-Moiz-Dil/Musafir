@@ -6,6 +6,8 @@ import com.model.User;
 import com.repository.DestinationRepository;
 import com.repository.FavoriteRepository;
 import com.repository.UserRepository;
+import com.service.ActivityLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,13 +34,16 @@ public class FavoriteController {
     private final FavoriteRepository    favoriteRepo;
     private final DestinationRepository destinationRepo;
     private final UserRepository        userRepo;
+    private final ActivityLogService    logService;
 
     public FavoriteController(FavoriteRepository favoriteRepo,
                               DestinationRepository destinationRepo,
-                              UserRepository userRepo) {
+                              UserRepository userRepo,
+                              ActivityLogService logService) {
         this.favoriteRepo    = favoriteRepo;
         this.destinationRepo = destinationRepo;
         this.userRepo        = userRepo;
+        this.logService      = logService;
     }
 
     // ── Helper: resolve current user ────────────────────────────────────────
@@ -104,7 +109,7 @@ public class FavoriteController {
      * 409 if already saved.
      */
     @PostMapping("/{destinationId}")
-    public ResponseEntity<?> add(@PathVariable Integer destinationId) {
+    public ResponseEntity<?> add(@PathVariable Integer destinationId, HttpServletRequest request) {
         User user = currentUser();
 
         // Destination must exist and be active
@@ -122,6 +127,7 @@ public class FavoriteController {
         fav.setUserId(user.getUserId());
         fav.setDestinationId(destinationId);
         favoriteRepo.save(fav);
+        logService.log(user.getUserId(), "FAVORITE_ADDED", request);
 
         return ResponseEntity.status(201).body(Map.of("message", "Added to wishlist"));
     }
@@ -133,7 +139,7 @@ public class FavoriteController {
      */
     @DeleteMapping("/{destinationId}")
     @Transactional
-    public ResponseEntity<?> remove(@PathVariable Integer destinationId) {
+    public ResponseEntity<?> remove(@PathVariable Integer destinationId, HttpServletRequest request) {
         User user = currentUser();
 
         if (!favoriteRepo.existsByUserIdAndDestinationId(user.getUserId(), destinationId)) {
@@ -141,6 +147,7 @@ public class FavoriteController {
         }
 
         favoriteRepo.deleteByUserIdAndDestinationId(user.getUserId(), destinationId);
+        logService.log(user.getUserId(), "FAVORITE_REMOVED", request);
         return ResponseEntity.ok(Map.of("message", "Removed from wishlist"));
     }
 }

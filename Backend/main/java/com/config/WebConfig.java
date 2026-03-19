@@ -5,16 +5,19 @@ import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.io.File;
+
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     /**
-     * Serve uploaded files (avatars, etc.) at /uploads/**
-     * Files are stored in uploads/ relative to the working directory (Backend/).
+     * Serve uploaded files at /uploads/**
+     * Always resolved to Backend/uploads/ via UploadUtils.
      */
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
+        String uploadsPath = UploadUtils.UPLOADS_BASE.toString() + File.separator;
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:uploads/");
+                .addResourceLocations("file:" + uploadsPath);
     }
 }

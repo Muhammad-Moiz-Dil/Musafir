@@ -11,6 +11,8 @@ public interface DestinationRepository extends JpaRepository<Destination, Intege
 
     List<Destination> findByIsActiveTrueOrderByNameAsc();
 
+    List<Destination> findAllByOrderByNameAsc();
+
     // pattern should be passed as "%term%" from the caller
     @Query("SELECT d FROM Destination d WHERE d.isActive = true AND " +
            "(d.name LIKE :pattern OR d.city LIKE :pattern OR d.description LIKE :pattern " +

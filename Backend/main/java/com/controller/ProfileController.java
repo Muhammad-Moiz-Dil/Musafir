@@ -1,14 +1,17 @@
 package com.controller;
 
+import com.config.UploadUtils;
 import com.model.Trip;
 import com.model.User;
 import com.model.UserPreferences;
 import com.repository.FavoriteRepository;
 import com.repository.TripDestinationRepository;
 import com.repository.TripRepository;
+import com.service.ActivityLogService;
 import com.service.ProfileService;
 import com.service.RecommendationService;
 import com.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +28,12 @@ import java.util.stream.Collectors;
 @CrossOrigin(origins = "*")
 public class ProfileController {
 
-    private final ProfileService profileService;
+    private final ProfileService        profileService;
     private final RecommendationService recommendationService;
-    private final TripRepository tripRepo;
+    private final TripRepository        tripRepo;
     private final TripDestinationRepository tripDestRepo;
-    private final FavoriteRepository favoriteRepo;
+    private final FavoriteRepository    favoriteRepo;
+    private final ActivityLogService    logService;
 
     // Avatar storage directory (relative to where the JAR runs, i.e., Backend/ folder)
     private static final String AVATAR_DIR = "uploads/avatars/";
@@ -39,12 +43,14 @@ public class ProfileController {
                              RecommendationService recommendationService,
                              TripRepository tripRepo,
                              TripDestinationRepository tripDestRepo,
-                             FavoriteRepository favoriteRepo) {
-        this.profileService = profileService;
+                             FavoriteRepository favoriteRepo,
+                             ActivityLogService logService) {
+        this.profileService        = profileService;
         this.recommendationService = recommendationService;
-        this.tripRepo = tripRepo;
-        this.tripDestRepo = tripDestRepo;
-        this.favoriteRepo = favoriteRepo;
+        this.tripRepo              = tripRepo;
+        this.tripDestRepo          = tripDestRepo;
+        this.favoriteRepo          = favoriteRepo;
+        this.logService            = logService;
     }
 
     private String currentEmail() {
@@ -60,13 +66,24 @@ public class ProfileController {
 
     /** PUT /api/users/profile */
     @PutMapping("/profile")
-    public ResponseEntity<?> updateProfile(@RequestBody ProfileService.UpdateProfileRequest req) {
+    public ResponseEntity<?> updateProfile(@RequestBody ProfileService.UpdateProfileRequest req,
+                                           HttpServletRequest request) {
         try {
-            User u = profileService.updateProfile(currentEmail(), req);
-            return ResponseEntity.ok(Map.of(
-                "message", "Profile updated successfully.",
-                "user", buildProfileMap(u)
-            ));
+            String oldEmail = currentEmail();
+            User u = profileService.updateProfile(oldEmail, req);
+            logService.log(u.getUserId(), "PROFILE_UPDATED", request);
+
+            Map<String, Object> resp = new LinkedHashMap<>();
+            resp.put("message", "Profile updated successfully.");
+            resp.put("user", buildProfileMap(u));
+
+            // If email changed, issue a new JWT so the session stays valid
+            if (!u.getEmail().equalsIgnoreCase(oldEmail)) {
+                resp.put("newToken", profileService.generateToken(u));
+                resp.put("newEmail", u.getEmail());
+            }
+
+            return ResponseEntity.ok(resp);
         } catch (UserService.FieldValidationException ex) {
             return ResponseEntity.status(422).body(Map.of(
                 "message", "Validation failed.",
@@ -77,7 +94,8 @@ public class ProfileController {
 
     /** POST /api/users/profile/avatar */
     @PostMapping("/profile/avatar")
-    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadAvatar(@RequestParam("file") MultipartFile file,
+                                          HttpServletRequest request) {
         String email = currentEmail();
         User u = profileService.getProfile(email);
 
@@ -93,9 +111,9 @@ public class ProfileController {
         }
 
         try {
-            // Ensure directory exists
-            Path dir = Paths.get(AVATAR_DIR);
-            if (!Files.exists(dir)) Files.createDirectories(dir);
+            // Ensure directory exists (always resolves to Backend/uploads/avatars/)
+            Path dir = UploadUtils.resolve("avatars");
+            Files.createDirectories(dir);
 
             // Save file as userId_uuid.jpg/png
             String ext = contentType.equals("image/png") ? ".png" : ".jpg";
@@ -106,13 +124,14 @@ public class ProfileController {
             if (u.getProfilePicture() != null && !u.getProfilePicture().isBlank()) {
                 try {
                     String oldFilename = u.getProfilePicture().replace(AVATAR_URL_PREFIX, "");
-                    Files.deleteIfExists(Paths.get(AVATAR_DIR + oldFilename));
+                    Files.deleteIfExists(UploadUtils.resolve("avatars").resolve(oldFilename));
                 } catch (Exception ignored) {}
             }
 
             Files.copy(file.getInputStream(), dest, StandardCopyOption.REPLACE_EXISTING);
             String avatarUrl = AVATAR_URL_PREFIX + filename;
             profileService.saveAvatarPath(u.getUserId(), avatarUrl);
+            logService.log(u.getUserId(), "AVATAR_UPDATED", request);
 
             return ResponseEntity.ok(Map.of(
                 "message", "Avatar uploaded successfully.",
@@ -125,7 +144,8 @@ public class ProfileController {
 
     /** PUT /api/users/password */
     @PutMapping("/password")
-    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest req) {
+    public ResponseEntity<?> changePassword(@RequestBody ChangePasswordRequest req,
+                                            HttpServletRequest request) {
         // Frontend validations
         java.util.Map<String, String> frontErrors = new java.util.HashMap<>();
         if (req.getCurrentPassword() == null || req.getCurrentPassword().isBlank())
@@ -139,6 +159,7 @@ public class ProfileController {
 
         try {
             profileService.changePassword(currentEmail(), req.getCurrentPassword(), req.getNewPassword());
+            logService.log(currentEmail(), "PASSWORD_CHANGED", request);
             return ResponseEntity.ok(Map.of("message", "Password changed successfully."));
         } catch (UserService.FieldValidationException ex) {
             return ResponseEntity.status(422).body(Map.of("message", "Validation failed.", "errors", ex.getErrors()));
@@ -177,9 +198,11 @@ public class ProfileController {
 
     /** PUT /api/users/preferences */
     @PutMapping("/preferences")
-    public ResponseEntity<?> savePreferences(@RequestBody SavePreferencesRequest req) {
+    public ResponseEntity<?> savePreferences(@RequestBody SavePreferencesRequest req,
+                                             HttpServletRequest request) {
         User u = profileService.getProfile(currentEmail());
         profileService.savePreferences(u.getUserId(), req.getAgeGroup(), req.getTravelPreferences());
+        logService.log(u.getUserId(), "PREFERENCES_UPDATED", request);
         return ResponseEntity.ok(Map.of("message", "Preferences saved successfully."));
     }
 

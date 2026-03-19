@@ -245,14 +245,14 @@
                 </div>
 
                 <!-- Optional fields -->
-                <p class="form-section-label">Optional Details</p>
+                <p class="form-section-label">Contact Details</p>
 
                 <div class="form-grid">
 
                     <!-- Phone Number -->
                     <div class="form-group">
                         <label class="form-label" for="phoneNumber">
-                            Phone Number <span class="optional">(optional)</span>
+                            Phone Number <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
                             <span class="input-icon">
@@ -269,7 +269,7 @@
                     <!-- CNIC -->
                     <div class="form-group">
                         <label class="form-label" for="cnic">
-                            CNIC <span class="optional">(optional)</span>
+                            CNIC <span class="required">*</span>
                         </label>
                         <div class="input-wrapper">
                             <span class="input-icon">
@@ -407,6 +407,14 @@
     phoneInput.addEventListener('blur',    () => validatePhone());
     cnicInput.addEventListener('blur',     () => validateCNIC());
 
+    // Clear error as user starts typing
+    fullNameInput.addEventListener('input', () => { clearError('fullNameError'); setInputState(fullNameInput, null); });
+    emailInput.addEventListener('input',    () => { clearError('emailError'); setInputState(emailInput, null); });
+    passwordInput.addEventListener('input', () => { clearError('passwordError'); setInputState(passwordInput, null); });
+    confirmInput.addEventListener('input',  () => { clearError('confirmPasswordError'); setInputState(confirmInput, null); });
+    phoneInput.addEventListener('input',    () => { clearError('phoneError'); setInputState(phoneInput, null); });
+    cnicInput.addEventListener('input',     () => { clearError('cnicError'); setInputState(cnicInput, null); });
+
     function validateFullName() {
         const v = fullNameInput.value.trim();
         if (!Validator.required(v)) { showError('fullNameError', 'Full name is required.'); setInputState(fullNameInput, 'is-error'); return false; }
@@ -440,14 +448,14 @@
 
     function validatePhone() {
         const v = phoneInput.value.trim();
-        if (!v) return true;
+        if (!v) { showError('phoneError', 'Phone number is required.'); setInputState(phoneInput, 'is-error'); return false; }
         if (!Validator.phone(v)) { showError('phoneError', 'Enter a valid Pakistani number (e.g. 0300-0000000).'); setInputState(phoneInput, 'is-error'); return false; }
         clearError('phoneError'); setInputState(phoneInput, 'is-valid'); return true;
     }
 
     function validateCNIC() {
         const v = cnicInput.value.trim();
-        if (!v) return true;
+        if (!v) { showError('cnicError', 'CNIC is required.'); setInputState(cnicInput, 'is-error'); return false; }
         if (!Validator.cnic(v)) { showError('cnicError', 'Enter a valid CNIC (e.g. 42101-1234567-8).'); setInputState(cnicInput, 'is-error'); return false; }
         clearError('cnicError'); setInputState(cnicInput, 'is-valid'); return true;
     }
@@ -462,13 +470,17 @@
             !fullNameInput.value.trim() ||
             !emailInput.value.trim()    ||
             !passwordInput.value        ||
-            !confirmInput.value;
+            !confirmInput.value         ||
+            !phoneInput.value.trim()    ||
+            !cnicInput.value.trim();
 
         if (requiredEmpty) {
             validateFullName();
             validateEmail();
             validatePassword();
             validateConfirm();
+            validatePhone();
+            validateCNIC();
             showAlert('error', 'Please fill in all required fields.');
             return;
         }

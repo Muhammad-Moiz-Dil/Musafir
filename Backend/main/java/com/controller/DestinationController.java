@@ -38,6 +38,9 @@ public class DestinationController {
         m.put("imageUrl",      d.getImageUrl()      != null ? d.getImageUrl()      : "");
         m.put("averageRating", d.getAverageRating() != null ? d.getAverageRating().doubleValue() : 0.0);
         m.put("totalReviews",  d.getTotalReviews()  != null ? d.getTotalReviews()  : 0);
+        m.put("altitude",      d.getAltitude()      != null ? d.getAltitude()      : "");
+        m.put("bestTime",      d.getBestTime()      != null ? d.getBestTime()      : "");
+        m.put("budgetLevel",   d.getBudgetLevel()   != null ? d.getBudgetLevel()   : "");
         return ResponseEntity.ok(m);
     }
 

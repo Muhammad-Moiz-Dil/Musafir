@@ -473,6 +473,14 @@
     phoneInput.addEventListener('blur',    () => validatePhone());
     cnicInput.addEventListener('blur',     () => validateCNIC());
 
+    // ── Clear error as user starts typing ───────────────────
+    fullNameInput.addEventListener('input', () => { clearError('fullNameError'); setInputState(fullNameInput, null); });
+    emailInput.addEventListener('input',    () => { clearError('emailError'); setInputState(emailInput, null); });
+    passwordInput.addEventListener('input', () => { clearError('passwordError'); setInputState(passwordInput, null); });
+    confirmInput.addEventListener('input',  () => { clearError('confirmPasswordError'); setInputState(confirmInput, null); });
+    phoneInput.addEventListener('input',    () => { clearError('phoneError'); setInputState(phoneInput, null); });
+    cnicInput.addEventListener('input',     () => { clearError('cnicError'); setInputState(cnicInput, null); });
+
     function validateFullName() {
         const v = fullNameInput.value.trim();
         if (!Validator.required(v)) {

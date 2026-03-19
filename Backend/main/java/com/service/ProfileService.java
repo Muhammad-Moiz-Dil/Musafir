@@ -4,6 +4,7 @@ import com.model.User;
 import com.model.UserPreferences;
 import com.repository.UserPreferencesRepository;
 import com.repository.UserRepository;
+import com.utility.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,13 +17,16 @@ public class ProfileService {
     private final UserRepository userRepo;
     private final UserPreferencesRepository prefRepo;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
 
     public ProfileService(UserRepository userRepo,
                           UserPreferencesRepository prefRepo,
-                          PasswordEncoder passwordEncoder) {
+                          PasswordEncoder passwordEncoder,
+                          JwtUtil jwtUtil) {
         this.userRepo = userRepo;
         this.prefRepo = prefRepo;
         this.passwordEncoder = passwordEncoder;
+        this.jwtUtil = jwtUtil;
     }
 
     /** Get full profile for authenticated user */
@@ -31,10 +35,31 @@ public class ProfileService {
                 .orElseThrow(() -> new UserService.AuthException("User not found."));
     }
 
-    /** Update profile fields: fullName, phoneNumber, cnic, address */
+    /** Generate a fresh JWT for the given user (used after email change). */
+    public String generateToken(User user) {
+        return jwtUtil.generateToken(user.getEmail(), user.getUserType().name());
+    }
+
+    /** Update profile fields: fullName, phoneNumber, cnic, address, email */
     public User updateProfile(String email, UpdateProfileRequest req) {
         User user = getProfile(email);
         Map<String, String> errors = new HashMap<>();
+
+        // email validation
+        if (req.getEmail() != null) {
+            String newEmail = req.getEmail().trim().toLowerCase();
+            if (!newEmail.isEmpty()) {
+                if (!newEmail.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")) {
+                    errors.put("email", "Enter a valid email address.");
+                } else if (!newEmail.equals(user.getEmail().toLowerCase())) {
+                    if (userRepo.existsByEmail(newEmail)) {
+                        errors.put("email", "This email is already registered to another account.");
+                    } else {
+                        user.setEmail(newEmail);
+                    }
+                }
+            }
+        }
 
         // fullName validation
         if (req.getFullName() != null) {
@@ -174,11 +199,14 @@ public class ProfileService {
     // ── DTOs ──────────────────────────────────────────────────
 
     public static class UpdateProfileRequest {
+        private String email;
         private String fullName;
         private String phoneNumber;
         private String cnic;
         private String address;
 
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
         public String getFullName() { return fullName; }
         public void setFullName(String fullName) { this.fullName = fullName; }
         public String getPhoneNumber() { return phoneNumber; }

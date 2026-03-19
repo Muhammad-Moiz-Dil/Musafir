@@ -1,10 +1,13 @@
 package com.controller;
 
 import com.model.User;
+import com.service.ActivityLogService;
+import com.service.SettingsService;
 import com.service.UserService;
 import com.service.UserService.FieldValidationException;
 import com.service.UserService.RegisterRequest;
 import com.service.UserService.LoginResult;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import org.springframework.http.HttpStatus;
@@ -18,10 +21,15 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    private final UserService userService;
+    private final UserService        userService;
+    private final ActivityLogService logService;
+    private final SettingsService    settingsService;
 
-    public AuthController(UserService userService) {
-        this.userService = userService;
+    public AuthController(UserService userService, ActivityLogService logService,
+                          SettingsService settingsService) {
+        this.userService     = userService;
+        this.logService      = logService;
+        this.settingsService = settingsService;
     }
 
     /**
@@ -29,7 +37,16 @@ public class AuthController {
      * Registers a new Tourist or HotelManager account.
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestBody body) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestBody body,
+                                      HttpServletRequest request) {
+
+        // Feature gate: check registration flags
+        if ("Tourist".equals(body.getUserType()) && !settingsService.isEnabled("FEATURE_USER_REGISTRATION")) {
+            return ResponseEntity.status(503).body(Map.of("message", "User registration is currently disabled."));
+        }
+        if ("HotelManager".equals(body.getUserType()) && !settingsService.isEnabled("FEATURE_HM_REGISTRATION")) {
+            return ResponseEntity.status(503).body(Map.of("message", "Hotel manager registration is currently disabled."));
+        }
 
         RegisterRequest req = new RegisterRequest();
         req.setFullName(body.getFullName());
@@ -42,6 +59,7 @@ public class AuthController {
 
         try {
             User created = userService.register(req);
+            logService.log(created.getUserId(), "USER_REGISTER", request);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "message", "Account created successfully.",
@@ -69,9 +87,11 @@ public class AuthController {
      * Authenticates Tourist or HotelManager. Returns JWT token.
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestBody body) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestBody body,
+                                   HttpServletRequest request) {
         try {
             LoginResult result = userService.login(body.getEmail(), body.getPassword());
+            logService.log(result.getUser().getUserId(), "USER_LOGIN", request);
             return buildLoginResponse(result);
         } catch (UserService.AuthException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -87,9 +107,11 @@ public class AuthController {
      * Authenticates Admin accounts only. Returns JWT token.
      */
     @PostMapping("/admin/login")
-    public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginRequestBody body) {
+    public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginRequestBody body,
+                                        HttpServletRequest request) {
         try {
             LoginResult result = userService.adminLogin(body.getEmail(), body.getPassword());
+            logService.log(result.getUser().getUserId(), "ADMIN_LOGIN", request);
             return buildLoginResponse(result);
         } catch (UserService.AuthException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

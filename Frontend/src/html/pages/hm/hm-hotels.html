@@ -170,7 +170,6 @@ button{font-family:var(--font);cursor:pointer}
     <div class="user-card">
       <div class="user-avatar" id="sidebarInitials"></div>
       <div><div class="user-name" id="sidebarName"></div><div class="user-role">Hotel Manager</div></div>
-      <button class="user-logout" title="Sign out" onclick="doLogout()">⏻</button>
     </div>
   </div>
 </aside>
@@ -276,8 +275,9 @@ function ratingStars(rating) {
 }
 
 function hotelImg(imageUrl) {
-  if (!imageUrl) return '../../../../public/assets/images/lahore.jpg';
-  if (imageUrl.startsWith('http') || imageUrl.startsWith('/uploads')) return imageUrl;
+  if (!imageUrl) return null;
+  if (imageUrl.startsWith('http')) return imageUrl;
+  if (imageUrl.startsWith('/uploads')) return API_CONFIG.BASE_URL.replace('/api', '') + imageUrl;
   return '../../../../public/assets/images/' + imageUrl;
 }
 
@@ -314,9 +314,13 @@ async function loadHotels() {
       const rt        = roomTotals[h.id] || { total: h.totalRooms || 0, available: h.availableRooms || 0 };
       const totalRms  = rt.total;
       const availRms  = rt.available;
+      const imgSrc    = hotelImg(h.imageUrl);
+      const imgHtml   = imgSrc
+        ? `<img class="hotel-img" src="${imgSrc}" alt="${h.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+        : '';
       return `
       <div class="hotel-card">
-        <img class="hotel-img" src="${hotelImg(h.imageUrl)}" alt="${h.name}" onerror="this.src='../../../../public/assets/images/lahore.jpg'">
+        ${imgHtml}<div class="hotel-img-placeholder" style="${imgSrc ? 'display:none' : ''}">🏨</div>
         <div class="hotel-body">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
             <div class="hotel-name">${h.name}</div>

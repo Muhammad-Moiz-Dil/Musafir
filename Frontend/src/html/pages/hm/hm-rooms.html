@@ -173,7 +173,6 @@ tbody tr:hover{background:#F8FAFC}
     <div class="user-card">
       <div class="user-avatar" id="sidebarInitials"></div>
       <div><div class="user-name" id="sidebarName"></div><div class="user-role">Hotel Manager</div></div>
-      <button class="user-logout" title="Sign out" onclick="doLogout()">⏻</button>
     </div>
   </div>
 </aside>
@@ -437,7 +436,10 @@ function openAddModal() {
   document.getElementById('modalTitle').textContent = 'Add Room Type';
   document.getElementById('saveBtn').textContent = 'Add Room Type';
   clearForm();
-  document.getElementById('availRow').style.display = 'none'; // Available auto-set on add
+  // Pre-select hotel if one is already chosen in the filter
+  const filteredHotelId = document.getElementById('hotelFilter').value;
+  if (filteredHotelId) document.getElementById('fHotelId').value = filteredHotelId;
+  document.getElementById('availRow').style.display = 'none';
   document.getElementById('roomModal').classList.remove('hidden');
 }
 

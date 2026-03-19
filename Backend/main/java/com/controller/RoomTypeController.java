@@ -6,6 +6,8 @@ import com.model.User;
 import com.repository.HotelRepository;
 import com.repository.RoomTypeRepository;
 import com.repository.UserRepository;
+import com.service.ActivityLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -20,13 +22,16 @@ public class RoomTypeController {
     private final RoomTypeRepository roomTypeRepo;
     private final HotelRepository    hotelRepo;
     private final UserRepository     userRepo;
+    private final ActivityLogService logService;
 
     public RoomTypeController(RoomTypeRepository roomTypeRepo,
                               HotelRepository hotelRepo,
-                              UserRepository userRepo) {
+                              UserRepository userRepo,
+                              ActivityLogService logService) {
         this.roomTypeRepo = roomTypeRepo;
         this.hotelRepo    = hotelRepo;
         this.userRepo     = userRepo;
+        this.logService   = logService;
     }
 
     /** GET /api/rooms/hotel/{hotelId} — public (authenticated): room types for a hotel */
@@ -62,7 +67,8 @@ public class RoomTypeController {
     /** POST /api/rooms — HM: add a room type to one of their hotels */
     @PostMapping
     public ResponseEntity<?> addRoomType(@RequestBody Map<String, Object> body,
-                                         Authentication auth) {
+                                         Authentication auth,
+                                         HttpServletRequest request) {
         User manager = resolveManager(auth);
         if (manager == null) return ResponseEntity.status(403).body(Map.of("message", "Access denied"));
 
@@ -94,6 +100,7 @@ public class RoomTypeController {
         rt.setImageUrl((String) body.get("imageUrl"));
 
         RoomType saved = roomTypeRepo.save(rt);
+        logService.log(manager.getUserId(), "ROOM_ADDED", request);
         Map<String, Object> resp = toMap(saved);
         resp.put("hotelName", hotel.getHotelName());
         return ResponseEntity.ok(resp);
@@ -103,7 +110,8 @@ public class RoomTypeController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateRoomType(@PathVariable Integer id,
                                             @RequestBody Map<String, Object> body,
-                                            Authentication auth) {
+                                            Authentication auth,
+                                            HttpServletRequest request) {
         User manager = resolveManager(auth);
         if (manager == null) return ResponseEntity.status(403).body(Map.of("message", "Access denied"));
 
@@ -132,6 +140,7 @@ public class RoomTypeController {
             rt.setImageUrl((String) body.get("imageUrl"));
 
         roomTypeRepo.save(rt);
+        logService.log(manager.getUserId(), "ROOM_UPDATED", request);
         Map<String, Object> resp = toMap(rt);
         resp.put("hotelName", hotel.getHotelName());
         return ResponseEntity.ok(resp);
@@ -139,7 +148,8 @@ public class RoomTypeController {
 
     /** DELETE /api/rooms/{id} — HM: soft-delete a room type */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteRoomType(@PathVariable Integer id, Authentication auth) {
+    public ResponseEntity<?> deleteRoomType(@PathVariable Integer id, Authentication auth,
+                                            HttpServletRequest request) {
         User manager = resolveManager(auth);
         if (manager == null) return ResponseEntity.status(403).body(Map.of("message", "Access denied"));
 
@@ -152,6 +162,7 @@ public class RoomTypeController {
 
         rt.setIsActive(false);
         roomTypeRepo.save(rt);
+        logService.log(manager.getUserId(), "ROOM_REMOVED", request);
         return ResponseEntity.ok(Map.of("message", "Room type removed"));
     }
 

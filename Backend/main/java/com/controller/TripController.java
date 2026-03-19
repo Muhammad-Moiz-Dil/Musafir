@@ -2,6 +2,8 @@ package com.controller;
 
 import com.model.*;
 import com.repository.*;
+import com.service.ActivityLogService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,17 +32,20 @@ public class TripController {
     private final DestinationRepository     destRepo;
     private final ReviewRepository          reviewRepo;
     private final UserRepository            userRepo;
+    private final ActivityLogService        logService;
 
     public TripController(TripRepository tripRepo,
                           TripDestinationRepository tripDestRepo,
                           DestinationRepository destRepo,
                           ReviewRepository reviewRepo,
-                          UserRepository userRepo) {
+                          UserRepository userRepo,
+                          ActivityLogService logService) {
         this.tripRepo     = tripRepo;
         this.tripDestRepo = tripDestRepo;
         this.destRepo     = destRepo;
         this.reviewRepo   = reviewRepo;
         this.userRepo     = userRepo;
+        this.logService   = logService;
     }
 
     // ── Helper ───────────────────────────────────────────────
@@ -94,7 +99,8 @@ public class TripController {
 
     // ── POST /api/trips ──────────────────────────────────────
     @PostMapping
-    public ResponseEntity<?> createTrip(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> createTrip(@RequestBody Map<String, String> body,
+                                        HttpServletRequest request) {
         User user = currentUser();
 
         String title = body.get("title");
@@ -109,6 +115,7 @@ public class TripController {
         trip.setUserId(user.getUserId());
         trip.setTitle(title.trim());
         trip = tripRepo.save(trip);
+        logService.log(user.getUserId(), "TRIP_CREATED", request);
 
         return ResponseEntity.status(201).body(Map.of(
                 "message", "Trip created",
@@ -118,7 +125,8 @@ public class TripController {
 
     // ── PATCH /api/trips/{tripId}/complete ───────────────────
     @PatchMapping("/{tripId}/complete")
-    public ResponseEntity<?> markComplete(@PathVariable Integer tripId) {
+    public ResponseEntity<?> markComplete(@PathVariable Integer tripId,
+                                          HttpServletRequest request) {
         User user = currentUser();
 
         Trip trip = tripRepo.findById(tripId).orElse(null);
@@ -136,6 +144,7 @@ public class TripController {
 
         trip.setStatus(Trip.TripStatus.COMPLETED);
         tripRepo.save(trip);
+        logService.log(user.getUserId(), "TRIP_COMPLETED", request);
         return ResponseEntity.ok(Map.of("message", "Trip marked as completed"));
     }
 

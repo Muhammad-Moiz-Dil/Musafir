@@ -206,6 +206,21 @@
     transition: var(--ease);
 }
 .wa-explore-btn:hover { background: var(--accent-dk); }
+/* ── Destination Search Widget ─── */
+.dest-search-wrap{position:relative;}
+.dest-search-input-row{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:var(--r-md,8px);padding:0 12px;background:var(--surface);transition:border-color .2s;}
+.dest-search-input-row:focus-within{border-color:var(--accent,#6366f1);}
+.dest-search-icon{color:var(--t3);flex-shrink:0;}
+.dest-search-input{background:none;border:none;outline:none;color:var(--white);font-size:14px;width:100%;padding:10px 0;}
+.dest-search-input::placeholder{color:var(--t3);}
+.dest-search-clear{background:none;border:none;cursor:pointer;color:var(--t3);padding:2px 4px;font-size:16px;line-height:1;display:none;}
+.dest-search-clear:hover{color:var(--white);}
+.dest-search-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:#0d1623;border:1px solid rgba(255,255,255,.15);border-radius:var(--r-md,8px);max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;}
+.dest-search-item{padding:10px 14px;cursor:pointer;font-size:14px;color:#e8eaf0;border-bottom:1px solid rgba(255,255,255,.08);transition:background .15s;}
+.dest-search-item:last-child{border-bottom:none;}
+.dest-search-item:hover{background:rgba(255,255,255,.10);}
+.dest-search-item .dsrc-city{color:var(--t3);font-size:12px;}
+.dest-no-result{padding:14px;text-align:center;color:var(--t3);font-size:13px;}
 </style>
 </head>
 <body>
@@ -338,22 +353,16 @@
     <div class="wa-search-box">
         <h3>🔍 Check Weather for Any Destination</h3>
         <div class="wa-search-row">
-            <select id="destSelect" onchange="onDestSelectChange(this.value)">
-                <option value="">📍 Select a destination…</option>
-                <option value="Hunza Valley">🏔️ Hunza Valley</option>
-                <option value="Murree">🌲 Murree</option>
-                <option value="Swat Valley">🌿 Swat Valley</option>
-                <option value="Skardu">⛰️ Skardu</option>
-                <option value="Naran Kaghan">🌊 Naran Kaghan</option>
-                <option value="Lahore">🏙️ Lahore</option>
-                <option value="Islamabad">🕌 Islamabad</option>
-                <option value="Fairy Meadows">🏕️ Fairy Meadows</option>
-                <option value="Mohenjo Daro">🏛️ Mohenjo Daro</option>
-                <option value="Cholistan Desert">🏜️ Cholistan Desert</option>
-            </select>
+            <div class="dest-search-wrap" id="destSearchWrap" style="flex:1;min-width:200px;">
+                <div class="dest-search-input-row">
+                    <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                    <input type="text" id="destSearchInput" class="dest-search-input" placeholder="Search destination…" autocomplete="off">
+                    <button type="button" class="dest-search-clear" id="destSearchClear">✕</button>
+                </div>
+                <div class="dest-search-dropdown" id="destSearchDropdown"></div>
+            </div>
             <span class="wa-search-sep">or type a city</span>
             <input type="text" id="destInput" placeholder="e.g. Karachi, Peshawar…"
-                   oninput="onDestInputChange(this.value)"
                    onkeydown="if(event.key==='Enter') lookupWeather()">
             <button class="wa-lookup-btn" id="lookupBtn" onclick="lookupWeather()">
                 ⚡ Check Weather
@@ -671,23 +680,63 @@ async function loadAlerts() {
     }
 }
 
-// ── Destination weather search / lookup ─────────────────────────────────────
-function onDestSelectChange(val) {
-    if (val) {
-        document.getElementById('destInput').value = '';
-        lookupWeather();
+// ── Destination search widget ──────────────────────────────────
+(function(){
+    const tok = sessionStorage.getItem('tripify_token');
+    const input = document.getElementById('destSearchInput');
+    const dropdown = document.getElementById('destSearchDropdown');
+    const clearBtn = document.getElementById('destSearchClear');
+    let timer;
+    async function search(q) {
+        try {
+            const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(q.trim()), {
+                headers: { 'Authorization': 'Bearer ' + tok }
+            });
+            if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+            const data = await res.json();
+            showDropdown(Array.isArray(data) ? data : []);
+        } catch(e) { showDropdown([]); }
     }
-}
-function onDestInputChange(val) {
-    if (val.trim()) {
-        document.getElementById('destSelect').value = '';
+    function showDropdown(items) {
+        if (!items.length) {
+            dropdown.innerHTML = '<div class="dest-no-result">🔍 No destination found</div>';
+            dropdown.style.display = 'block'; return;
+        }
+        dropdown.innerHTML = items.map(d =>
+            `<div class="dest-search-item" data-name="${d.name}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
+        ).join('');
+        dropdown.style.display = 'block';
+        dropdown.querySelectorAll('.dest-search-item').forEach(el => {
+            el.addEventListener('mousedown', e => {
+                e.preventDefault();
+                input.value = el.dataset.name;
+                clearBtn.style.display = 'inline';
+                hideDropdown();
+                document.getElementById('destInput').value = '';
+                lookupWeather();
+            });
+        });
     }
-}
+    function hideDropdown() { dropdown.style.display = 'none'; }
+    input.addEventListener('input', e => {
+        clearBtn.style.display = e.target.value ? 'inline' : 'none';
+        clearTimeout(timer);
+        if (!e.target.value.trim()) { hideDropdown(); return; }
+        timer = setTimeout(() => search(e.target.value), 300);
+    });
+    clearBtn.addEventListener('click', () => {
+        input.value = ''; clearBtn.style.display = 'none'; hideDropdown();
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#destSearchWrap')) hideDropdown();
+    });
+})();
 
+// ── Destination weather lookup ─────────────────────────────────
 async function lookupWeather() {
-    const selectVal = document.getElementById('destSelect').value.trim();
+    const searchVal = document.getElementById('destSearchInput').value.trim();
     const inputVal  = document.getElementById('destInput').value.trim();
-    const name = selectVal || inputVal;
+    const name = searchVal || inputVal;
 
     if (!name) {
         showToast('⚠️', 'Please select or type a destination name.');

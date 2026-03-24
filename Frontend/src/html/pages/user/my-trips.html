@@ -238,6 +238,21 @@
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .spin { display: inline-block; animation: spin 0.9s linear infinite; }
+/* ── Destination Search Widget ─── */
+.dest-search-wrap{position:relative;}
+.dest-search-input-row{display:flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:var(--r-md,8px);padding:0 10px;background:var(--surface);transition:border-color .2s;height:34px;}
+.dest-search-input-row:focus-within{border-color:var(--accent,#6366f1);}
+.dest-search-icon{color:var(--t3);flex-shrink:0;}
+.dest-search-input{background:none;border:none;outline:none;color:var(--white);font-size:13px;width:100%;}
+.dest-search-input::placeholder{color:var(--t3);}
+.dest-search-clear{background:none;border:none;cursor:pointer;color:var(--t3);padding:2px 4px;font-size:14px;line-height:1;display:none;}
+.dest-search-clear:hover{color:var(--white);}
+.dest-search-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:#0d1623;border:1px solid rgba(255,255,255,.15);border-radius:var(--r-md,8px);max-height:200px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;}
+.dest-search-item{padding:9px 12px;cursor:pointer;font-size:14px;color:#e8eaf0;border-bottom:1px solid rgba(255,255,255,.08);transition:background .15s;}
+.dest-search-item:last-child{border-bottom:none;}
+.dest-search-item:hover{background:rgba(255,255,255,.10);}
+.dest-search-item .dsrc-city{color:var(--t3);font-size:11.5px;}
+.dest-no-result{padding:12px;text-align:center;color:var(--t3);font-size:12.5px;}
 </style>
 </head>
 <body>
@@ -506,6 +521,7 @@ function renderTrips(filter) {
         return;
     }
     listEl.innerHTML = data.map(t => renderTripCard(t)).join('');
+    data.filter(t => t.status !== 'COMPLETED').forEach(t => initTripDestSearch(t.tripId));
 }
 
 function renderTripCard(trip) {
@@ -518,10 +534,14 @@ function renderTripCard(trip) {
 
     const addDestHtml = !isCompleted ? `
     <div class="add-dest-row" id="addRow-${trip.tripId}">
-        <select class="add-dest-select" id="addSelect-${trip.tripId}">
-            <option value="">— Select a destination —</option>
-            ${getAddableOptions(trip)}
-        </select>
+        <div class="dest-search-wrap" id="destSearchWrap-${trip.tripId}" style="flex:1;max-width:320px;">
+            <div class="dest-search-input-row">
+                <svg class="dest-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="addSearchInput-${trip.tripId}" class="dest-search-input" placeholder="Search destination…" autocomplete="off" data-trip-id="${trip.tripId}">
+                <button type="button" class="dest-search-clear" id="addSearchClear-${trip.tripId}">✕</button>
+            </div>
+            <div class="dest-search-dropdown" id="addSearchDropdown-${trip.tripId}"></div>
+        </div>
         <button class="btn btn-ghost btn-sm" onclick="addDestination(${trip.tripId})">Add</button>
         <span class="add-dest-err" id="addErr-${trip.tripId}"></span>
     </div>` : '';
@@ -639,16 +659,77 @@ function validateTitle(input, errEl) {
     return true;
 }
 
+// ── Selected dest ID map (tripId → destId) ──────────────────
+const _selectedDestId = {};
+
+// ── Init search widget for a trip ───────────────────────────
+function initTripDestSearch(tripId) {
+    const input = document.getElementById('addSearchInput-' + tripId);
+    const dropdown = document.getElementById('addSearchDropdown-' + tripId);
+    const clearBtn = document.getElementById('addSearchClear-' + tripId);
+    if (!input) return;
+    let timer;
+    async function search(q) {
+        try {
+            const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(q.trim()), {
+                headers: { 'Authorization': 'Bearer ' + TOKEN }
+            });
+            if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+            const data = await res.json();
+            const items = Array.isArray(data) ? data : [];
+            // Filter out already-added destinations
+            const trip = allTrips.find(t => t.tripId === tripId);
+            const inTrip = new Set((trip && trip.destinations || []).map(d => String(d.destinationId)));
+            showDropdown(items.filter(d => !inTrip.has(String(d.id))));
+        } catch(e) { showDropdown([]); }
+    }
+    function showDropdown(items) {
+        if (!items.length) {
+            dropdown.innerHTML = '<div class="dest-no-result">🔍 No destination found</div>';
+            dropdown.style.display = 'block'; return;
+        }
+        dropdown.innerHTML = items.map(d =>
+            `<div class="dest-search-item" data-id="${d.id}" data-name="${d.name}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
+        ).join('');
+        dropdown.style.display = 'block';
+        dropdown.querySelectorAll('.dest-search-item').forEach(el => {
+            el.addEventListener('mousedown', e => {
+                e.preventDefault();
+                input.value = el.dataset.name;
+                clearBtn.style.display = 'inline';
+                _selectedDestId[tripId] = el.dataset.id;
+                document.getElementById('addErr-' + tripId).textContent = '';
+                hideDropdown();
+            });
+        });
+    }
+    function hideDropdown() { dropdown.style.display = 'none'; }
+    input.addEventListener('input', e => {
+        clearBtn.style.display = e.target.value ? 'inline' : 'none';
+        _selectedDestId[tripId] = null;
+        clearTimeout(timer);
+        if (!e.target.value.trim()) { hideDropdown(); return; }
+        timer = setTimeout(() => search(e.target.value), 300);
+    });
+    clearBtn.addEventListener('click', () => {
+        input.value = ''; clearBtn.style.display = 'none'; hideDropdown();
+        _selectedDestId[tripId] = null;
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#destSearchWrap-' + tripId)) hideDropdown();
+    });
+}
+
 // ── Add destination to trip ─────────────────────────────────
 async function addDestination(tripId) {
-    const select = document.getElementById('addSelect-' + tripId);
-    const errEl  = document.getElementById('addErr-'    + tripId);
+    const errEl  = document.getElementById('addErr-' + tripId);
     errEl.textContent = '';
 
-    const destId = select.value;
-    if (!destId) { errEl.textContent = 'Please select a destination.'; return; }
+    const destId = _selectedDestId[tripId];
+    if (!destId) { errEl.textContent = 'Please search and select a destination.'; return; }
 
-    const addBtn = select.nextElementSibling;
+    const input = document.getElementById('addSearchInput-' + tripId);
+    const addBtn = input ? input.closest('.add-dest-row').querySelector('.btn') : null;
     addBtn.disabled = true;
     addBtn.textContent = '…';
 

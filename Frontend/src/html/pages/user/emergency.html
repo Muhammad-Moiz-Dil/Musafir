@@ -129,6 +129,21 @@
 
 /* Loading spinner */
 .spin-wrap { text-align:center; padding:40px; color:var(--t2); }
+/* ── Destination Search Widget ─── */
+.dest-search-wrap{position:relative;}
+.dest-search-input-row{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:var(--r-md,8px);padding:0 12px;background:var(--surface);transition:border-color .2s;}
+.dest-search-input-row:focus-within{border-color:var(--accent,#6366f1);}
+.dest-search-icon{color:var(--t3);flex-shrink:0;}
+.dest-search-input{background:none;border:none;outline:none;color:var(--white);font-size:14px;width:100%;padding:10px 0;}
+.dest-search-input::placeholder{color:var(--t3);}
+.dest-search-clear{background:none;border:none;cursor:pointer;color:var(--t3);padding:2px 4px;font-size:16px;line-height:1;display:none;}
+.dest-search-clear:hover{color:var(--white);}
+.dest-search-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:#0d1623;border:1px solid rgba(255,255,255,.15);border-radius:var(--r-md,8px);max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;}
+.dest-search-item{padding:10px 14px;cursor:pointer;font-size:14px;color:#e8eaf0;border-bottom:1px solid rgba(255,255,255,.08);transition:background .15s;}
+.dest-search-item:last-child{border-bottom:none;}
+.dest-search-item:hover{background:rgba(255,255,255,.10);}
+.dest-search-item .dsrc-city{color:var(--t3);font-size:12px;}
+.dest-no-result{padding:14px;text-align:center;color:var(--t3);font-size:13px;}
 </style>
 </head>
 <body>
@@ -237,12 +252,17 @@
         <span class="badge badge-accent" id="destLoadBadge">Loading…</span>
     </div>
 
-    <!-- Destination Selector -->
+    <!-- Destination Search -->
     <div class="dest-select-row">
-        <label for="destDropdown">📍 Select Destination:</label>
-        <select id="destDropdown" onchange="onDestDropdownChange(this.value)">
-            <option value="">— Choose a destination —</option>
-        </select>
+        <label>📍 Select Destination:</label>
+        <div class="dest-search-wrap" id="destSearchWrap" style="flex:1;max-width:400px;">
+            <div class="dest-search-input-row">
+                <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="destSearchInput" class="dest-search-input" placeholder="Search destination…" autocomplete="off">
+                <button type="button" class="dest-search-clear" id="destSearchClear">✕</button>
+            </div>
+            <div class="dest-search-dropdown" id="destSearchDropdown"></div>
+        </div>
     </div>
 
     <!-- Selected Destination Panel -->
@@ -340,32 +360,67 @@ let allDestinations = [];
 let activeDestId = null;
 let bookmarkedIds = new Set();
 
-// ── Populate destination dropdown ─────────────────────────
-function renderTabs(dests) {
-    const dd = document.getElementById('destDropdown');
-    dests.forEach(d => {
-        const opt = document.createElement('option');
-        opt.value = d.destinationId;
-        opt.textContent = d.name;
-        dd.appendChild(opt);
+// ── Destination search widget ──────────────────────────────
+(function(){
+    const input = document.getElementById('destSearchInput');
+    const dropdown = document.getElementById('destSearchDropdown');
+    const clearBtn = document.getElementById('destSearchClear');
+    let timer;
+    async function search(q) {
+        try {
+            const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(q.trim()), {
+                headers: { 'Authorization': 'Bearer ' + tripToken }
+            });
+            if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+            const data = await res.json();
+            showDropdown(Array.isArray(data) ? data : []);
+        } catch(e) { showDropdown([]); }
+    }
+    function showDropdown(items) {
+        if (!items.length) {
+            dropdown.innerHTML = '<div class="dest-no-result">🔍 No destination found</div>';
+            dropdown.style.display = 'block'; return;
+        }
+        dropdown.innerHTML = items.map(d =>
+            `<div class="dest-search-item" data-id="${d.id||d.destinationId}" data-name="${d.name}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
+        ).join('');
+        dropdown.style.display = 'block';
+        dropdown.querySelectorAll('.dest-search-item').forEach(el => {
+            el.addEventListener('mousedown', e => {
+                e.preventDefault();
+                input.value = el.dataset.name;
+                clearBtn.style.display = 'inline';
+                hideDropdown();
+                selectDest(parseInt(el.dataset.id));
+            });
+        });
+    }
+    function hideDropdown() { dropdown.style.display = 'none'; }
+    input.addEventListener('input', e => {
+        clearBtn.style.display = e.target.value ? 'inline' : 'none';
+        clearTimeout(timer);
+        if (!e.target.value.trim()) { hideDropdown(); return; }
+        timer = setTimeout(() => search(e.target.value), 300);
     });
+    clearBtn.addEventListener('click', () => {
+        input.value = ''; clearBtn.style.display = 'none'; hideDropdown();
+        document.getElementById('destPanel').innerHTML = '<div class="spin-wrap"><p style="color:var(--t3);font-size:13px">Select a destination above to view its emergency contacts and safety guidelines.</p></div>';
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#destSearchWrap')) hideDropdown();
+    });
+})();
+
+// ── Populate destination count badge ──────────────────────
+function renderTabs(dests) {
     document.getElementById('destLoadBadge').textContent = dests.length + ' Destinations';
     document.getElementById('destLoadBadge').className = 'badge badge-accent';
-}
-
-// ── Dropdown change handler ────────────────────────────────
-function onDestDropdownChange(val) {
-    if (!val) return;
-    selectDest(parseInt(val));
 }
 
 // ── Select & load destination emergency info ───────────────
 async function selectDest(id) {
     if (activeDestId === id) return;
     activeDestId = id;
-
-    // Sync dropdown
-    document.getElementById('destDropdown').value = id;
 
     const panel = document.getElementById('destPanel');
     panel.innerHTML = `<div class="spin-wrap"><div style="font-size:28px;animation:spin 1s linear infinite;display:inline-block">⏳</div><p style="margin-top:10px;color:var(--t2)">Loading emergency info…</p></div>`;

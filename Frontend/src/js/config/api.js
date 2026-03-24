@@ -85,6 +85,7 @@ const ENDPOINTS = {
         UPDATE_DESC:      (id) => `${API_CONFIG.BASE_URL}/hotels/${id}/description`,
         UPDATE_AMENITIES: (id) => `${API_CONFIG.BASE_URL}/hotels/${id}/amenities`,
         UPDATE_INFO:      (id) => `${API_CONFIG.BASE_URL}/hotels/${id}/info`,
+        SEARCH:           `${API_CONFIG.BASE_URL}/hotels/search`,
     },
     ROOMS: {
         BY_HOTEL: (hotelId) => `${API_CONFIG.BASE_URL}/rooms/hotel/${hotelId}`,

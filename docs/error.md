@@ -343,3 +343,65 @@ Never hardcode the Google Maps API key (or any API key) in HTML/JS frontend file
 - Removed unused `userRepo` field and constructor parameter from `ProfileController`.
 - Removed unused `import java.util.Optional` from `ProfileService`.
 - Added `@NonNull` annotations to `JwtFilter.doFilterInternal` and `WebConfig.addResourceHandlers` params to satisfy inherited interface contracts.
+
+---
+
+## UC-COST-001 — Trip Cost Estimator Enhancement (Source, Hotel Search, Room Type)
+**Date:** 2026-03-25
+**Files:** `trip-cost.html`, `HotelController.java`, `HotelRepository.java`, `api.js`
+**Status:** Implemented
+
+### Design Decisions
+- Added **Source** search widget (destination autocomplete) — optional, used as display label in fuel breakdown row ("Islamabad → Hunza Valley (1000 km)"). Does not affect distance calculation.
+- Added **Hotel Search** widget (API-backed via `GET /api/hotels/search?q=`) — autocomplete shows hotel name, stars, base price/night, destination name. Only active hotels are returned.
+- `GET /api/hotels/search?q=` requires `q` ≥ 2 chars; returns `{id, name, stars, pricePerNight, availableRooms, destinationName}`. Added `findByHotelNameContainingIgnoreCaseAndIsActiveTrue` to `HotelRepository`.
+- When a hotel is selected: search widget is replaced by a "selected badge" showing name + stars + base rate; fallback Hotel Category dropdown is hidden; room types are fetched from `GET /api/hotels/{id}`.
+- **Room Type** dropdown appears only if the selected hotel has active room types. Each option stores `pricePerNight`, `typeName`, `capacity` in `data-*` attributes.
+- **Accommodation cost logic** (priority order):
+  1. Hotel from DB + room type selected → `roomType.pricePerNight × nights × ceil(travelers / roomType.capacity)`
+  2. Hotel from DB, no room types available → `hotel.pricePerNight × nights × ceil(travelers / 2)`
+  3. No hotel from DB → generic Hotel Category dropdown (3000 / 7000 / 18000 per night)
+- **Validation**: if hotel field has text but no hotel was selected from dropdown → block calculate and show inline error "Hotel not found in our listings…". If hotel selected and room types exist but none chosen → block calculate.
+- Clearing the hotel via "✕" badge button or re-typing in the search field resets all hotel/room state and restores fallback category dropdown.
+- Quick Presets updated to pass source city as first arg to `applyPreset(src, dest, dist, travelers, nights)`.
+
+### Rule
+`GET /api/hotels/search` sits before `/api/hotels/managers` in HotelController — Spring maps the most specific literal path first, so no conflict with `GET /api/hotels/{id}` or `GET /api/hotels`.
+
+---
+
+## UC-COST-002 — Trip Cost Estimator Corrections
+**Date:** 2026-03-25
+**Files:** `trip-cost.html`, `HotelController.java`, `HotelRepository.java`
+**Status:** Fixed
+
+### Issues Fixed
+1. **Hotel not filtered by destination** — hotel search was returning all hotels regardless of selected destination.
+   - Backend: `GET /api/hotels/search` now accepts optional `destinationId` param. If provided + q≥2 chars: filters by name AND destinationId. If provided + q<2: returns all hotels at that destination. If not provided: searches all (requires q≥2).
+   - Added `findByHotelNameContainingIgnoreCaseAndIsActiveTrueAndDestinationId` and `findByIsActiveTrueAndDestinationId` to `HotelRepository`.
+   - Frontend: destination search items now carry `data-id`; `onDestChange(name, id)` stores `selectedDestination={id,name}`; hotel search IIFE passes `&destinationId=X` when set; "no hotel" message shows destination name ("No hotels found at Hunza Valley").
+   - Hotel search auto-loads on focus when destination is already selected.
+   - Changing destination clears previously selected hotel if it was from a different destination.
+
+2. **Room type section not showing** — `loadRoomTypes` hid the section when `rooms.length===0` (hotels with no configured room types).
+   - Fixed: section always shown after hotel selection. If 0 room types: shows "No room types — hotel base rate will be used" as a disabled info option. If rooms exist: dropdown populates normally.
+   - `loadRoomTypes` now shows a loading state while fetching.
+
+3. **Label said "Starting Location (Source)"** — removed "(Source)", now reads "Starting Location".
+
+---
+
+## UC-COST-003 — Trip Cost Estimator Further Corrections
+**Date:** 2026-03-25
+**Files:** `trip-cost.html`
+**Status:** Fixed
+
+### Issues Fixed
+1. **Hotel Category section removed** — the generic Hotel Category dropdown (budget/mid/luxury fallback) has been removed entirely. Hotel must now be selected from DB listings. If no hotel selected when Calculate is clicked → inline error shown on the hotel field.
+
+2. **Hotel search still showing wrong-destination hotels** — root cause was two-fold:
+   - Backend `destinationId` filtering only works after backend restart (new repo methods + updated controller endpoint). User must run `mvn spring-boot:run` again from `Backend/`.
+   - Frontend defence added: hotel search IIFE now **refuses to send any API request** if `selectedDestination` is null. If user clicks/types in hotel field without selecting a destination first, dropdown shows "Please select a destination first". This makes it physically impossible for cross-destination hotels to appear regardless of backend state.
+
+### Rule
+Always restart the backend (`mvn spring-boot:run` from `Backend/`) after adding new repository methods or changing controller logic — Spring Data JPA generates queries at startup, not at runtime.

@@ -75,8 +75,17 @@ public class BookingController {
         if (hotel == null)
             return ResponseEntity.status(404).body(Map.of("message", "Hotel not found"));
 
-        LocalDate checkIn  = LocalDate.parse(checkInStr);
-        LocalDate checkOut = LocalDate.parse(checkOutStr);
+        LocalDate checkIn, checkOut;
+        try {
+            checkIn  = LocalDate.parse(checkInStr);
+            checkOut = LocalDate.parse(checkOutStr);
+        } catch (java.time.format.DateTimeParseException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Invalid date format. Use YYYY-MM-DD"));
+        }
+        if (checkIn.isBefore(LocalDate.now()))
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Check-in date cannot be in the past"));
         if (!checkOut.isAfter(checkIn))
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "Check-out date must be after check-in date"));

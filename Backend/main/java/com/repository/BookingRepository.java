@@ -20,4 +20,6 @@ public interface BookingRepository extends JpaRepository<Booking, Integer> {
                                                            List<Booking.BookingStatus> statuses);
 
     List<Booking> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    int countByUserId(Integer userId);
 }

@@ -4,6 +4,7 @@ import com.config.UploadUtils;
 import com.model.Trip;
 import com.model.User;
 import com.model.UserPreferences;
+import com.repository.BookingRepository;
 import com.repository.FavoriteRepository;
 import com.repository.TripDestinationRepository;
 import com.repository.TripRepository;
@@ -33,6 +34,7 @@ public class ProfileController {
     private final TripRepository        tripRepo;
     private final TripDestinationRepository tripDestRepo;
     private final FavoriteRepository    favoriteRepo;
+    private final BookingRepository     bookingRepo;
     private final ActivityLogService    logService;
 
     // Avatar storage directory (relative to where the JAR runs, i.e., Backend/ folder)
@@ -44,12 +46,14 @@ public class ProfileController {
                              TripRepository tripRepo,
                              TripDestinationRepository tripDestRepo,
                              FavoriteRepository favoriteRepo,
+                             BookingRepository bookingRepo,
                              ActivityLogService logService) {
         this.profileService        = profileService;
         this.recommendationService = recommendationService;
         this.tripRepo              = tripRepo;
         this.tripDestRepo          = tripDestRepo;
         this.favoriteRepo          = favoriteRepo;
+        this.bookingRepo           = bookingRepo;
         this.logService            = logService;
     }
 
@@ -244,7 +248,7 @@ public class ProfileController {
         Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("tripsPlanned", tripsPlanned);
         stats.put("wishlistItems", wishlistItems);
-        stats.put("hotelsBooked", 0);
+        stats.put("hotelsBooked", bookingRepo.countByUserId(userId));
         stats.put("destinationsVisited", visitedDestIds.size());
         return ResponseEntity.ok(stats);
     }

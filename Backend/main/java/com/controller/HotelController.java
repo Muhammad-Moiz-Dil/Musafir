@@ -44,6 +44,42 @@ public class HotelController {
         this.hotelReviewRepo = hotelReviewRepo;
     }
 
+    /** GET /api/hotels/search?q=&destinationId= — authenticated: search hotels by name, optionally filtered by destination */
+    @GetMapping("/search")
+    public ResponseEntity<?> searchHotels(
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(required = false) Integer destinationId) {
+
+        List<Hotel> hotels;
+        if (destinationId != null) {
+            // Destination selected: filter by it; q is optional
+            String trimmed = q.trim();
+            if (trimmed.length() >= 2) {
+                hotels = hotelRepo.findByHotelNameContainingIgnoreCaseAndIsActiveTrueAndDestinationId(trimmed, destinationId);
+            } else {
+                hotels = hotelRepo.findByIsActiveTrueAndDestinationId(destinationId);
+            }
+        } else {
+            // No destination: require at least 2 chars
+            if (q.trim().length() < 2) return ResponseEntity.ok(List.of());
+            hotels = hotelRepo.findByHotelNameContainingIgnoreCaseAndIsActiveTrue(q.trim());
+        }
+
+        List<Map<String, Object>> result = hotels.stream().map(h -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id",              h.getHotelId());
+            m.put("name",            h.getHotelName());
+            m.put("stars",           h.getStarRating());
+            m.put("pricePerNight",   h.getPricePerNight());
+            m.put("availableRooms",  h.getAvailableRooms());
+            String destName = destRepo.findById(h.getDestinationId())
+                .map(d -> d.getName()).orElse("Unknown");
+            m.put("destinationName", destName);
+            return m;
+        }).toList();
+        return ResponseEntity.ok(result);
+    }
+
     /** GET /api/hotels/managers — Admin only: list all HotelManager users for dropdown */
     @GetMapping("/managers")
     public ResponseEntity<?> getHotelManagers(Authentication auth) {

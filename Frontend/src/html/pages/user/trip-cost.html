@@ -80,6 +80,25 @@
 .dest-search-item:hover{background:rgba(255,255,255,.10);}
 .dest-search-item .dsrc-city{color:var(--t3);font-size:12px;}
 .dest-no-result{padding:14px;text-align:center;color:var(--t3);font-size:13px;}
+
+/* ── Hotel search widget ── */
+.hotel-search-item .hsrc-dest{color:var(--t3);font-size:12px;}
+.hotel-search-item .hsrc-stars{color:#f5a623;font-size:11px;margin-left:4px;}
+.hotel-search-item .hsrc-price{color:var(--accent);font-size:11px;float:right;}
+
+/* ── Selected hotel badge ── */
+.hotel-selected-badge{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);
+    border-radius:var(--r-md,8px);padding:8px 12px;margin-top:6px;
+}
+.hotel-selected-badge .hsb-name{flex:1;font-size:13px;font-weight:600;color:var(--white);}
+.hotel-selected-badge .hsb-sub{font-size:11px;color:var(--t2);}
+.hotel-selected-badge .hsb-clear{background:none;border:none;cursor:pointer;color:var(--t3);font-size:16px;padding:0 2px;line-height:1;}
+.hotel-selected-badge .hsb-clear:hover{color:#ef4444;}
+
+/* ── Fallback label note ── */
+.fallback-note{font-size:11px;color:var(--t3);margin-left:4px;font-weight:400;}
 </style>
 </head>
 <body>
@@ -152,11 +171,11 @@
     <div class="mb-22">
         <div style="font-size:12.5px;color:var(--t2);margin-bottom:8px;font-weight:600;">⚡ Quick Presets</div>
         <div class="route-chips" id="presetChips">
-            <button class="route-chip" onclick="applyPreset('Hunza Valley',500,2,3)">🏔️ Islamabad → Hunza (500 km)</button>
-            <button class="route-chip" onclick="applyPreset('Murree',50,4,2)">🌲 Islamabad → Murree (50 km)</button>
-            <button class="route-chip" onclick="applyPreset('Swat Valley',340,3,4)">🌿 Lahore → Swat (340 km)</button>
-            <button class="route-chip" onclick="applyPreset('Skardu',620,2,5)">⛰️ Islamabad → Skardu (620 km)</button>
-            <button class="route-chip" onclick="applyPreset('Naran Kaghan',250,4,3)">🌊 Islamabad → Naran (250 km)</button>
+            <button class="route-chip" onclick="applyPreset('Islamabad','Hunza Valley',500,2,3)">🏔️ Islamabad → Hunza (500 km)</button>
+            <button class="route-chip" onclick="applyPreset('Islamabad','Murree',50,4,2)">🌲 Islamabad → Murree (50 km)</button>
+            <button class="route-chip" onclick="applyPreset('Lahore','Swat Valley',340,3,4)">🌿 Lahore → Swat (340 km)</button>
+            <button class="route-chip" onclick="applyPreset('Islamabad','Skardu',620,2,5)">⛰️ Islamabad → Skardu (620 km)</button>
+            <button class="route-chip" onclick="applyPreset('Islamabad','Naran Kaghan',250,4,3)">🌊 Islamabad → Naran (250 km)</button>
         </div>
     </div>
 
@@ -171,9 +190,23 @@
         <div class="input-panel">
             <h3>⚙️ Trip Parameters</h3>
 
+            <!-- Source location -->
+            <div class="form-group">
+                <label class="form-label">🚀 Starting Location</label>
+                <div class="dest-search-wrap" id="srcSearchWrap">
+                    <div class="dest-search-input-row">
+                        <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/></svg>
+                        <input type="text" id="srcSearchInput" class="dest-search-input" placeholder="e.g. Islamabad, Lahore, Karachi…" autocomplete="off" oninput="clearError('src')">
+                        <button type="button" class="dest-search-clear" id="srcSearchClear">✕</button>
+                    </div>
+                    <div class="dest-search-dropdown" id="srcSearchDropdown"></div>
+                </div>
+                <span class="field-error" id="srcErr"></span>
+            </div>
+
             <!-- Destination search -->
             <div class="form-group">
-                <label class="form-label">📍 Select Destination</label>
+                <label class="form-label">📍 Destination</label>
                 <div class="dest-search-wrap" id="destSearchWrap">
                     <div class="dest-search-input-row">
                         <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -212,14 +245,37 @@
                 <span class="field-error" id="nightsErr"></span>
             </div>
 
+            <!-- Hotel search (API-backed) -->
             <div class="form-group">
-                <label class="form-label">🏨 Hotel Category</label>
-                <select class="form-select" id="hotelCat">
-                    <option value="budget">Budget (Rs. 3,000/night)</option>
-                    <option value="mid" selected>Mid-Range (Rs. 7,000/night)</option>
-                    <option value="luxury">Luxury (Rs. 18,000/night)</option>
-                </select>
+                <label class="form-label">🏨 Search Hotel</label>
+                <div class="dest-search-wrap" id="hotelSearchWrap" style="display:block">
+                    <div class="dest-search-input-row">
+                        <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                        <input type="text" id="hotelSearchInput" class="dest-search-input" placeholder="Search hotel by name…" autocomplete="off">
+                        <button type="button" class="dest-search-clear" id="hotelSearchClear">✕</button>
+                    </div>
+                    <div class="dest-search-dropdown" id="hotelSearchDropdown"></div>
+                </div>
+                <!-- Selected hotel badge -->
+                <div class="hotel-selected-badge" id="hotelBadge" style="display:none">
+                    <div>
+                        <div class="hsb-name" id="hotelBadgeName"></div>
+                        <div class="hsb-sub" id="hotelBadgeSub"></div>
+                    </div>
+                    <button type="button" class="hsb-clear" id="hotelBadgeClear" title="Clear hotel">✕</button>
+                </div>
+                <span class="field-error" id="hotelErr"></span>
             </div>
+
+            <!-- Room Type (shown after hotel selected) -->
+            <div class="form-group" id="roomTypeGroup" style="display:none">
+                <label class="form-label">🛏️ Room Type</label>
+                <select class="form-select" id="roomTypeSelect" onchange="onRoomTypeChange()">
+                    <option value="">— Select room type —</option>
+                </select>
+                <span class="field-error" id="roomTypeErr"></span>
+            </div>
+
 
             <div class="form-group">
                 <label class="form-label">🍽️ Meal Preference</label>
@@ -264,17 +320,32 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-// Destination → default distance map
+// ── Selected hotel / room state ───────────────────────────
+let selectedHotel       = null;  // { id, name, pricePerNight, destinationName, stars }
+let selectedRoomType    = null;  // { roomTypeId, typeName, pricePerNight, capacity }
+let selectedDestination = null;  // { id, name } — set when user picks a destination
+
+// ── Destination → default distance map ───────────────────
 const DEST_DIST = {
     'Hunza Valley':500,'Murree':50,'Swat Valley':340,'Skardu':620,
     'Naran Kaghan':250,'Lahore':380,'Islamabad':10,
     'Fairy Meadows':550,'Mohenjo Daro':1200,'Cholistan Desert':700
 };
 
-function onDestChange(dest){
+function onDestChange(dest, destId){
+    selectedDestination = (dest && destId) ? { id: destId, name: dest } : null;
     if(dest && DEST_DIST[dest]){
         document.getElementById('dist').value = DEST_DIST[dest];
         clearError('dist');
+    }
+    // If a hotel was already selected but is not at this destination, clear it
+    if(selectedHotel && selectedDestination && selectedHotel.destinationName !== selectedDestination.name){
+        clearHotel();
+    }
+    // Update hotel search placeholder to reflect destination
+    const hotelInput = document.getElementById('hotelSearchInput');
+    if(hotelInput){
+        hotelInput.placeholder = dest ? `Search hotels in ${dest}…` : 'Search hotel by name…';
     }
 }
 
@@ -286,12 +357,110 @@ function clearError(field){
     document.getElementById('errorBanner').style.display='none';
 }
 
+// ── Room type change handler ──────────────────────────────
+function onRoomTypeChange(){
+    const sel=document.getElementById('roomTypeSelect');
+    const opt=sel.options[sel.selectedIndex];
+    if(sel.value && opt.dataset.price){
+        selectedRoomType={
+            roomTypeId: parseInt(sel.value),
+            typeName:   opt.dataset.name,
+            pricePerNight: parseFloat(opt.dataset.price),
+            capacity:   parseInt(opt.dataset.cap||'2')
+        };
+    } else {
+        selectedRoomType=null;
+    }
+    clearError('roomType');
+}
+
+// ── Clear selected hotel ──────────────────────────────────
+function clearHotel(){
+    selectedHotel=null; selectedRoomType=null;
+    document.getElementById('hotelSearchInput').value='';
+    document.getElementById('hotelSearchClear').style.display='none';
+    document.getElementById('hotelBadge').style.display='none';
+    document.getElementById('hotelSearchWrap').style.display='block';
+    document.getElementById('roomTypeGroup').style.display='none';
+    document.getElementById('roomTypeSelect').innerHTML='<option value="">— Select room type —</option>';
+    clearError('hotel'); clearError('roomType');
+}
+
+// ── Load room types for selected hotel ───────────────────
+async function loadRoomTypes(hotelId){
+    const tok=sessionStorage.getItem('tripify_token');
+    const group=document.getElementById('roomTypeGroup');
+    const sel=document.getElementById('roomTypeSelect');
+    // Show section immediately with a loading state
+    sel.innerHTML='<option value="">Loading room types…</option>';
+    sel.disabled=true;
+    group.style.display='block';
+    try{
+        const res=await fetch(ENDPOINTS.HOTELS.BY_ID(hotelId),{headers:{'Authorization':'Bearer '+tok}});
+        if(!res.ok) throw new Error('fetch failed');
+        const data=await res.json();
+        const rooms=data.roomTypes||[];
+        sel.disabled=false;
+        if(rooms.length===0){
+            // No room types configured — show info and auto-use hotel base rate
+            sel.innerHTML='<option value="base">No room types — hotel base rate will be used</option>';
+            sel.value='base';
+            selectedRoomType=null; // will fall back to hotel base price in calculate()
+        } else {
+            sel.innerHTML='<option value="">— Select room type —</option>';
+            rooms.forEach(r=>{
+                const opt=document.createElement('option');
+                opt.value=r.roomTypeId;
+                opt.dataset.price=r.pricePerNight;
+                opt.dataset.name=r.typeName;
+                opt.dataset.cap=r.capacity||2;
+                opt.textContent=r.typeName+' — Rs. '+Number(r.pricePerNight).toLocaleString('en-PK')+'/night  (max '+r.capacity+' guests)';
+                sel.appendChild(opt);
+            });
+            selectedRoomType=null;
+        }
+    } catch(e){
+        sel.disabled=false;
+        sel.innerHTML='<option value="">Could not load room types</option>';
+        selectedRoomType=null;
+    }
+}
+
+// ── Select a hotel from search results ───────────────────
+function selectHotel(hotel){
+    selectedHotel={
+        id: hotel.id,
+        name: hotel.name,
+        pricePerNight: parseFloat(hotel.pricePerNight),
+        destinationName: hotel.destinationName,
+        stars: hotel.stars
+    };
+    selectedRoomType=null;
+    // Hide search widget, show badge
+    document.getElementById('hotelSearchWrap').style.display='none';
+    const badge=document.getElementById('hotelBadge');
+    badge.style.display='flex';
+    document.getElementById('hotelBadgeName').textContent=hotel.name;
+    const stars=hotel.stars?'⭐'.repeat(hotel.stars)+' ':'';
+    document.getElementById('hotelBadgeSub').textContent=stars+hotel.destinationName+' — Base Rs. '+Number(hotel.pricePerNight).toLocaleString('en-PK')+'/night';
+    clearError('hotel');
+    // Load room types
+    loadRoomTypes(hotel.id);
+}
+
+document.getElementById('hotelBadgeClear').addEventListener('click', clearHotel);
+
 function validate(){
     let ok=true;
     const dist     = parseInt(document.getElementById('dist').value);
     const travelers= parseInt(document.getElementById('travelers').value);
     const nights   = parseInt(document.getElementById('nights').value);
 
+    if(!document.getElementById('srcSearchInput').value.trim()){
+        document.getElementById('srcErr').textContent='Starting location is required.';
+        document.getElementById('srcSearchInput').classList.add('invalid');
+        ok=false;
+    }
     if(!document.getElementById('dist').value.trim() || isNaN(dist) || dist < 1 || dist > 5000){
         document.getElementById('distErr').textContent = dist > 5000 ? 'Maximum distance is 5,000 km.' : 'Please enter a valid distance (1–5,000 km).';
         document.getElementById('dist').classList.add('invalid');
@@ -307,16 +476,49 @@ function validate(){
         document.getElementById('nights').classList.add('invalid');
         ok=false;
     }
+    // Hotel typed but not selected from dropdown
+    const hotelInput = document.getElementById('hotelSearchInput').value.trim();
+    if(hotelInput && !selectedHotel){
+        document.getElementById('hotelErr').textContent = 'This hotel was not found in our listings for the selected destination. Select from the suggestions.';
+        ok=false;
+    }
+    // Room types exist but none chosen
+    if(selectedHotel){
+        const sel=document.getElementById('roomTypeSelect');
+        const hasOptions = sel.options.length > 1 && sel.options[1] && sel.options[1].value !== 'base';
+        if(hasOptions && !selectedRoomType){
+            document.getElementById('roomTypeErr').textContent='Please select a room type for this hotel.';
+            ok=false;
+        }
+    }
     return ok;
 }
 
-function applyPreset(dest, dist, travelers, nights){
+async function applyPreset(src, dest, dist, travelers, nights){
+    const srcIn = document.getElementById('srcSearchInput');
+    if(srcIn){ srcIn.value = src; document.getElementById('srcSearchClear').style.display='inline'; }
     const si = document.getElementById('destSearchInput');
     if(si){ si.value = dest; document.getElementById('destSearchClear').style.display='inline'; }
-    document.getElementById('dist').value        = dist;
-    document.getElementById('travelers').value   = travelers;
-    document.getElementById('nights').value      = nights;
+    document.getElementById('dist').value      = dist;
+    document.getElementById('travelers').value = travelers;
+    document.getElementById('nights').value    = nights;
     ['dist','travelers','nights'].forEach(id=>{ clearError(id); });
+
+    // Look up destination ID so hotel search is properly scoped
+    try {
+        const tok = sessionStorage.getItem('tripify_token');
+        const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(dest), {
+            headers: { 'Authorization': 'Bearer ' + tok }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) {
+                const match = data.find(d => d.name === dest) || data[0];
+                onDestChange(match.name, match.id);
+            }
+        }
+    } catch(e) { /* non-critical — preset still fills fields */ }
+
     calculate();
 }
 
@@ -331,29 +533,47 @@ function calculate(){
         const travelers = parseInt(document.getElementById('travelers').value);
         const nights    = parseInt(document.getElementById('nights').value);
         const transport = document.getElementById('transport').value;
-        const hotelCat  = document.getElementById('hotelCat').value;
         const mealPref  = document.getElementById('mealPref').value;
 
-        const hotelRate   = {budget:3000, mid:7000, luxury:18000}[hotelCat];
         const mealRate    = {local:400, mid:800, restaurant:1500}[mealPref];
         const petrolPrice = 295; // PKR per litre
 
+        // Source / destination labels for display
+        const srcLabel  = document.getElementById('srcSearchInput').value.trim() || 'Origin';
+        const destLabel = document.getElementById('destSearchInput').value.trim() || 'Destination';
+
         let fuelCost = 0;
-        if(transport==='car')    fuelCost = Math.round((dist*2/12)*petrolPrice);
-        else if(transport==='suv') fuelCost = Math.round((dist*2/8)*petrolPrice);
-        else if(transport==='bus') fuelCost = Math.round(dist*2*7*travelers);
+        if(transport==='car')       fuelCost = Math.round((dist*2/12)*petrolPrice);
+        else if(transport==='suv')  fuelCost = Math.round((dist*2/8)*petrolPrice);
+        else if(transport==='bus')  fuelCost = Math.round(dist*2*7*travelers);
         else if(transport==='flight') fuelCost = Math.round(travelers*18000);
 
-        const hotelCost = hotelRate * nights * Math.ceil(travelers/2);
-        const foodCost  = mealRate  * 3 * travelers * (nights+1);
-        const misc      = Math.round((fuelCost+hotelCost+foodCost)*0.10);
-        const total     = fuelCost + hotelCost + foodCost + misc;
+        // ── Accommodation: hotel must be selected from listings ──
+        if(!selectedHotel){
+            document.getElementById('hotelErr').textContent = 'Please select a hotel from the listings to calculate accommodation cost.';
+            return;
+        }
+        let hotelCost, hotelSub;
+        if(selectedRoomType){
+            const cap   = selectedRoomType.capacity || 2;
+            const rooms = Math.ceil(travelers / cap);
+            hotelCost   = Math.round(selectedRoomType.pricePerNight * nights * rooms);
+            hotelSub    = `${nights} nights × ${rooms} ${selectedRoomType.typeName}${rooms>1?' rooms':' room'} @ ${selectedHotel.name}`;
+        } else {
+            const rooms = Math.ceil(travelers / 2);
+            hotelCost   = Math.round(selectedHotel.pricePerNight * nights * rooms);
+            hotelSub    = `${nights} nights × ${rooms} rooms @ ${selectedHotel.name} (base rate)`;
+        }
+
+        const foodCost = mealRate * 3 * travelers * (nights+1);
+        const misc     = Math.round((fuelCost+hotelCost+foodCost)*0.10);
+        const total    = fuelCost + hotelCost + foodCost + misc;
 
         if(total <= 0) throw new Error('Invalid total');
 
         const items=[
-            {icon:'⛽',label:'Fuel / Transport',sub:`${dist*2} km × ${transport}`,amt:fuelCost,color:'#f5a623',pct:Math.round(fuelCost/total*100)},
-            {icon:'🏨',label:'Accommodation',sub:`${nights} nights × ${Math.ceil(travelers/2)} rooms`,amt:hotelCost,color:'#3b82f6',pct:Math.round(hotelCost/total*100)},
+            {icon:'⛽',label:'Fuel / Transport',sub:`${srcLabel} → ${destLabel} (${dist*2} km)`,amt:fuelCost,color:'#f5a623',pct:Math.round(fuelCost/total*100)},
+            {icon:'🏨',label:'Accommodation',sub:hotelSub,amt:hotelCost,color:'#3b82f6',pct:Math.round(hotelCost/total*100)},
             {icon:'🍽️',label:'Food & Meals',sub:`${travelers} traveler${travelers>1?'s':''} × ${nights+1} days`,amt:foodCost,color:'#22c55e',pct:Math.round(foodCost/total*100)},
             {icon:'🎒',label:'Miscellaneous (10%)',sub:'Tips, entry fees, emergencies',amt:misc,color:'#a855f7',pct:Math.round(misc/total*100)},
         ];
@@ -431,6 +651,62 @@ if(qp.get('dest')) calculate();
             dropdown.style.display = 'block'; return;
         }
         dropdown.innerHTML = items.map(d =>
+            `<div class="dest-search-item" data-value="${d.name}" data-id="${d.id}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
+        ).join('');
+        dropdown.style.display = 'block';
+        dropdown.querySelectorAll('.dest-search-item').forEach(el => {
+            el.addEventListener('mousedown', e => {
+                e.preventDefault();
+                input.value = el.dataset.value;
+                clearBtn.style.display = 'inline';
+                hideDropdown();
+                onDestChange(el.dataset.value, parseInt(el.dataset.id));
+            });
+        });
+    }
+    function hideDropdown() { dropdown.style.display = 'none'; }
+    input.addEventListener('input', e => {
+        clearBtn.style.display = e.target.value ? 'inline' : 'none';
+        // If user edits the field, clear tracked destination
+        selectedDestination = null;
+        onDestChange(null, null);
+        clearTimeout(timer);
+        if (!e.target.value.trim()) { hideDropdown(); return; }
+        timer = setTimeout(() => search(e.target.value), 300);
+    });
+    clearBtn.addEventListener('click', () => {
+        input.value = ''; clearBtn.style.display = 'none'; hideDropdown();
+        selectedDestination = null;
+        onDestChange(null, null);
+    });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#destSearchWrap')) hideDropdown();
+    });
+})();
+
+// ── Source search widget (destinations autocomplete) ──────
+(function(){
+    const tok = sessionStorage.getItem('tripify_token');
+    const input = document.getElementById('srcSearchInput');
+    const dropdown = document.getElementById('srcSearchDropdown');
+    const clearBtn = document.getElementById('srcSearchClear');
+    let timer;
+    async function search(q) {
+        try {
+            const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(q.trim()), {
+                headers: { 'Authorization': 'Bearer ' + tok }
+            });
+            if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+            const data = await res.json();
+            showDropdown(Array.isArray(data) ? data : []);
+        } catch(e) { showDropdown([]); }
+    }
+    function showDropdown(items) {
+        if (!items.length) {
+            dropdown.innerHTML = '<div class="dest-no-result">No match — you can still type any city name</div>';
+            dropdown.style.display = 'block'; return;
+        }
+        dropdown.innerHTML = items.map(d =>
             `<div class="dest-search-item" data-value="${d.name}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
         ).join('');
         dropdown.style.display = 'block';
@@ -440,7 +716,6 @@ if(qp.get('dest')) calculate();
                 input.value = el.dataset.value;
                 clearBtn.style.display = 'inline';
                 hideDropdown();
-                onDestChange(el.dataset.value);
             });
         });
     }
@@ -455,7 +730,92 @@ if(qp.get('dest')) calculate();
         input.value = ''; clearBtn.style.display = 'none'; hideDropdown();
     });
     document.addEventListener('click', e => {
-        if (!e.target.closest('#destSearchWrap')) hideDropdown();
+        if (!e.target.closest('#srcSearchWrap')) hideDropdown();
+    });
+})();
+
+// ── Hotel search widget ───────────────────────────────────
+(function(){
+    const tok = sessionStorage.getItem('tripify_token');
+    const input = document.getElementById('hotelSearchInput');
+    const dropdown = document.getElementById('hotelSearchDropdown');
+    const clearBtn = document.getElementById('hotelSearchClear');
+    let timer;
+
+    function showNoDest() {
+        dropdown.innerHTML = '<div class="dest-no-result">📍 Please select a destination first</div>';
+        dropdown.style.display = 'block';
+    }
+
+    async function search(q) {
+        // Never search without a destination — this prevents cross-destination results
+        if (!selectedDestination || !selectedDestination.id) { showNoDest(); return; }
+        try {
+            const url = ENDPOINTS.HOTELS.SEARCH
+                + '?q=' + encodeURIComponent(q.trim())
+                + '&destinationId=' + selectedDestination.id;
+            const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + tok } });
+            if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
+            const data = await res.json();
+            showDropdown(Array.isArray(data) ? data : []);
+        } catch(e) { showDropdown([]); }
+    }
+
+    function showDropdown(items) {
+        if (!items.length) {
+            dropdown.innerHTML = `<div class="dest-no-result">🏨 This hotel is not found at <strong>${selectedDestination ? selectedDestination.name : 'this destination'}</strong></div>`;
+            dropdown.style.display = 'block'; return;
+        }
+        dropdown.innerHTML = items.map(h => {
+            const stars = h.stars ? '⭐'.repeat(h.stars) : '';
+            const price = h.pricePerNight ? 'Rs. ' + Number(h.pricePerNight).toLocaleString('en-PK') + '/night' : '';
+            return `<div class="dest-search-item hotel-search-item"
+                        data-id="${h.id}" data-name="${h.name}"
+                        data-price="${h.pricePerNight||0}" data-dest="${h.destinationName||''}"
+                        data-stars="${h.stars||0}" data-avail="${h.availableRooms||0}">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                            <span style="font-weight:600">${h.name}</span>
+                            <span class="hsrc-price">${price}</span>
+                        </div>
+                        <div style="margin-top:2px">
+                            <span class="hsrc-stars">${stars}</span>
+                            <span class="dsrc-city">📍 ${h.destinationName||''}</span>
+                        </div>
+                    </div>`;
+        }).join('');
+        dropdown.style.display = 'block';
+        dropdown.querySelectorAll('.dest-search-item').forEach(el => {
+            el.addEventListener('mousedown', e => {
+                e.preventDefault();
+                hideDropdown();
+                selectHotel({
+                    id:              parseInt(el.dataset.id),
+                    name:            el.dataset.name,
+                    pricePerNight:   parseFloat(el.dataset.price),
+                    destinationName: el.dataset.dest,
+                    stars:           parseInt(el.dataset.stars)||0,
+                    availableRooms:  parseInt(el.dataset.avail)||0
+                });
+            });
+        });
+    }
+
+    function hideDropdown() { dropdown.style.display = 'none'; }
+
+    input.addEventListener('focus', () => {
+        if (!selectedDestination) { showNoDest(); return; }
+        if (!selectedHotel) search(input.value);
+    });
+    input.addEventListener('input', e => {
+        clearBtn.style.display = e.target.value ? 'inline' : 'none';
+        if (selectedHotel) { clearHotel(); input.value = e.target.value; }
+        clearTimeout(timer);
+        if (!selectedDestination) { showNoDest(); return; }
+        timer = setTimeout(() => search(e.target.value), 300);
+    });
+    clearBtn.addEventListener('click', () => { clearHotel(); });
+    document.addEventListener('click', e => {
+        if (!e.target.closest('#hotelSearchWrap') && !e.target.closest('#hotelBadge')) hideDropdown();
     });
 })();
 </script>

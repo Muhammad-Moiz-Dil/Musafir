@@ -405,3 +405,32 @@ Never hardcode the Google Maps API key (or any API key) in HTML/JS frontend file
 
 ### Rule
 Always restart the backend (`mvn spring-boot:run` from `Backend/`) after adding new repository methods or changing controller logic — Spring Data JPA generates queries at startup, not at runtime.
+
+---
+
+## BUG-012 — Travel Guidelines destination search shows no results (JS syntax error)
+**Date:** 2026-03-25
+**File:** `Frontend/src/html/pages/user/travel-guidelines.html`
+**Status:** Fixed
+
+### Root Cause
+The `loadDestinations()` function (a no-op stub left over from an older implementation) had orphaned dead code: a `} catch (e) {` block after a bare `return;`. The closing `}` ended the function body, and the dangling `catch` keyword with no preceding `try` is a JavaScript syntax error. Since all code is in one `<script>` block, the parser rejected the entire block — meaning the search widget's `input` event listener was never attached and typing in the search field produced no results.
+
+### Fix Applied
+Removed the orphaned `} catch (e) { ... }` block, leaving `loadDestinations()` as a clean empty no-op function.
+
+### Rule
+Any leftover stub function must be syntactically valid. Orphaned `catch` blocks (no matching `try`) are silent killers — they fail the entire script block without a visible UI error.
+
+---
+
+## BUG-011 — Travel Guidelines nav item jumps position when page loads
+**Date:** 2026-03-25
+**File:** `Frontend/src/html/pages/user/travel-guidelines.html`
+**Status:** Fixed
+
+### Root Cause
+The sidebar nav in `travel-guidelines.html` had the three items in the wrong order: `souvenirs → seasonal-insights → travel-guidelines (active)`. Every other user page has them in the order `travel-guidelines → souvenirs → seasonal-insights`. So clicking "Travel Guidelines" from any other page appeared to shift the button two positions downward because the active item rendered in a different slot.
+
+### Fix Applied
+Reordered the three nav items in `travel-guidelines.html` to match all other pages: `travel-guidelines (active)` first, then `souvenirs`, then `seasonal-insights`.

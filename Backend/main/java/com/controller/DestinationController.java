@@ -79,6 +79,8 @@ public class DestinationController {
             m.put("imageUrl",      d.getImageUrl()      != null ? d.getImageUrl()      : "");
             m.put("averageRating", d.getAverageRating() != null ? d.getAverageRating().doubleValue() : 0.0);
             m.put("totalReviews",  d.getTotalReviews()  != null ? d.getTotalReviews()  : 0);
+            m.put("lat",           d.getLatitude());
+            m.put("lng",           d.getLongitude());
             return m;
         }).collect(Collectors.toList());
 

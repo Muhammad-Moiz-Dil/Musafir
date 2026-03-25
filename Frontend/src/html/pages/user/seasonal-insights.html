@@ -256,7 +256,7 @@ if (!TOKEN) { window.location.href = '../auth/login.html'; }
 // ── Chart instances (kept to destroy before re-render) ──
 let chartTemp    = null;
 let chartRain    = null;
-let chartPrice   = null;
+let chartScore   = null;
 let chartClimate = null;
 
 // ── Chart.js global defaults ───────────────────────────
@@ -270,7 +270,7 @@ Chart.defaults.plugins.legend.display = false;
 function destroyCharts() {
     if (chartTemp)    { chartTemp.destroy();    chartTemp    = null; }
     if (chartRain)    { chartRain.destroy();    chartRain    = null; }
-    if (chartPrice)   { chartPrice.destroy();   chartPrice   = null; }
+    if (chartScore)   { chartScore.destroy();   chartScore   = null; }
     if (chartClimate) { chartClimate.destroy(); chartClimate = null; }
 }
 
@@ -286,16 +286,24 @@ function renderInsights(data) {
     const labels   = data.months.map(m => m.monthName);
     const temps    = data.months.map(m => m.temperature   != null ? Number(m.temperature)   : null);
     const rains    = data.months.map(m => m.rainfall      != null ? Number(m.rainfall)      : null);
-    const prices   = data.months.map(m => m.averagePrice  != null ? Number(m.averagePrice)  : null);
 
     // Stats
     const validTemps  = temps.filter(v => v != null);
     const validRains  = rains.filter(v => v != null);
-    const validPrices = prices.filter(v => v != null);
 
     const avgTemp     = validTemps.length  ? (validTemps.reduce((a,b)=>a+b,0)  / validTemps.length).toFixed(1)  : '—';
     const maxRain     = validRains.length  ? Math.max(...validRains).toFixed(1) : '—';
-    const minPrice    = validPrices.length ? Math.min(...validPrices).toLocaleString() : '—';
+
+    // Travel Comfort Score per month (0–100)
+    // Temp comfort: peak at 22°C, falls off linearly. Rainfall penalty: higher rain = lower score.
+    const peakRain = validRains.length ? Math.max(...validRains) : 1;
+    const scores = data.months.map((m, i) => {
+        const t = temps[i], r = rains[i];
+        if (t == null && r == null) return null;
+        const tempScore = t != null ? Math.max(0, 100 - Math.abs(t - 22) * 3.5) : 50;
+        const rainScore = r != null ? Math.max(0, 100 - (r / (peakRain || 1)) * 100) : 50;
+        return Math.round(tempScore * 0.45 + rainScore * 0.55);
+    });
 
     // Best month = lowest rainfall + warm enough
     let bestIdx = 0;
@@ -328,10 +336,6 @@ function renderInsights(data) {
                 <div class="stat-value rain">${maxRain} mm</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Lowest Hotel Cost</div>
-                <div class="stat-value price">PKR ${minPrice}</div>
-            </div>
-            <div class="stat-card">
                 <div class="stat-label">Data Points</div>
                 <div class="stat-value" style="color:var(--white)">${data.months.length} months</div>
             </div>
@@ -361,13 +365,13 @@ function renderInsights(data) {
             </div>
             <div class="chart-card">
                 <div class="chart-card-header">
-                    <div class="chart-card-icon price">💰</div>
+                    <div class="chart-card-icon" style="background:rgba(167,139,250,0.15)">⭐</div>
                     <div>
-                        <div class="chart-card-title">Average Hotel Cost</div>
-                        <div class="chart-card-sub">PKR per month</div>
+                        <div class="chart-card-title">Travel Comfort Score</div>
+                        <div class="chart-card-sub">Best months to visit (0–100)</div>
                     </div>
                 </div>
-                <div class="chart-wrap"><canvas id="chartPrice"></canvas></div>
+                <div class="chart-wrap"><canvas id="chartScore"></canvas></div>
             </div>
             <div class="chart-card">
                 <div class="chart-card-header">
@@ -422,22 +426,48 @@ function renderInsights(data) {
         options: chartOptions('mm')
     });
 
-    // ── Average price — bar chart ──
-    const ctxP = document.getElementById('chartPrice').getContext('2d');
-    chartPrice = new Chart(ctxP, {
+    // ── Travel Comfort Score — horizontal bar chart ──
+    const ctxS = document.getElementById('chartScore').getContext('2d');
+    chartScore = new Chart(ctxS, {
         type: 'bar',
         data: {
             labels,
             datasets: [{
-                data: prices,
-                backgroundColor: 'rgba(52,211,153,0.45)',
-                borderColor: '#34d399',
+                data: scores,
+                backgroundColor: scores.map(s =>
+                    s == null ? 'rgba(255,255,255,0.1)' :
+                    s >= 70   ? 'rgba(52,211,153,0.7)'  :
+                    s >= 40   ? 'rgba(251,191,36,0.7)'  :
+                                'rgba(239,68,68,0.6)'
+                ),
+                borderColor: scores.map(s =>
+                    s == null ? 'transparent' :
+                    s >= 70   ? '#34d399' :
+                    s >= 40   ? '#fbbf24' :
+                                '#ef4444'
+                ),
                 borderWidth: 1.5,
                 borderRadius: 5,
                 spanGaps: true,
             }]
         },
-        options: chartOptions('PKR', true)
+        options: {
+            ...chartOptions('%'),
+            plugins: {
+                ...chartOptions('%').plugins,
+                tooltip: {
+                    ...chartOptions('%').plugins?.tooltip,
+                    callbacks: {
+                        label: ctx => {
+                            const v = ctx.parsed.y;
+                            if (v == null) return 'No data';
+                            const label = v >= 70 ? '🟢 Great' : v >= 40 ? '🟡 Moderate' : '🔴 Poor';
+                            return `Score: ${v}/100 — ${label}`;
+                        }
+                    }
+                }
+            }
+        }
     });
 
     // ── Climate Overview — dual-axis (temp line + rainfall bars) ──

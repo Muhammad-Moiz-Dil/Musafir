@@ -376,7 +376,11 @@ const SOUVENIR_IMG = {
     'emerald':       '../../../../public/assets/images/emeralds.png',
 };
 function getSouvenirImg(s) {
-    if (s.imageUrl) return s.imageUrl;
+    if (s.imageUrl) {
+        return s.imageUrl.startsWith('/uploads/')
+            ? API_CONFIG.BASE_URL.replace('/api', '') + s.imageUrl
+            : s.imageUrl;
+    }
     return SOUVENIR_IMG[(s.name || '').toLowerCase()] || null;
 }
 

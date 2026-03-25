@@ -13,4 +13,8 @@ public interface SeasonalDataRepository extends JpaRepository<SeasonalData, Inte
 
     @Query("SELECT s FROM SeasonalData s WHERE s.destination.name = :destination ORDER BY s.month ASC")
     List<SeasonalData> findByDestination(@Param("destination") String destination);
+
+    List<SeasonalData> findByDestinationDestinationIdOrderByMonthAsc(Integer destinationId);
+
+    java.util.Optional<SeasonalData> findByDestinationDestinationIdAndMonth(Integer destinationId, Integer month);
 }

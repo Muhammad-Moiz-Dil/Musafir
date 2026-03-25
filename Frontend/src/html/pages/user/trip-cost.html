@@ -192,15 +192,10 @@
 
             <!-- Source location -->
             <div class="form-group">
-                <label class="form-label">🚀 Starting Location</label>
-                <div class="dest-search-wrap" id="srcSearchWrap">
-                    <div class="dest-search-input-row">
-                        <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="3"/><line x1="12" y1="8" x2="12" y2="21"/></svg>
-                        <input type="text" id="srcSearchInput" class="dest-search-input" placeholder="e.g. Islamabad, Lahore, Karachi…" autocomplete="off" oninput="clearError('src')">
-                        <button type="button" class="dest-search-clear" id="srcSearchClear">✕</button>
-                    </div>
-                    <div class="dest-search-dropdown" id="srcSearchDropdown"></div>
-                </div>
+                <label class="form-label">🚀 Starting City</label>
+                <select class="form-select" id="srcCity" onchange="onSrcChange()">
+                    <option value="">— Select your starting city —</option>
+                </select>
                 <span class="field-error" id="srcErr"></span>
             </div>
 
@@ -228,9 +223,14 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">📏 One-Way Distance (km)</label>
-                <input type="number" class="form-input" id="dist" min="1" max="5000" value="250" placeholder="e.g. 250" oninput="clearError('dist')">
+                <label class="form-label">📏 One-Way Distance (km) <span id="distAutoNote" style="font-size:11px;color:var(--t2);font-weight:400"></span></label>
+                <input type="number" class="form-input" id="dist" min="1" max="5000" placeholder="Select source &amp; destination to auto-calculate" oninput="clearError('dist');document.getElementById('distAutoNote').textContent=''">
                 <span class="field-error" id="distErr"></span>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">⛽ Petrol Price (Rs./litre)</label>
+                <input type="number" class="form-input" id="petrolPrice" min="100" max="1000" value="295" placeholder="e.g. 295">
             </div>
 
             <div class="form-group">
@@ -323,21 +323,80 @@
 // ── Selected hotel / room state ───────────────────────────
 let selectedHotel       = null;  // { id, name, pricePerNight, destinationName, stars }
 let selectedRoomType    = null;  // { roomTypeId, typeName, pricePerNight, capacity }
-let selectedDestination = null;  // { id, name } — set when user picks a destination
+let selectedDestination = null;  // { id, name, lat, lng }
+let selectedSource      = null;  // { name, lat, lng }
 
-// ── Destination → default distance map ───────────────────
-const DEST_DIST = {
-    'Hunza Valley':500,'Murree':50,'Swat Valley':340,'Skardu':620,
-    'Naran Kaghan':250,'Lahore':380,'Islamabad':10,
-    'Fairy Meadows':550,'Mohenjo Daro':1200,'Cholistan Desert':700
-};
+// ── Major Pakistani cities with coordinates ───────────────
+const PAKISTAN_CITIES = [
+    { name: 'Islamabad',   lat: 33.6844, lng: 73.0479 },
+    { name: 'Rawalpindi',  lat: 33.5651, lng: 73.0169 },
+    { name: 'Lahore',      lat: 31.5204, lng: 74.3587 },
+    { name: 'Karachi',     lat: 24.8607, lng: 67.0011 },
+    { name: 'Peshawar',    lat: 34.0150, lng: 71.5249 },
+    { name: 'Quetta',      lat: 30.1798, lng: 66.9750 },
+    { name: 'Multan',      lat: 30.1575, lng: 71.5249 },
+    { name: 'Faisalabad',  lat: 31.4504, lng: 73.1350 },
+    { name: 'Hyderabad',   lat: 25.3960, lng: 68.3578 },
+    { name: 'Sialkot',     lat: 32.4927, lng: 74.5317 },
+    { name: 'Gujranwala',  lat: 32.1877, lng: 74.1945 },
+    { name: 'Abbottabad',  lat: 34.1466, lng: 73.2117 },
+    { name: 'Sukkur',      lat: 27.7052, lng: 68.8574 },
+    { name: 'Bahawalpur',  lat: 29.3956, lng: 71.6836 },
+    { name: 'Gilgit',      lat: 35.9208, lng: 74.3082 },
+];
 
-function onDestChange(dest, destId){
-    selectedDestination = (dest && destId) ? { id: destId, name: dest } : null;
-    if(dest && DEST_DIST[dest]){
-        document.getElementById('dist').value = DEST_DIST[dest];
+// Populate source city dropdown
+(function(){
+    const sel = document.getElementById('srcCity');
+    PAKISTAN_CITIES.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.dataset.lat = c.lat;
+        opt.dataset.lng = c.lng;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+    });
+})();
+
+// ── Haversine distance (km) × 1.3 road factor ────────────
+function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1.3);
+}
+
+// ── Auto-fill distance when both source + dest have coords ─
+function tryAutoCalcDist() {
+    if (selectedSource && selectedSource.lat &&
+        selectedDestination && selectedDestination.lat) {
+        const km = haversineKm(selectedSource.lat, selectedSource.lng,
+                               selectedDestination.lat, selectedDestination.lng);
+        document.getElementById('dist').value = km;
+        document.getElementById('distAutoNote').textContent = '— auto-calculated';
         clearError('dist');
     }
+}
+
+// ── Source city change handler ────────────────────────────
+function onSrcChange() {
+    const sel = document.getElementById('srcCity');
+    const opt = sel.options[sel.selectedIndex];
+    if (sel.value && opt.dataset.lat) {
+        selectedSource = { name: sel.value, lat: parseFloat(opt.dataset.lat), lng: parseFloat(opt.dataset.lng) };
+    } else {
+        selectedSource = null;
+    }
+    clearError('src');
+    tryAutoCalcDist();
+}
+
+function onDestChange(dest, destId, lat, lng){
+    selectedDestination = (dest && destId) ? { id: destId, name: dest, lat: lat||null, lng: lng||null } : null;
+    tryAutoCalcDist();
     // If a hotel was already selected but is not at this destination, clear it
     if(selectedHotel && selectedDestination && selectedHotel.destinationName !== selectedDestination.name){
         clearHotel();
@@ -456,9 +515,9 @@ function validate(){
     const travelers= parseInt(document.getElementById('travelers').value);
     const nights   = parseInt(document.getElementById('nights').value);
 
-    if(!document.getElementById('srcSearchInput').value.trim()){
-        document.getElementById('srcErr').textContent='Starting location is required.';
-        document.getElementById('srcSearchInput').classList.add('invalid');
+    if(!document.getElementById('srcCity').value){
+        document.getElementById('srcErr').textContent='Please select your starting city.';
+        document.getElementById('srcCity').classList.add('invalid');
         ok=false;
     }
     if(!document.getElementById('dist').value.trim() || isNaN(dist) || dist < 1 || dist > 5000){
@@ -494,17 +553,20 @@ function validate(){
     return ok;
 }
 
-async function applyPreset(src, dest, dist, travelers, nights){
-    const srcIn = document.getElementById('srcSearchInput');
-    if(srcIn){ srcIn.value = src; document.getElementById('srcSearchClear').style.display='inline'; }
-    const si = document.getElementById('destSearchInput');
-    if(si){ si.value = dest; document.getElementById('destSearchClear').style.display='inline'; }
-    document.getElementById('dist').value      = dist;
+async function applyPreset(src, dest, distFallback, travelers, nights){
+    // Set source dropdown
+    const srcSel = document.getElementById('srcCity');
+    if(srcSel){ srcSel.value = src; onSrcChange(); }
+
+    // Set destination input
+    const destIn = document.getElementById('destSearchInput');
+    if(destIn){ destIn.value = dest; document.getElementById('destSearchClear').style.display='inline'; }
+
     document.getElementById('travelers').value = travelers;
     document.getElementById('nights').value    = nights;
-    ['dist','travelers','nights'].forEach(id=>{ clearError(id); });
+    ['travelers','nights'].forEach(id=>{ clearError(id); });
 
-    // Look up destination ID so hotel search is properly scoped
+    // Look up destination to get id + lat/lng
     try {
         const tok = sessionStorage.getItem('tripify_token');
         const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(dest), {
@@ -514,10 +576,16 @@ async function applyPreset(src, dest, dist, travelers, nights){
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0) {
                 const match = data.find(d => d.name === dest) || data[0];
-                onDestChange(match.name, match.id);
+                onDestChange(match.name, match.id, match.lat, match.lng);
             }
         }
-    } catch(e) { /* non-critical — preset still fills fields */ }
+    } catch(e) { /* non-critical */ }
+
+    // If auto-calc didn't produce a distance, use fallback
+    if (!document.getElementById('dist').value) {
+        document.getElementById('dist').value = distFallback;
+        clearError('dist');
+    }
 
     calculate();
 }
@@ -536,10 +604,10 @@ function calculate(){
         const mealPref  = document.getElementById('mealPref').value;
 
         const mealRate    = {local:400, mid:800, restaurant:1500}[mealPref];
-        const petrolPrice = 295; // PKR per litre
+        const petrolPrice = Math.max(100, parseInt(document.getElementById('petrolPrice').value) || 295);
 
         // Source / destination labels for display
-        const srcLabel  = document.getElementById('srcSearchInput').value.trim() || 'Origin';
+        const srcLabel  = document.getElementById('srcCity').value || 'Origin';
         const destLabel = document.getElementById('destSearchInput').value.trim() || 'Destination';
 
         let fuelCost = 0;
@@ -651,7 +719,7 @@ if(qp.get('dest')) calculate();
             dropdown.style.display = 'block'; return;
         }
         dropdown.innerHTML = items.map(d =>
-            `<div class="dest-search-item" data-value="${d.name}" data-id="${d.id}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
+            `<div class="dest-search-item" data-value="${d.name}" data-id="${d.id}" data-lat="${d.lat||''}" data-lng="${d.lng||''}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
         ).join('');
         dropdown.style.display = 'block';
         dropdown.querySelectorAll('.dest-search-item').forEach(el => {
@@ -660,7 +728,8 @@ if(qp.get('dest')) calculate();
                 input.value = el.dataset.value;
                 clearBtn.style.display = 'inline';
                 hideDropdown();
-                onDestChange(el.dataset.value, parseInt(el.dataset.id));
+                onDestChange(el.dataset.value, parseInt(el.dataset.id),
+                             parseFloat(el.dataset.lat)||null, parseFloat(el.dataset.lng)||null);
             });
         });
     }
@@ -684,55 +753,6 @@ if(qp.get('dest')) calculate();
     });
 })();
 
-// ── Source search widget (destinations autocomplete) ──────
-(function(){
-    const tok = sessionStorage.getItem('tripify_token');
-    const input = document.getElementById('srcSearchInput');
-    const dropdown = document.getElementById('srcSearchDropdown');
-    const clearBtn = document.getElementById('srcSearchClear');
-    let timer;
-    async function search(q) {
-        try {
-            const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(q.trim()), {
-                headers: { 'Authorization': 'Bearer ' + tok }
-            });
-            if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
-            const data = await res.json();
-            showDropdown(Array.isArray(data) ? data : []);
-        } catch(e) { showDropdown([]); }
-    }
-    function showDropdown(items) {
-        if (!items.length) {
-            dropdown.innerHTML = '<div class="dest-no-result">No match — you can still type any city name</div>';
-            dropdown.style.display = 'block'; return;
-        }
-        dropdown.innerHTML = items.map(d =>
-            `<div class="dest-search-item" data-value="${d.name}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
-        ).join('');
-        dropdown.style.display = 'block';
-        dropdown.querySelectorAll('.dest-search-item').forEach(el => {
-            el.addEventListener('mousedown', e => {
-                e.preventDefault();
-                input.value = el.dataset.value;
-                clearBtn.style.display = 'inline';
-                hideDropdown();
-            });
-        });
-    }
-    function hideDropdown() { dropdown.style.display = 'none'; }
-    input.addEventListener('input', e => {
-        clearBtn.style.display = e.target.value ? 'inline' : 'none';
-        clearTimeout(timer);
-        if (!e.target.value.trim()) { hideDropdown(); return; }
-        timer = setTimeout(() => search(e.target.value), 300);
-    });
-    clearBtn.addEventListener('click', () => {
-        input.value = ''; clearBtn.style.display = 'none'; hideDropdown();
-    });
-    document.addEventListener('click', e => {
-        if (!e.target.closest('#srcSearchWrap')) hideDropdown();
-    });
-})();
 
 // ── Hotel search widget ───────────────────────────────────
 (function(){

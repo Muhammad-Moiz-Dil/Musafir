@@ -247,6 +247,8 @@ CREATE TABLE Trips (
     user_id    INT          NOT NULL,
     title      VARCHAR(255) NOT NULL,
     status     ENUM('PLANNED','COMPLETED') NOT NULL DEFAULT 'PLANNED',
+    start_date DATE NULL,
+    end_date   DATE NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE
 );
@@ -910,3 +912,5 @@ UPDATE Destinations SET image_url = 'peshawer.jpg'     WHERE name = 'Peshawar';
 UPDATE Destinations SET image_url = 'kasmir.jpeg'      WHERE name LIKE '%Kashmir%';
 UPDATE Destinations SET image_url = 'karachi.webp'     WHERE name = 'Karachi';
 UPDATE Destinations SET image_url = 'gawadar.jpeg'     WHERE name LIKE '%Gwadar%';
+
+ALTER TABLE Trips ADD COLUMN start_date DATE NULL, ADD COLUMN end_date DATE NULL;

@@ -379,6 +379,8 @@
             <input type="text" id="tripTitle" class="create-trip-input"
                    placeholder="Trip name (e.g. Hunza Summer 2026)"
                    maxlength="255" autocomplete="off">
+            <input type="date" id="tripStartDate" class="create-trip-input" style="max-width:160px" title="Start date">
+            <input type="date" id="tripEndDate"   class="create-trip-input" style="max-width:160px" title="End date">
             <button class="btn btn-primary" id="createTripBtn">Create Trip</button>
         </div>
         <div class="create-trip-err" id="tripTitleErr"></div>
@@ -466,7 +468,8 @@ const IMG_MAP  = {
 // ── Init ────────────────────────────────────────────────────
 async function init() {
     applyUserProfile(USER);
-    await Promise.all([loadTrips(), loadAllDestinations()]);
+    await loadAllDestinations();
+    await loadTrips();
     setupCreateTrip();
     setupModal();
     setupSidebar();
@@ -526,7 +529,14 @@ function renderTrips(filter) {
 
 function renderTripCard(trip) {
     const isCompleted = trip.status === 'COMPLETED';
-    const date = trip.createdAt ? new Date(trip.createdAt).toLocaleDateString('en-PK', { day:'numeric', month:'short', year:'numeric' }) : '';
+    const fmt = d => d ? new Date(d).toLocaleDateString('en-PK', { day:'numeric', month:'short', year:'numeric' }) : null;
+    const startFmt = fmt(trip.startDate);
+    const endFmt   = fmt(trip.endDate);
+    const dateLabel = startFmt && endFmt ? `${startFmt} → ${endFmt}`
+                    : startFmt           ? `From ${startFmt}`
+                    : endFmt             ? `Until ${endFmt}`
+                    : trip.createdAt     ? `Created ${fmt(trip.createdAt)}` : '';
+    const date = dateLabel;
 
     const destsHtml = trip.destinations && trip.destinations.length > 0
         ? trip.destinations.map((d, i) => renderDestRow(trip, d, i + 1, isCompleted)).join('')
@@ -556,7 +566,7 @@ function renderTripCard(trip) {
         <div class="trip-card-header">
             <div class="trip-title-block">
                 <div class="trip-title">${escHtml(trip.title)}</div>
-                <div class="trip-date">Created ${date}</div>
+                <div class="trip-date">${escHtml(date)}</div>
             </div>
             <span class="trip-badge ${isCompleted ? 'badge-completed' : 'badge-planned'}">${isCompleted ? 'Completed' : 'Planned'}</span>
         </div>
@@ -613,17 +623,36 @@ function setupCreateTrip() {
     input.addEventListener('input', () => { errEl.textContent = ''; input.classList.remove('is-error'); });
     input.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
 
+    const startDateEl = document.getElementById('tripStartDate');
+    const endDateEl   = document.getElementById('tripEndDate');
+    startDateEl.addEventListener('change', () => {
+        endDateEl.min = startDateEl.value || '';
+        if (endDateEl.value && endDateEl.value < startDateEl.value) {
+            endDateEl.value = '';
+        }
+    });
+
     btn.addEventListener('click', async () => {
         if (!validateTitle(input, errEl)) return;
         if (btn.disabled) return;
 
+        const startVal = document.getElementById('tripStartDate').value;
+        const endVal   = document.getElementById('tripEndDate').value;
+        if (startVal && endVal && endVal < startVal) {
+            errEl.textContent = 'End date cannot be before start date.';
+            return;
+        }
+
         btn.disabled = true;
         btn.textContent = 'Creating…';
         try {
+            const body = { title: input.value.trim() };
+            if (startVal) body.startDate = startVal;
+            if (endVal)   body.endDate   = endVal;
             const res = await fetch(ENDPOINTS.TRIPS.CREATE, {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: input.value.trim() })
+                body: JSON.stringify(body)
             });
             const data = await res.json().catch(() => ({}));
             if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
@@ -633,6 +662,8 @@ function setupCreateTrip() {
                 return;
             }
             input.value = '';
+            document.getElementById('tripStartDate').value = '';
+            document.getElementById('tripEndDate').value   = '';
             showToast('🗺️', 'Trip created!');
             await loadTrips();
         } catch (e) {
@@ -664,52 +695,49 @@ const _selectedDestId = {};
 
 // ── Init search widget for a trip ───────────────────────────
 function initTripDestSearch(tripId) {
-    const input = document.getElementById('addSearchInput-' + tripId);
+    const input    = document.getElementById('addSearchInput-'    + tripId);
     const dropdown = document.getElementById('addSearchDropdown-' + tripId);
-    const clearBtn = document.getElementById('addSearchClear-' + tripId);
+    const clearBtn = document.getElementById('addSearchClear-'    + tripId);
     if (!input) return;
-    let timer;
-    async function search(q) {
-        try {
-            const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(q.trim()), {
-                headers: { 'Authorization': 'Bearer ' + TOKEN }
-            });
-            if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
-            const data = await res.json();
-            const items = Array.isArray(data) ? data : [];
-            // Filter out already-added destinations
-            const trip = allTrips.find(t => t.tripId === tripId);
-            const inTrip = new Set((trip && trip.destinations || []).map(d => String(d.destinationId)));
-            showDropdown(items.filter(d => !inTrip.has(String(d.id))));
-        } catch(e) { showDropdown([]); }
+
+    function getFiltered(q) {
+        const trip   = trips.find(t => t.tripId === tripId);
+        const inTrip = new Set((trip && trip.destinations || []).map(d => d.destinationId));
+        const lower  = (q || '').trim().toLowerCase();
+        return allDestinations.filter(d =>
+            !inTrip.has(d.id) &&
+            (!lower || d.name.toLowerCase().includes(lower) || (d.city || '').toLowerCase().includes(lower))
+        );
     }
+
     function showDropdown(items) {
         if (!items.length) {
             dropdown.innerHTML = '<div class="dest-no-result">🔍 No destination found</div>';
-            dropdown.style.display = 'block'; return;
-        }
-        dropdown.innerHTML = items.map(d =>
-            `<div class="dest-search-item" data-id="${d.id}" data-name="${d.name}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
-        ).join('');
-        dropdown.style.display = 'block';
-        dropdown.querySelectorAll('.dest-search-item').forEach(el => {
-            el.addEventListener('mousedown', e => {
-                e.preventDefault();
-                input.value = el.dataset.name;
-                clearBtn.style.display = 'inline';
-                _selectedDestId[tripId] = el.dataset.id;
-                document.getElementById('addErr-' + tripId).textContent = '';
-                hideDropdown();
+        } else {
+            dropdown.innerHTML = items.map(d =>
+                `<div class="dest-search-item" data-id="${d.id}" data-name="${escHtml(d.name)}">${escHtml(d.name)}${d.city ? ` <span class="dsrc-city">— ${escHtml(d.city)}</span>` : ''}</div>`
+            ).join('');
+            dropdown.querySelectorAll('.dest-search-item').forEach(el => {
+                el.addEventListener('mousedown', e => {
+                    e.preventDefault();
+                    input.value = el.dataset.name;
+                    clearBtn.style.display = 'inline';
+                    _selectedDestId[tripId] = el.dataset.id;
+                    document.getElementById('addErr-' + tripId).textContent = '';
+                    hideDropdown();
+                });
             });
-        });
+        }
+        dropdown.style.display = 'block';
     }
+
     function hideDropdown() { dropdown.style.display = 'none'; }
+
+    input.addEventListener('focus', () => showDropdown(getFiltered(input.value)));
     input.addEventListener('input', e => {
         clearBtn.style.display = e.target.value ? 'inline' : 'none';
         _selectedDestId[tripId] = null;
-        clearTimeout(timer);
-        if (!e.target.value.trim()) { hideDropdown(); return; }
-        timer = setTimeout(() => search(e.target.value), 300);
+        showDropdown(getFiltered(e.target.value));
     });
     clearBtn.addEventListener('click', () => {
         input.value = ''; clearBtn.style.display = 'none'; hideDropdown();
@@ -726,7 +754,7 @@ async function addDestination(tripId) {
     errEl.textContent = '';
 
     const destId = _selectedDestId[tripId];
-    if (!destId) { errEl.textContent = 'Please search and select a destination.'; return; }
+    if (!destId) return;
 
     const input = document.getElementById('addSearchInput-' + tripId);
     const addBtn = input ? input.closest('.add-dest-row').querySelector('.btn') : null;

@@ -650,7 +650,7 @@ tbody tr:hover { background: #F8FAFC; }
         <a href="admin-moderation.html" class="nav-item">
             <span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>
             <span>Moderation</span>
-            <span class="nav-badge">5</span>
+            <span class="nav-badge" id="moderationBadge" style="display:none"></span>
         </a>
         <div class="nav-divider"></div>
         <a href="admin-settings.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
@@ -670,10 +670,7 @@ tbody tr:hover { background: #F8FAFC; }
         <span class="breadcrumb-cur" id="breadcrumbCur">Dashboard</span>
     </div>
     <div class="topbar-actions">
-        <button class="topbar-btn" title="Settings">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 0 1 21 12a10 10 0 0 1-2.93 7.07"/></svg>
-        </button>
-        <div class="topbar-avatar" id="topbarInitials" title="Admin Profile">SA</div>
+<div class="topbar-avatar" id="topbarInitials" title="Admin Profile">SA</div>
     </div>
 </header>
 
@@ -1188,6 +1185,8 @@ window.resolveFlag = async function(flagId) {
 };
 
 loadDashboard();
+
+(async function(){try{const r=await fetch(ENDPOINTS.ADMIN.FLAGS_COUNT,{headers:{Authorization:'Bearer '+token}});if(!r.ok)return;const {count}=await r.json();const b=document.getElementById('moderationBadge');if(b){if(count>0){b.textContent=count;b.style.display='';}else b.style.display='none';}}catch(e){}})();
 
 })();
 </script>

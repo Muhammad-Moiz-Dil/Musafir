@@ -49,7 +49,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
     <a href="admin-bookings.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span>Bookings</span></a>
     <span class="nav-label">Insights</span>
     <a href="admin-analytics.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>Statistics</span></a>
-    <a href="admin-moderation.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Moderation</span><span class="nav-badge">5</span></a>
+    <a href="admin-moderation.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Moderation</span><span class="nav-badge" id="moderationBadge" style="display:none"></span></a>
     <div class="nav-divider"></div>
     <a href="admin-settings.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>System Settings</span></a>
   </nav>
@@ -143,6 +143,15 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
           <div class="form-group">
             <label for="editDescription">Description</label>
             <textarea id="editDescription" placeholder="Describe the hotel — location highlights, unique features, atmosphere…" maxlength="1000"></textarea>
+          </div>
+        </div>
+        <div class="form-row single">
+          <div class="form-group">
+            <label for="editManager">Hotel Manager</label>
+            <select id="editManager">
+              <option value="">— Unassigned —</option>
+            </select>
+            <span class="field-err" id="editManagerError"></span>
           </div>
         </div>
         <div class="form-row single">
@@ -383,7 +392,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   });
 
   // ── Edit modal ─────────────────────────────────────
-  window.openEditModal = function(hotelId){
+  window.openEditModal = async function(hotelId){
     const h = allHotels.find(x=>x.id===hotelId);
     if (!h) return;
     editingId = hotelId;
@@ -395,6 +404,22 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
     document.getElementById('editDescription').value    = h.description || '';
     document.getElementById('editIsActive').value       = h.isActive ? 'true' : 'false';
     clearErrors();
+
+    // Load managers into dropdown
+    const mgrSel = document.getElementById('editManager');
+    mgrSel.innerHTML = '<option value="">Loading…</option>';
+    try {
+      const res = await fetch(ENDPOINTS.HOTELS.MANAGERS, { headers:{'Authorization':'Bearer '+token} });
+      if (res.ok) {
+        const managers = await res.json();
+        mgrSel.innerHTML = '<option value="">— Unassigned —</option>' +
+          managers.map(m=>`<option value="${m.id}">${esc(m.fullName)}</option>`).join('');
+      } else {
+        mgrSel.innerHTML = '<option value="">— Unable to load —</option>';
+      }
+    } catch { mgrSel.innerHTML = '<option value="">— Unable to load —</option>'; }
+    mgrSel.value = h.managerId != null ? String(h.managerId) : '';
+
     document.getElementById('editModalOverlay').classList.add('show');
     document.getElementById('editHotelName').focus();
   };
@@ -438,6 +463,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
     const btn = document.getElementById('updateBtn');
     btn.disabled = true; btn.textContent = 'Updating...';
     try {
+      const mgrVal = document.getElementById('editManager').value;
       const payload = {
         name:           document.getElementById('editHotelName').value.trim(),
         pricePerNight:  parseFloat(document.getElementById('editPricePerNight').value),
@@ -445,7 +471,8 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
         totalRooms:     parseInt(document.getElementById('editTotalRooms').value),
         availableRooms: parseInt(document.getElementById('editAvailableRooms').value),
         description:    document.getElementById('editDescription').value.trim() || null,
-        isActive:       document.getElementById('editIsActive').value === 'true'
+        isActive:       document.getElementById('editIsActive').value === 'true',
+        managerId:      mgrVal ? parseInt(mgrVal) : null
       };
       const res = await fetch(ENDPOINTS.HOTELS.UPDATE(editingId), {
         method:'PUT',
@@ -648,6 +675,7 @@ html{scroll-behavior:smooth}body{font-family:var(--font);background:var(--bg);co
   });
 
   loadHotels();
+  (async function(){try{const r=await fetch(ENDPOINTS.ADMIN.FLAGS_COUNT,{headers:{Authorization:'Bearer '+token}});if(!r.ok)return;const {count}=await r.json();const b=document.getElementById('moderationBadge');if(b){if(count>0){b.textContent=count;b.style.display='';}else b.style.display='none';}}catch(e){}})();
 })();
 </script>
 </body>

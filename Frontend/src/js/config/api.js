@@ -51,7 +51,8 @@ const ENDPOINTS = {
         BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/souvenirs/${id}`,
     },
     SEASONAL: {
-        BY_DESTINATION: (name) => `${API_CONFIG.BASE_URL}/seasonal-data/${encodeURIComponent(name)}`,
+        BY_DESTINATION:    (name) => `${API_CONFIG.BASE_URL}/seasonal-data/${encodeURIComponent(name)}`,
+        ADMIN_BY_DEST_ID:  (id)   => `${API_CONFIG.BASE_URL}/seasonal-data/admin/${id}`,
     },
     EMERGENCY: {
         BY_DESTINATION: (id) => `${API_CONFIG.BASE_URL}/emergency/${id}`,

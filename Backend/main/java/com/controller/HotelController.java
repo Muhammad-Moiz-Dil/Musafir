@@ -65,18 +65,20 @@ public class HotelController {
             hotels = hotelRepo.findByHotelNameContainingIgnoreCaseAndIsActiveTrue(q.trim());
         }
 
-        List<Map<String, Object>> result = hotels.stream().map(h -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("id",              h.getHotelId());
-            m.put("name",            h.getHotelName());
-            m.put("stars",           h.getStarRating());
-            m.put("pricePerNight",   h.getPricePerNight());
-            m.put("availableRooms",  h.getAvailableRooms());
-            String destName = destRepo.findById(h.getDestinationId())
-                .map(d -> d.getName()).orElse("Unknown");
-            m.put("destinationName", destName);
-            return m;
-        }).toList();
+        List<Map<String, Object>> result = hotels.stream()
+            .filter(h -> h.getManagerId() != null)
+            .map(h -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",              h.getHotelId());
+                m.put("name",            h.getHotelName());
+                m.put("stars",           h.getStarRating());
+                m.put("pricePerNight",   h.getPricePerNight());
+                m.put("availableRooms",  h.getAvailableRooms());
+                String destName = destRepo.findById(h.getDestinationId())
+                    .map(d -> d.getName()).orElse("Unknown");
+                m.put("destinationName", destName);
+                return m;
+            }).toList();
         return ResponseEntity.ok(result);
     }
 
@@ -224,10 +226,10 @@ public class HotelController {
         return ResponseEntity.ok(result);
     }
 
-    /** GET /api/hotels — list all active hotels */
+    /** GET /api/hotels — list all active hotels that have an assigned manager */
     @GetMapping
     public ResponseEntity<?> getAllHotels() {
-        List<Hotel> hotels = hotelRepo.findByIsActiveTrueOrderByStarRatingDesc();
+        List<Hotel> hotels = hotelRepo.findByIsActiveTrueAndManagerIdIsNotNullOrderByStarRatingDesc();
         List<Map<String, Object>> result = new ArrayList<>();
 
         for (Hotel h : hotels) {
@@ -288,6 +290,7 @@ public class HotelController {
                 managerName = userRepo.findById(h.getManagerId())
                     .map(u -> u.getFullName()).orElse("Unknown");
             }
+            m.put("managerId",   h.getManagerId());
             m.put("managerName", managerName);
             result.add(m);
         }
@@ -336,6 +339,22 @@ public class HotelController {
         }
         if (body.containsKey("isActive")) {
             hotel.setIsActive(Boolean.parseBoolean(body.get("isActive").toString()));
+        }
+        if (body.containsKey("managerId")) {
+            Object mgrIdObj = body.get("managerId");
+            if (mgrIdObj == null || mgrIdObj.toString().isBlank()) {
+                hotel.setManagerId(null);
+            } else {
+                try {
+                    int managerId = Integer.parseInt(mgrIdObj.toString());
+                    User manager = userRepo.findById(managerId).orElse(null);
+                    if (manager == null || manager.getUserType() != User.UserType.HotelManager)
+                        return ResponseEntity.badRequest().body(Map.of("message", "Invalid hotel manager selected"));
+                    hotel.setManagerId(managerId);
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body(Map.of("message", "Invalid manager ID"));
+                }
+            }
         }
         if (body.containsKey("description")) {
             hotel.setDescription(body.get("description") != null ? body.get("description").toString().trim() : null);

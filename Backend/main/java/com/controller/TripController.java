@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import java.time.LocalDate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -66,6 +67,8 @@ public class TripController {
             tripMap.put("tripId",    trip.getTripId());
             tripMap.put("title",     trip.getTitle());
             tripMap.put("status",    trip.getStatus().name());
+            tripMap.put("startDate", trip.getStartDate());
+            tripMap.put("endDate",   trip.getEndDate());
             tripMap.put("createdAt", trip.getCreatedAt());
 
             List<TripDestination> tripDests = tripDestRepo.findByTripIdOrderByVisitOrder(trip.getTripId());
@@ -114,6 +117,20 @@ public class TripController {
         Trip trip = new Trip();
         trip.setUserId(user.getUserId());
         trip.setTitle(title.trim());
+
+        String startStr = body.get("startDate");
+        String endStr   = body.get("endDate");
+        try {
+            if (startStr != null && !startStr.isBlank()) trip.setStartDate(LocalDate.parse(startStr));
+            if (endStr   != null && !endStr.isBlank())   trip.setEndDate(LocalDate.parse(endStr));
+        } catch (java.time.format.DateTimeParseException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid date format. Use YYYY-MM-DD"));
+        }
+        if (trip.getStartDate() != null && trip.getEndDate() != null
+                && trip.getEndDate().isBefore(trip.getStartDate())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "End date cannot be before start date"));
+        }
+
         trip = tripRepo.save(trip);
         logService.log(user.getUserId(), "TRIP_CREATED", request);
 

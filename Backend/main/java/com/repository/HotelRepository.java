@@ -12,6 +12,8 @@ public interface HotelRepository extends JpaRepository<Hotel, Integer> {
 
     List<Hotel> findByIsActiveTrueOrderByStarRatingDesc();
 
+    List<Hotel> findByIsActiveTrueAndManagerIdIsNotNullOrderByStarRatingDesc();
+
     Optional<Hotel> findByHotelIdAndIsActiveTrue(Integer hotelId);
 
     List<Hotel> findByManagerId(Integer managerId);

@@ -177,7 +177,7 @@ td{padding:13px 16px;font-size:13.5px;color:var(--text-2);vertical-align:middle}
     <a href="admin-bookings.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span>Bookings</span></a>
     <span class="nav-label">Insights</span>
     <a href="admin-analytics.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span><span>Statistics</span></a>
-    <a href="admin-moderation.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Moderation</span><span class="nav-badge">5</span></a>
+    <a href="admin-moderation.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span>Moderation</span><span class="nav-badge" id="moderationBadge" style="display:none"></span></a>
     <div class="nav-divider"></div>
     <a href="admin-settings.html" class="nav-item"><span class="nav-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>System Settings</span></a>
   </nav>
@@ -627,6 +627,7 @@ function renderTable() {
         <button class="act-btn" onclick="openGuidelinesModal(${d.id},'${escHtml(d.name)}')">Guidelines</button>
         <button class="act-btn" onclick="openEmergencyModal(${d.id},'${escHtml(d.name)}')">Emergency</button>
         <button class="act-btn" onclick="openSouvenirsModal(${d.id},'${escHtml(d.name)}')">Souvenirs</button>
+        <button class="act-btn" onclick="openSeasonalModal(${d.id},'${escHtml(d.name)}')">Seasonal</button>
       </div></td>
     </tr>`;
   }).join('');
@@ -1267,6 +1268,109 @@ function resetSouvenirForm() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 loadDestinations();
+(async function(){try{const r=await fetch(ENDPOINTS.ADMIN.FLAGS_COUNT,{headers:getHeaders()});if(!r.ok)return;const {count}=await r.json();const b=document.getElementById('moderationBadge');if(b){if(count>0){b.textContent=count;b.style.display='';}else b.style.display='none';}}catch(e){}})();
+</script>
+
+<!-- ════════════════════════════ SEASONAL DATA MODAL ════════════════════════════ -->
+<div class="modal-overlay" id="seasonalModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="seasonalModalTitle">Seasonal Data</span>
+      <button class="modal-close" onclick="closeModal('seasonalModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12.5px;color:var(--text-3);margin-bottom:16px">Enter monthly averages for this destination. Leave a field blank to clear it.</p>
+      <div id="seasonalFormErr" style="display:none;background:var(--danger-lt);color:var(--danger);padding:10px 14px;border-radius:var(--r-sm);font-size:13px;margin-bottom:14px"></div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="background:#F8FAFC;border-bottom:1px solid var(--border)">
+              <th style="padding:10px 12px;text-align:left;font-weight:700;color:var(--text-3);font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px;width:90px">Month</th>
+              <th style="padding:10px 12px;text-align:left;font-weight:700;color:var(--text-3);font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px">Avg Temp (°C)</th>
+              <th style="padding:10px 12px;text-align:left;font-weight:700;color:var(--text-3);font-size:11.5px;text-transform:uppercase;letter-spacing:0.5px">Avg Rainfall (mm)</th>
+            </tr>
+          </thead>
+          <tbody id="seasonalTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('seasonalModal')">Cancel</button>
+      <button class="btn btn-primary" id="seasonalSaveBtn" onclick="saveSeasonalData()">Save All Months</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+let currentSeasonalDestId = null;
+
+async function openSeasonalModal(destId, destName) {
+  currentSeasonalDestId = destId;
+  document.getElementById('seasonalModalTitle').textContent = `Seasonal Data — ${destName}`;
+  document.getElementById('seasonalFormErr').style.display = 'none';
+
+  // Build 12 empty rows
+  const tbody = document.getElementById('seasonalTableBody');
+  tbody.innerHTML = MONTH_NAMES.map((m, i) => `
+    <tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 12px;font-weight:600;color:var(--text-1)">${m}</td>
+      <td style="padding:6px 12px"><input type="number" step="0.01" id="s-temp-${i+1}" class="form-input" style="width:100%;padding:6px 10px" placeholder="e.g. 12.5"></td>
+      <td style="padding:6px 12px"><input type="number" step="0.01" min="0" id="s-rain-${i+1}" class="form-input" style="width:100%;padding:6px 10px" placeholder="e.g. 45.0"></td>
+    </tr>`).join('');
+
+  document.getElementById('seasonalModal').classList.add('open');
+
+  // Load existing data
+  try {
+    const res = await fetch(`http://localhost:8080/api/seasonal-data/admin/${destId}`, { headers: getHeaders() });
+    if (res.status === 401) { doLogout(); return; }
+    if (res.ok) {
+      const data = await res.json();
+      (data.months || []).forEach(row => {
+        const m = row.month;
+        if (m < 1 || m > 12) return;
+        if (row.temperature != null) document.getElementById(`s-temp-${m}`).value = row.temperature;
+        if (row.rainfall    != null) document.getElementById(`s-rain-${m}`).value = row.rainfall;
+      });
+    }
+  } catch (e) { /* no existing data, leave blank */ }
+}
+
+async function saveSeasonalData() {
+  const btn = document.getElementById('seasonalSaveBtn');
+  const errEl = document.getElementById('seasonalFormErr');
+  errEl.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  const months = [];
+  for (let m = 1; m <= 12; m++) {
+    const temp = document.getElementById(`s-temp-${m}`).value.trim();
+    const rain = document.getElementById(`s-rain-${m}`).value.trim();
+    months.push({
+      month:       m,
+      temperature: temp !== '' ? parseFloat(temp) : null,
+      rainfall:    rain !== '' ? parseFloat(rain) : null,
+    });
+  }
+
+  try {
+    const res = await fetch(`http://localhost:8080/api/seasonal-data/admin/${currentSeasonalDestId}`, {
+      method: 'PUT',
+      headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(months)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 401) { doLogout(); return; }
+    if (!res.ok) { errEl.textContent = data.message || 'Save failed.'; errEl.style.display = 'block'; return; }
+    closeModal('seasonalModal');
+    showToast('Seasonal data saved!');
+  } catch (e) {
+    errEl.textContent = 'Network error. Is the backend running?'; errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save All Months';
+  }
+}
 </script>
 </body>
 </html>

@@ -297,6 +297,16 @@ public class AdminController {
         User target = opt.get();
         if (target.getUserType() == User.UserType.Admin)
             return ResponseEntity.status(403).body(Map.of("message", "Cannot delete an admin account"));
+
+        // If deleting a HotelManager, unassign their hotels so tourists can't see them
+        if (target.getUserType() == User.UserType.HotelManager) {
+            List<Hotel> managedHotels = hotelRepo.findByManagerId(id);
+            for (Hotel h : managedHotels) {
+                h.setManagerId(null);
+            }
+            hotelRepo.saveAll(managedHotels);
+        }
+
         userRepo.deleteById(id);
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
     }

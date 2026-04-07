@@ -19,7 +19,6 @@ TRIPIFY/
 │
 ├── database/
 │   ├── migrations/
-│   ├── seeds/
 │   └── schemas/
 │
 ├── docs/
@@ -32,8 +31,7 @@ TRIPIFY/
     ├── public/
     │   └── assets/
     │       ├── images/
-    │       └── videos/
-    │
+    │    
     └── src/
         ├── css/
         │   ├── common/    //expected to be made

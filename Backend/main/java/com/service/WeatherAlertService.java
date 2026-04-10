@@ -23,7 +23,7 @@ public class WeatherAlertService {
     private final DestinationRepository destinationRepo;
     private final NotificationRepository notificationRepo;
     private final SystemSettingsRepository settingsRepo;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     @Value("${weather.api-key}")
     private String weatherApiKey;
@@ -35,11 +35,13 @@ public class WeatherAlertService {
     public WeatherAlertService(FavoriteRepository favoriteRepo,
                                DestinationRepository destinationRepo,
                                NotificationRepository notificationRepo,
-                               SystemSettingsRepository settingsRepo) {
+                               SystemSettingsRepository settingsRepo,
+                               RestTemplate restTemplate) {
         this.favoriteRepo     = favoriteRepo;
         this.destinationRepo  = destinationRepo;
         this.notificationRepo = notificationRepo;
         this.settingsRepo     = settingsRepo;
+        this.restTemplate     = restTemplate;
     }
 
     // ── Scheduled check every hour ─────────────────────────────────────────────

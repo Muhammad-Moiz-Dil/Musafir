@@ -1,6 +1,9 @@
 const API_CONFIG = {
-    BASE_URL: 'http://localhost:8080/api',
-    TIMEOUT: 10000,
+    // Use window.__TRIPIFY_API_URL__ if set (production override),
+    // otherwise fall back to localhost for development.
+    BASE_URL: (typeof window !== 'undefined' && window.__TRIPIFY_API_URL__)
+        ? window.__TRIPIFY_API_URL__
+        : 'http://localhost:8080/api',
 };
 
 const ENDPOINTS = {
@@ -8,7 +11,6 @@ const ENDPOINTS = {
         REGISTER:    `${API_CONFIG.BASE_URL}/auth/register`,
         LOGIN:       `${API_CONFIG.BASE_URL}/auth/login`,
         ADMIN_LOGIN: `${API_CONFIG.BASE_URL}/auth/admin/login`,
-        LOGOUT:      `${API_CONFIG.BASE_URL}/auth/logout`,
     },
     USER: {
         PROFILE:          `${API_CONFIG.BASE_URL}/users/profile`,

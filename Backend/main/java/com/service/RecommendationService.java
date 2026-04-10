@@ -1,5 +1,7 @@
 package com.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.model.Destination;
 import com.model.UserPreferences;
 import com.repository.DestinationRepository;
@@ -192,15 +194,15 @@ public class RecommendationService {
         return m;
     }
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     /** Parses a JSON array string like ["Mountains","Adventure"] into a List<String>. */
     private List<String> parseJsonArray(String json) {
         if (json == null || json.isBlank() || json.equals("[]")) return Collections.emptyList();
-        String inner = json.trim();
-        if (inner.startsWith("[")) inner = inner.substring(1);
-        if (inner.endsWith("]"))   inner = inner.substring(0, inner.length() - 1);
-        return Arrays.stream(inner.split(","))
-            .map(s -> s.trim().replaceAll("^\"|\"$", ""))
-            .filter(s -> !s.isBlank())
-            .collect(Collectors.toList());
+        try {
+            return MAPPER.readValue(json, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            return Collections.emptyList();
+        }
     }
 }

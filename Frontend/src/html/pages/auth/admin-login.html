@@ -5,38 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin Log In — Tripify</title>
 <link rel="icon" type="image/png" href="../../../../public/assets/images/favicon.png"/>
-    <link rel="stylesheet" href="../../../css/pages/auth.css" />
-    <style>
-        /* Admin-specific overrides */
-        .auth-panel {
-            background: linear-gradient(160deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-        }
-        .btn-submit {
-            background: linear-gradient(135deg, #0f3460 0%, #1a4a8a 100%);
-            box-shadow: 0 4px 14px rgba(15,52,96,0.40);
-        }
-        .btn-submit:hover {
-            box-shadow: 0 6px 20px rgba(15,52,96,0.50);
-        }
-        .auth-card__subtitle a,
-        .auth-card__subtitle a:hover { color: #0f3460; }
-        .form-input:focus { border-color: #0f3460; }
-        .auth-panel__heading span { color: var(--accent); }
-        .admin-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(245,166,35,0.15);
-            border: 1px solid rgba(245,166,35,0.3);
-            color: var(--accent);
-            font-size: 12px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-bottom: 20px;
-            letter-spacing: 0.5px;
-        }
-    </style>
+    <link rel="stylesheet" href="../../../css/pages/auth/auth.css" />
+    <link rel="stylesheet" href="../../../css/pages/auth/admin-login.css">
 </head>
 <body>
 
@@ -182,101 +152,7 @@
 <script src="../../../js/config/api.js"></script>
 <script src="../../../js/utils/validation.js"></script>
 <script src="../../../js/services/authService.js"></script>
-<script>
-(function () {
-    'use strict';
-
-    const form        = document.getElementById('adminLoginForm');
-    const submitBtn   = document.getElementById('submitBtn');
-    const alertBanner = document.getElementById('alertBanner');
-    const alertMsg    = document.getElementById('alertMessage');
-    const emailInput  = document.getElementById('email');
-    const passInput   = document.getElementById('password');
-
-    function showError(id, msg) { const el = document.getElementById(id); if (el) el.textContent = msg; }
-    function clearError(id)     { const el = document.getElementById(id); if (el) el.textContent = ''; }
-    function setInputState(input, state) { input.classList.remove('is-valid', 'is-error'); if (state) input.classList.add(state); }
-
-    function showAlert(type, msg) {
-        alertBanner.className = `alert alert--${type} show`;
-        alertMsg.textContent = msg;
-        alertBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    function hideAlert() { alertBanner.classList.remove('show'); }
-
-    // Password toggle
-    const toggleBtn = document.getElementById('togglePassword');
-    toggleBtn.addEventListener('click', () => {
-        const isPass = passInput.type === 'password';
-        passInput.type = isPass ? 'text' : 'password';
-        toggleBtn.querySelector('.eye-open').style.display  = isPass ? 'none' : '';
-        toggleBtn.querySelector('.eye-closed').style.display = isPass ? '' : 'none';
-        toggleBtn.setAttribute('aria-label', isPass ? 'Hide password' : 'Show password');
-    });
-
-    emailInput.addEventListener('blur', validateEmail);
-    passInput.addEventListener('blur',  validatePassword);
-
-    function validateEmail() {
-        const v = emailInput.value.trim();
-        if (!Validator.required(v)) { showError('emailError', 'Email is required.'); setInputState(emailInput, 'is-error'); return false; }
-        if (!Validator.email(v))    { showError('emailError', 'Enter a valid email address.'); setInputState(emailInput, 'is-error'); return false; }
-        clearError('emailError'); setInputState(emailInput, 'is-valid'); return true;
-    }
-
-    function validatePassword() {
-        const v = passInput.value;
-        if (!Validator.required(v)) { showError('passwordError', 'Password is required.'); setInputState(passInput, 'is-error'); return false; }
-        clearError('passwordError'); setInputState(passInput, 'is-valid'); return true;
-    }
-
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        hideAlert();
-
-        const ok = [validateEmail(), validatePassword()].every(Boolean);
-        if (!ok) return;
-
-        submitBtn.disabled = true;
-        submitBtn.classList.add('loading');
-
-        try {
-            const data = await AuthService.adminLogin(
-                emailInput.value.trim().toLowerCase(),
-                passInput.value
-            );
-
-            showAlert('success', `Welcome, ${data.user.fullName}! Loading admin panel…`);
-            submitBtn.classList.remove('loading');
-
-            setTimeout(() => {
-                window.location.href = '../admin/admin-dashboard.html';
-            }, 1500);
-
-        } catch (err) {
-            submitBtn.disabled = false;
-            submitBtn.classList.remove('loading');
-
-            if (err.status === 401) {
-                showAlert('error', 'Invalid email or password. Please try again.');
-                setInputState(emailInput, 'is-error');
-                setInputState(passInput, 'is-error');
-            } else if (err.status === 403) {
-                showAlert('error', 'Access denied. This portal is for administrators only.');
-                setInputState(emailInput, 'is-error');
-            } else if (err.status === 422 && err.errors) {
-                Object.entries(err.errors).forEach(([field, msg]) => showError(`${field}Error`, msg));
-                showAlert('error', 'Please fix the errors above and try again.');
-            } else if (!navigator.onLine) {
-                showAlert('error', 'No internet connection. Please check your network and try again.');
-            } else {
-                showAlert('error', err.message || 'Something went wrong. Please try again.');
-            }
-        }
-    });
-
-})();
-</script>
+<script src="../../../js/pages/auth/admin-login.js"></script>
 
 </body>
 </html>

@@ -13,11 +13,16 @@ import java.io.IOException;
 /**
  * Intercepts every request and returns 503 when FEATURE_MAINTENANCE_MODE = true,
  * except for admin auth and admin API endpoints so admins can still log in.
+ * The DB setting is cached for 30 seconds to avoid a DB hit on every request.
  */
 @Component
 public class MaintenanceFilter extends OncePerRequestFilter {
 
     private final SystemSettingsRepository settingsRepo;
+
+    private volatile boolean cachedMaintenance = false;
+    private volatile long    cacheExpiresAt     = 0L;
+    private static final long CACHE_TTL_MS      = 30_000L;
 
     public MaintenanceFilter(SystemSettingsRepository settingsRepo) {
         this.settingsRepo = settingsRepo;
@@ -29,9 +34,14 @@ public class MaintenanceFilter extends OncePerRequestFilter {
                                     FilterChain chain)
             throws ServletException, IOException {
 
-        boolean maintenance = settingsRepo.findBySettingKey("FEATURE_MAINTENANCE_MODE")
-                .map(s -> "true".equalsIgnoreCase(s.getSettingValue()))
-                .orElse(false);
+        long now = System.currentTimeMillis();
+        if (now >= cacheExpiresAt) {
+            cachedMaintenance = settingsRepo.findBySettingKey("FEATURE_MAINTENANCE_MODE")
+                    .map(s -> "true".equalsIgnoreCase(s.getSettingValue()))
+                    .orElse(false);
+            cacheExpiresAt = now + CACHE_TTL_MS;
+        }
+        boolean maintenance = cachedMaintenance;
 
         if (maintenance) {
             String path = request.getRequestURI();

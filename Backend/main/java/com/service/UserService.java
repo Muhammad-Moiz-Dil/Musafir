@@ -6,6 +6,7 @@ import com.utility.JwtUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -79,6 +80,9 @@ public class UserService {
             throw new AccessDeniedException("Use the Admin portal to sign in.");
         }
 
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
+
         String token = jwtUtil.generateToken(user.getEmail(), user.getUserType().name());
         return new LoginResult(token, user);
     }
@@ -101,6 +105,9 @@ public class UserService {
         if (user.getUserType() != User.UserType.Admin) {
             throw new AccessDeniedException("Access denied. This portal is for administrators only.");
         }
+
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getEmail(), user.getUserType().name());
         return new LoginResult(token, user);

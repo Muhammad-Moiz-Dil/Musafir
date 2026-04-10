@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface SouvenirRepository extends JpaRepository<Souvenir, Integer> {
 
+    List<Souvenir> findByIsActiveTrue();
+
     List<Souvenir> findByDestination_DestinationIdAndIsActiveTrue(Integer destinationId);
 
     List<Souvenir> findByDestination_DestinationIdOrderByNameAsc(Integer destinationId);

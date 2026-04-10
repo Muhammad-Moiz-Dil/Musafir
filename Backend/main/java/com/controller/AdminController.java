@@ -192,12 +192,14 @@ public class AdminController {
                 })
                 .collect(Collectors.toList());
 
-        // ── Monthly breakdown (6 months ending at rangeEnd) ─────────────────
+        // ── Monthly breakdown (covers rangeStart → rangeEnd, capped at 12) ────
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM yyyy");
         List<Map<String, Object>> monthly = new ArrayList<>();
-        for (int i = 5; i >= 0; i--) {
-            LocalDateTime mStart = rangeEnd.minusMonths(i).toLocalDate()
-                                           .withDayOfMonth(1).atStartOfDay();
+        LocalDateTime cursor = rangeStart.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        LocalDateTime lastMonthStart = rangeEnd.toLocalDate().withDayOfMonth(1).atStartOfDay();
+        int monthCount = 0;
+        while (!cursor.isAfter(lastMonthStart) && monthCount < 12) {
+            LocalDateTime mStart = cursor;
             LocalDateTime mEnd   = mStart.plusMonths(1).minusSeconds(1);
             String label = mStart.format(fmt);
 
@@ -216,9 +218,11 @@ public class AdminController {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("month",    label);
             m.put("bookings", bCount);
-            m.put("revenue",  mRev.longValue());
+            m.put("revenue",  mRev);
             m.put("users",    uCount);
             monthly.add(m);
+            cursor = cursor.plusMonths(1);
+            monthCount++;
         }
 
         // ── User breakdown ───────────────────────────────────────────────────
@@ -234,7 +238,7 @@ public class AdminController {
         result.put("totalTourists",  totalTourists);
         result.put("totalHMs",       totalHMs);
         result.put("totalBookings",  bookings.size());
-        result.put("totalRevenue",   totalRevenue.longValue());
+        result.put("totalRevenue",   totalRevenue);
         result.put("newUsersInRange",newUsers.size());
         result.put("topDestinations",topDests);
         result.put("monthly",        monthly);

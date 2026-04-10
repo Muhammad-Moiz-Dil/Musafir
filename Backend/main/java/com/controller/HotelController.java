@@ -403,6 +403,14 @@ public class HotelController {
             Path dir = UploadUtils.resolve("hotels");
             Files.createDirectories(dir);
 
+            // Delete old image if one exists
+            if (hotel.getImageUrl() != null && !hotel.getImageUrl().isBlank()) {
+                try {
+                    String oldFilename = hotel.getImageUrl().replace(HOTEL_IMG_PREFIX, "");
+                    Files.deleteIfExists(dir.resolve(oldFilename));
+                } catch (Exception ignored) {}
+            }
+
             String orig = file.getOriginalFilename();
             String ext  = (orig != null && orig.contains(".")) ? orig.substring(orig.lastIndexOf(".")) : ".jpg";
             String filename = "hotel_" + id + "_" + System.currentTimeMillis() + ext;

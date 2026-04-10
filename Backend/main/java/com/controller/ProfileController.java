@@ -37,8 +37,6 @@ public class ProfileController {
     private final BookingRepository     bookingRepo;
     private final ActivityLogService    logService;
 
-    // Avatar storage directory (relative to where the JAR runs, i.e., Backend/ folder)
-    private static final String AVATAR_DIR = "uploads/avatars/";
     private static final String AVATAR_URL_PREFIX = "/uploads/avatars/";
 
     public ProfileController(ProfileService profileService,
@@ -257,17 +255,17 @@ public class ProfileController {
 
     private Map<String, Object> buildProfileMap(User u) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMMM yyyy");
-        return Map.of(
-            "id",             u.getUserId(),
-            "email",          u.getEmail(),
-            "fullName",       u.getFullName(),
-            "userType",       u.getUserType().name(),
-            "phoneNumber",    u.getPhoneNumber()     != null ? u.getPhoneNumber()     : "",
-            "cnic",           u.getCnic()            != null ? u.getCnic()            : "",
-            "address",        u.getAddress()         != null ? u.getAddress()         : "",
-            "profilePicture", u.getProfilePicture()  != null ? u.getProfilePicture()  : "",
-            "memberSince",    u.getCreatedAt()       != null ? u.getCreatedAt().format(fmt) : "January 2026"
-        );
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id",             u.getUserId());
+        m.put("email",          u.getEmail());
+        m.put("fullName",       u.getFullName());
+        m.put("userType",       u.getUserType().name());
+        m.put("phoneNumber",    u.getPhoneNumber()    != null ? u.getPhoneNumber()    : "");
+        m.put("cnic",           u.getCnic()           != null ? u.getCnic()           : "");
+        m.put("address",        u.getAddress()        != null ? u.getAddress()        : "");
+        m.put("profilePicture", u.getProfilePicture() != null ? u.getProfilePicture() : "");
+        m.put("memberSince",    u.getCreatedAt()      != null ? u.getCreatedAt().format(fmt) : "January 2026");
+        return m;
     }
 
     // ── DTOs ──────────────────────────────────────────────────

@@ -27,6 +27,9 @@ public class Review {
     @Column(name = "verified")
     private Boolean verified = false;
 
+    @Column(name = "is_flagged")
+    private Boolean isFlagged = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -40,6 +43,7 @@ public class Review {
     public Integer getRating()            { return rating; }
     public String  getReviewText()        { return reviewText; }
     public Boolean getVerified()          { return verified; }
+    public Boolean getIsFlagged()         { return isFlagged; }
     public LocalDateTime getCreatedAt()   { return createdAt; }
 
     // ── Setters ──────────────────────────────────────────────
@@ -48,4 +52,5 @@ public class Review {
     public void setRating(Integer rating)               { this.rating        = rating;       }
     public void setReviewText(String reviewText)        { this.reviewText    = reviewText;   }
     public void setVerified(Boolean verified)           { this.verified      = verified;     }
+    public void setIsFlagged(Boolean isFlagged)         { this.isFlagged     = isFlagged;    }
 }

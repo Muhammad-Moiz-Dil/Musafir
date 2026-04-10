@@ -14,6 +14,7 @@ import com.service.SettingsService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -51,6 +52,7 @@ public class BookingController {
 
     // Tourist: create a booking
     @PostMapping
+    @Transactional
     public ResponseEntity<?> createBooking(@RequestBody Map<String, Object> body,
                                            Authentication auth,
                                            HttpServletRequest request) {
@@ -60,11 +62,11 @@ public class BookingController {
         User user = userRepo.findByEmail(auth.getName()).orElse(null);
         if (user == null) return ResponseEntity.status(401).body(Map.of("message", "Unauthorized"));
 
-        Integer hotelId      = (Integer) body.get("hotelId");
+        Integer hotelId      = body.get("hotelId") instanceof Number n ? n.intValue() : null;
         String  checkInStr   = (String)  body.get("checkInDate");
         String  checkOutStr  = (String)  body.get("checkOutDate");
-        Integer guests       = body.get("numberOfGuests") instanceof Integer g ? g : 1;
-        Integer roomTypeId   = body.get("roomTypeId") instanceof Integer r ? r : null;
+        Integer guests       = body.get("numberOfGuests") instanceof Number g ? g.intValue() : 1;
+        Integer roomTypeId   = body.get("roomTypeId") instanceof Number r ? r.intValue() : null;
 
         if (hotelId == null || checkInStr == null || checkOutStr == null) {
             return ResponseEntity.badRequest()
@@ -90,10 +92,10 @@ public class BookingController {
             return ResponseEntity.badRequest()
                     .body(Map.of("message", "Check-out date must be after check-in date"));
 
-        // ── Room type validation ──────────────────────────────────
+        // ── Room type validation (pessimistic lock prevents double-booking) ────
         RoomType roomType = null;
         if (roomTypeId != null) {
-            roomType = roomTypeRepo.findById(roomTypeId).orElse(null);
+            roomType = roomTypeRepo.findByIdForUpdate(roomTypeId).orElse(null);
             if (roomType == null || !roomType.getIsActive() || !roomType.getHotelId().equals(hotelId))
                 return ResponseEntity.badRequest()
                         .body(Map.of("message", "Invalid room type for this hotel"));

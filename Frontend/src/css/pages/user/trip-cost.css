@@ -1,0 +1,91 @@
+
+.estimator-layout { display:grid; grid-template-columns:400px 1fr; gap:22px; }
+.input-panel {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r-xl); padding:24px;
+}
+.input-panel h3 { font-size:16px; font-weight:700; color:var(--white); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+
+/* Results panel */
+.result-panel {
+    background:linear-gradient(160deg,#0f2235 0%,#1b4965 100%);
+    border:1px solid rgba(245,166,35,0.15);
+    border-radius:var(--r-xl); padding:24px;
+}
+.result-panel.has-result { border-color:rgba(245,166,35,0.3); }
+.result-placeholder { text-align:center; padding:40px 20px; }
+.result-placeholder span { font-size:48px; display:block; margin-bottom:12px; }
+.result-placeholder p { font-size:14px; color:var(--t2); }
+.total-box {
+    background:rgba(245,166,35,0.1); border:1px solid rgba(245,166,35,0.25);
+    border-radius:var(--r-lg); padding:22px; text-align:center; margin-bottom:20px;
+}
+.total-label { font-size:13px; color:rgba(255,255,255,0.6); margin-bottom:5px; }
+.total-amount { font-family:var(--display); font-size:42px; font-weight:800; color:var(--accent); line-height:1; }
+.total-per { font-size:12px; color:var(--t2); margin-top:5px; }
+.breakdown { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+.breakdown-item {
+    display:flex; align-items:center; gap:12px;
+    background:rgba(255,255,255,0.04); border-radius:var(--r-sm); padding:12px 14px;
+}
+.bi-icon { width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.bi-label { flex:1; font-size:13px; font-weight:600; color:var(--white); }
+.bi-sub   { font-size:11px; color:var(--t2); }
+.bi-amount { font-size:14px; font-weight:700; color:var(--white); }
+.cost-bar { height:6px; border-radius:3px; margin-top:6px; transition:width 0.6s ease; }
+
+/* Popular routes */
+.route-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:20px; }
+.route-chip {
+    background:var(--surface-2); border:1px solid var(--border);
+    color:var(--t2); font-size:12px; padding:6px 12px; border-radius:20px;
+    cursor:pointer; transition:var(--ease);
+}
+.route-chip:hover { background:var(--accent-glow); border-color:rgba(245,166,35,0.25); color:var(--accent); }
+
+/* Validation */
+.field-error { display:block; font-size:11.5px; color:#ef4444; margin-top:4px; min-height:16px; }
+.form-input.invalid { border-color:#ef4444 !important; }
+
+/* Error banner */
+.error-banner {
+    background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+    border-radius:var(--r); padding:12px 16px; font-size:13px; color:#fca5a5;
+    margin-bottom:16px; display:flex; align-items:center; gap:8px;
+}
+
+@media (max-width:900px) { .estimator-layout { grid-template-columns:1fr; } }
+/* ── Destination Search Widget ─── */
+.dest-search-wrap{position:relative;}
+.dest-search-input-row{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:var(--r-md,8px);padding:0 12px;background:var(--surface);transition:border-color .2s;}
+.dest-search-input-row:focus-within{border-color:var(--accent,#6366f1);}
+.dest-search-icon{color:var(--t3);flex-shrink:0;}
+.dest-search-input{background:none;border:none;outline:none;color:var(--white);font-size:14px;width:100%;padding:10px 0;}
+.dest-search-input::placeholder{color:var(--t3);}
+.dest-search-clear{background:none;border:none;cursor:pointer;color:var(--t3);padding:2px 4px;font-size:16px;line-height:1;display:none;}
+.dest-search-clear:hover{color:var(--white);}
+.dest-search-dropdown{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;background:#0d1623;border:1px solid rgba(255,255,255,.15);border-radius:var(--r-md,8px);max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5);display:none;}
+.dest-search-item{padding:10px 14px;cursor:pointer;font-size:14px;color:#e8eaf0;border-bottom:1px solid rgba(255,255,255,.08);transition:background .15s;}
+.dest-search-item:last-child{border-bottom:none;}
+.dest-search-item:hover{background:rgba(255,255,255,.10);}
+.dest-search-item .dsrc-city{color:var(--t3);font-size:12px;}
+.dest-no-result{padding:14px;text-align:center;color:var(--t3);font-size:13px;}
+
+/* ── Hotel search widget ── */
+.hotel-search-item .hsrc-dest{color:var(--t3);font-size:12px;}
+.hotel-search-item .hsrc-stars{color:#f5a623;font-size:11px;margin-left:4px;}
+.hotel-search-item .hsrc-price{color:var(--accent);font-size:11px;float:right;}
+
+/* ── Selected hotel badge ── */
+.hotel-selected-badge{
+    display:flex;align-items:center;gap:8px;
+    background:rgba(245,166,35,0.08);border:1px solid rgba(245,166,35,0.25);
+    border-radius:var(--r-md,8px);padding:8px 12px;margin-top:6px;
+}
+.hotel-selected-badge .hsb-name{flex:1;font-size:13px;font-weight:600;color:var(--white);}
+.hotel-selected-badge .hsb-sub{font-size:11px;color:var(--t2);}
+.hotel-selected-badge .hsb-clear{background:none;border:none;cursor:pointer;color:var(--t3);font-size:16px;padding:0 2px;line-height:1;}
+.hotel-selected-badge .hsb-clear:hover{color:#ef4444;}
+
+/* ── Fallback label note ── */
+.fallback-note{font-size:11px;color:var(--t3);margin-left:4px;font-weight:400;}

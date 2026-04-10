@@ -8,7 +8,7 @@ A full-stack travel planning web application for Pakistani tourism destinations,
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Java 17, Spring Boot 3.4.3, Spring Security, Spring Data JPA |
+| Backend | Java 21, Spring Boot 3.4.3, Spring Security, Spring Data JPA |
 | Frontend | Vanilla HTML, CSS, JavaScript (no framework) |
 | Database | MySQL 8 |
 | Authentication | JWT (JSON Web Tokens) with BCrypt password hashing |
@@ -21,22 +21,65 @@ A full-stack travel planning web application for Pakistani tourism destinations,
 
 ```
 Tripify/
-├── Backend/                    # Spring Boot Maven project
-│   └── main/java/com/
-│       ├── config/             # JWT filter, Security config, CORS, WebConfig
-│       ├── controller/         # REST API endpoints
-│       ├── exceptionhandling/  # Global exception handler
-│       ├── model/              # JPA entities
-│       ├── repository/         # Spring Data JPA repositories
-│       ├── service/            # Business logic layer
-│       └── utility/            # JWT utility
+├── .gitignore
+│
+├── Backend/                         # Spring Boot Maven project
+│   ├── pom.xml
+│   ├── main/
+│   │   ├── java/com/
+│   │   │   ├── config/              # Security, CORS, JWT filter, rate limiter, startup initializer
+│   │   │   ├── controller/          # 17 REST API controllers
+│   │   │   ├── exceptionhandling/   # Global exception handler
+│   │   │   ├── model/               # 17 JPA entities
+│   │   │   ├── repository/          # Spring Data JPA repositories
+│   │   │   ├── service/             # Business logic layer
+│   │   │   ├── tripify/             # Spring Boot entry point (TripifyApplication.java)
+│   │   │   └── utility/             # JWT utility
+│   │   └── resources/
+│   │       └── application.properties
+│   ├── test/
+│   │   └── java/com/
+│   │       ├── config/              # RateLimitFilterTest
+│   │       └── utility/             # JwtUtilTest
+│   └── uploads/                     # Runtime file storage (gitignored)
+│       ├── avatars/
+│       ├── destinations/
+│       ├── hotels/
+│       └── souvenirs/
+│
 ├── Frontend/
+│   ├── index.html                   # Landing page (entry point)
+│   ├── public/assets/images/        # Static images used in the landing page
 │   └── src/
-│       ├── html/pages/         # Pages by role: auth/, user/, hm/, admin/
-│       ├── css/                # Stylesheets
-│       └── js/                 # API config, auth service, utilities
-└── database/
-    └── TripifyDB_MySQL.sql     # Full schema + seed data (single source of truth)
+│       ├── css/
+│       │   ├── common/              # reset.css, variables.css
+│       │   └── pages/
+│       │       ├── landing.css      # Landing page styles
+│       │       ├── admin/           # admin.css + 10 page-specific CSS files
+│       │       ├── auth/            # auth.css + 4 page-specific CSS files
+│       │       ├── hm/              # hm.css + 7 page-specific CSS files
+│       │       └── user/            # user.css + 15 page-specific CSS files
+│       ├── html/pages/
+│       │   ├── admin/               # 10 admin pages
+│       │   ├── auth/                # login, register, admin-login, hm-register
+│       │   ├── hm/                  # 7 hotel manager pages
+│       │   └── user/                # 15 tourist pages
+│       └── js/
+│           ├── config/              # api.js — all endpoint definitions
+│           ├── pages/
+│           │   ├── admin/           # 10 page scripts
+│           │   ├── auth/            # 4 auth page scripts
+│           │   ├── hm/              # 8 hotel manager page scripts
+│           │   └── user/            # 15 tourist page scripts
+│           ├── services/            # authService.js, notificationService.js, notificationPanel.js
+│           └── utils/               # validation.js, sanitize.js
+│
+├── database/
+│   ├── TripifyDB_MySQL.sql          # Full schema + seed data (single source of truth)
+│   
+│
+└── docs/
+    └── README.md                    # This file
 ```
 
 ---
@@ -44,30 +87,31 @@ Tripify/
 ## How to Run
 
 ### Prerequisites
-- Java 17+
+- Java 21+
 - MySQL 8
 - Maven 3.8+
 
-### Database Setup
-1. Open MySQL Workbench
-2. Run the full script: `database/TripifyDB_MySQL.sql`
-3. This creates the `TripifyDB` database, all tables, and seed data
+### 1. Database Setup
+Open MySQL Workbench and run:
+```
+database/TripifyDB_MySQL.sql
+```
+This creates the `TripifyDB` database, all 17 tables, indexes, and seed data in one shot.
 
-### Backend Setup
-1. Navigate to the `Backend/` directory
-2. Run:
+### 2. Backend Setup
 ```bash
+cd Backend
 mvn spring-boot:run
 ```
-3. Server starts on `http://localhost:8080`
+Server starts on `http://localhost:8080`.
 
-### Frontend Setup
-Open any HTML page directly in a browser or use a local server (e.g. VS Code Live Server).
+### 3. Frontend Setup
+Open `Frontend/index.html` in a browser, or use VS Code Live Server.
 
 Default entry points:
-- Tourist: `Frontend/src/html/pages/auth/login.html`
-- Hotel Manager: `Frontend/src/html/pages/auth/login.html`
-- Admin: `Frontend/src/html/pages/auth/admin-login.html`
+- Landing page: `Frontend/index.html`
+- Tourist / Hotel Manager login: `Frontend/src/html/pages/auth/login.html`
+- Admin login: `Frontend/src/html/pages/auth/admin-login.html`
 
 ### Default Admin Account
 ```
@@ -82,7 +126,7 @@ Password: admin123
 | Role | Description |
 |------|-------------|
 | **Tourist** | Browse destinations, plan trips, book hotels, write reviews, manage wishlist |
-| **Hotel Manager** | Manage hotel listings, view and action booking requests, manage room types |
+| **Hotel Manager** | Manage hotel listings, handle booking requests, manage room types and pricing |
 | **Admin** | Full platform control — destinations, hotels, users, analytics, moderation, settings |
 
 ---
@@ -143,13 +187,14 @@ Password: admin123
 ## Key Features
 
 - **JWT Authentication** — stateless, role-based access control with Spring Security
-- **Feature Flags** — Admin can enable/disable Booking, Reviews, Registration, and Weather Scheduler at runtime via the Settings panel
+- **Rate Limiting** — login endpoints throttled to 5 attempts/minute per IP; 15-minute lockout after exceeded
+- **Feature Flags** — Admin can enable/disable Booking, Reviews, Registration, and Weather Scheduler at runtime
 - **Scheduled Weather Alerts** — background job runs hourly, fetches live weather for all favorited destinations, and pushes alerts to users
-- **Verified Reviews** — reviews submitted after a completed trip are marked as verified and carry higher weight in the average rating calculation
+- **Verified Reviews** — reviews submitted after a completed trip are marked as verified
 - **Personalized Recommendations** — destination suggestions based on user age group and travel preferences
 - **File Uploads** — profile avatars, hotel cover photos, destination images, and souvenir images stored on the server
 - **Activity Audit Log** — every significant user action is logged with timestamp and IP address
-- **Google Maps Route Finder** — API key served securely from backend, never exposed in frontend files
+- **Google Maps Route Finder** — API key served securely from backend, never exposed in frontend
 
 ---
 
@@ -157,7 +202,7 @@ Password: admin123
 
 17 tables: `Users`, `Destinations`, `Hotels`, `RoomTypes`, `Bookings`, `Favorites`, `Reviews`, `HotelReviews`, `TravelGuidelines`, `EmergencyInfo`, `Souvenirs`, `SeasonalData`, `Trips`, `TripDestinations`, `Notifications`, `ActivityLogs`, `FlaggedContent`, `SystemSettings`
 
-All schema, indexes, and seed data are maintained in a single file: `database/TripifyDB_MySQL.sql`
+Full schema, indexes, and seed data: `database/TripifyDB_MySQL.sql`
 
 ---
 

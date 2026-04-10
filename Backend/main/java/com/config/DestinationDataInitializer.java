@@ -1,7 +1,9 @@
-package com.service;
+package com.config;
 
 import com.model.Destination;
 import com.repository.DestinationRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -19,6 +21,8 @@ import java.util.Map;
  */
 @Component
 public class DestinationDataInitializer implements ApplicationRunner {
+
+    private static final Logger log = LoggerFactory.getLogger(DestinationDataInitializer.class);
 
     private final DestinationRepository destinationRepo;
 
@@ -87,8 +91,7 @@ public class DestinationDataInitializer implements ApplicationRunner {
             }
         }
         if (updated > 0) {
-            System.out.println("[Tripify] DestinationDataInitializer: populated search_keywords for "
-                    + updated + " destination(s).");
+            log.info("Populated search_keywords for {} destination(s).", updated);
         }
     }
 }

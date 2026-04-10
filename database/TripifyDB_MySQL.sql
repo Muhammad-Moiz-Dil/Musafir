@@ -914,3 +914,11 @@ UPDATE Destinations SET image_url = 'karachi.webp'     WHERE name = 'Karachi';
 UPDATE Destinations SET image_url = 'gawadar.jpeg'     WHERE name LIKE '%Gwadar%';
 
 ALTER TABLE Trips ADD COLUMN start_date DATE NULL, ADD COLUMN end_date DATE NULL;
+
+-- ── MIGRATION: Add altitude, best_time, budget_level to Destinations (2026-04-10) ─
+-- Run this block ONLY if your existing DB is missing these columns.
+-- If you did a fresh setup using this file, skip this — columns are already there.
+ALTER TABLE Destinations
+    ADD COLUMN IF NOT EXISTS altitude     VARCHAR(50)  NULL AFTER search_keywords,
+    ADD COLUMN IF NOT EXISTS best_time    VARCHAR(100) NULL AFTER altitude,
+    ADD COLUMN IF NOT EXISTS budget_level VARCHAR(50)  NULL AFTER best_time;

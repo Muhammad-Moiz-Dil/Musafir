@@ -3,6 +3,17 @@ Backend/main/resources/application.properties
 
 # ── Build output ───────────────────────────────────────────────
 Backend/target/
+
+# ── User-uploaded runtime files ────────────────────────────────
+# Keep folder skeletons via .gitkeep but ignore actual uploads
+Backend/uploads/avatars/*
+Backend/uploads/destinations/*
+Backend/uploads/hotels/*
+Backend/uploads/souvenirs/*
+!Backend/uploads/avatars/.gitkeep
+!Backend/uploads/destinations/.gitkeep
+!Backend/uploads/hotels/.gitkeep
+!Backend/uploads/souvenirs/.gitkeep
 *.class
 *.jar
 *.war

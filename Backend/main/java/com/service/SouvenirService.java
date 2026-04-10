@@ -22,10 +22,7 @@ public class SouvenirService {
 
     /** Returns all active souvenirs across every destination. */
     public List<Souvenir> getAllSouvenirs() {
-        return souvenirRepo.findAll()
-                .stream()
-                .filter(s -> Boolean.TRUE.equals(s.getIsActive()))
-                .toList();
+        return souvenirRepo.findByIsActiveTrue();
     }
 
     /**

@@ -361,7 +361,7 @@ async function loadSouvenirs(destId, extras) {
     const list = document.getElementById('souvenirList');
     if (!list) return;
     try {
-        const res = await fetch(`http://localhost:8080/api/souvenirs/${destId}`, {
+        const res = await fetch(ENDPOINTS.SOUVENIRS.BY_DESTINATION(destId), {
             headers: { 'Authorization': 'Bearer ' + tripToken }
         });
         if (res.ok) {
@@ -405,7 +405,7 @@ async function loadGuidelines(destId, extras) {
         'Tips':'💡','Nature':'🌿','History':'🏛️','Currency':'💱','Connectivity':'📱'
     };
     try {
-        const res = await fetch(`http://localhost:8080/api/guidelines/${destId}`, {
+        const res = await fetch(ENDPOINTS.GUIDELINES.BY_DEST(destId), {
             headers: { 'Authorization': 'Bearer ' + tripToken }
         });
         if (res.ok) {
@@ -465,7 +465,7 @@ async function loadDestination() {
         // Fetch seasonal data
         let seasonalData = null;
         try {
-            const seRes = await fetch(`http://localhost:8080/api/seasonal-data/${encodeURIComponent(d.name)}`, {
+            const seRes = await fetch(ENDPOINTS.SEASONAL.BY_DESTINATION(d.name), {
                 headers: { 'Authorization': 'Bearer ' + tripToken }
             });
             if (seRes.ok) { const seData = await seRes.json(); if (seData.length) seasonalData = seData; }

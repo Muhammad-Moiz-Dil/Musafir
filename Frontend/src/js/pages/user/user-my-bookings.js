@@ -86,9 +86,17 @@ function fmtDate(d) {
     return d ? new Date(d).toLocaleDateString('en-PK', { day:'numeric', month:'short', year:'numeric' }) : '—';
 }
 
+function resolveHotelImg(url) {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/uploads')) return API_CONFIG.BASE_URL.replace('/api', '') + url;
+    return '../../../../public/assets/images/' + url;
+}
+
 function bookingCard(b) {
-    const imgHtml = b.imageUrl
-        ? `<img class="bk-img" src="${b.imageUrl}" alt="${b.hotelName || ''}" onerror="this.style.display='none'">`
+    const resolvedImg = resolveHotelImg(b.imageUrl);
+    const imgHtml = resolvedImg
+        ? `<img class="bk-img" src="${resolvedImg}" alt="${b.hotelName || ''}" onerror="this.style.display='none'">`
         : `<div class="bk-img-placeholder">🏨</div>`;
 
     const reviewBar = buildReviewBar(b);

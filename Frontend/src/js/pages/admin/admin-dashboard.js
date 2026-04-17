@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-const ADMIN_API = 'http://localhost:8080/api';
+const ADMIN_API = API_CONFIG.BASE_URL;
 const token = sessionStorage.getItem('tripify_token');
 const user  = JSON.parse(sessionStorage.getItem('tripify_user') || '{"fullName":"Super Admin","userType":"Admin"}');
 

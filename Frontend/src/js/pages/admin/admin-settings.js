@@ -1,4 +1,4 @@
-const ADMIN_API = 'http://localhost:8080/api/admin';
+const ADMIN_API = API_CONFIG.BASE_URL + '/admin';
 const token = sessionStorage.getItem('tripify_token');
 const user  = JSON.parse(sessionStorage.getItem('tripify_user') || '{}');
 

@@ -20,7 +20,8 @@
   function starsHTML(n){ if(!n) return '—'; return '<span class="stars">'+'★'.repeat(n)+'☆'.repeat(Math.max(0,5-n))+'</span>'; }
   function resolveImg(url){
     if (!url) return '';
-    if (url.startsWith('http') || url.startsWith('/uploads')) return url;
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/uploads')) return API_CONFIG.BASE_URL.replace('/api', '') + url;
     return '../../../../public/assets/images/' + url;
   }
   function showToast(msg, type='success'){

@@ -34,7 +34,9 @@ function resolveImage(dest) {
     const url = dest.imageUrl;
     if (!url) return IMG_BASE + 'lahore.jpg';
     if (IMG_MAP[url]) return IMG_MAP[url];
-    if (url.startsWith('http') || url.startsWith('/') || url.startsWith('../')) return url;
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/uploads')) return API_CONFIG.BASE_URL.replace('/api', '') + url;
+    if (url.startsWith('/') || url.startsWith('../')) return url;
     return IMG_BASE + url;
 }
 

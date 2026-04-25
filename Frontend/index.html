@@ -4,10 +4,676 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Tripify — Discover Pakistan</title>
-<link rel="icon" type="image/png" href="public/assets/images/favicon.png"/>
+    <link rel="icon" type="image/png" href="public/assets/images/favicon.png"/>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
+
+    <!-- GSAP + ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+
+    <!-- Base styles -->
     <link rel="stylesheet" href="src/css/pages/landing.css">
+
+    <style>
+    /* ══════════════════════════════════════════════
+       PREMIUM OVERRIDES — scoped to landing page
+    ══════════════════════════════════════════════ */
+
+    :root {
+        --bg0:        #060c13;
+        --bg1:        #0a1520;
+        --bg2:        #0d1b2a;
+        --accent:     #ffb830;
+        --accent2:    #f09c20;
+        --blue:       #1e6b8c;
+        --blue-light: #4FC3F7;
+        --glass:      rgba(255,255,255,0.045);
+        --glass-b:    rgba(255,255,255,0.08);
+        --font-s:     'Inter','system-ui',sans-serif;
+        --font-d:     'Playfair Display',Georgia,serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+        font-family: var(--font-s);
+        background: var(--bg0);
+        color: #fff;
+        overflow-x: hidden;
+    }
+    a { text-decoration: none; }
+
+    /* ── NAVBAR ─────────────────────────────────── */
+    .navbar {
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        z-index: 1000;
+        padding: 22px 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: background 0.4s, padding 0.4s, box-shadow 0.4s;
+    }
+    .navbar.scrolled {
+        background: rgba(6,12,19,0.88);
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
+        padding: 13px 64px;
+        box-shadow: 0 1px 0 rgba(255,255,255,0.05), 0 8px 40px rgba(0,0,0,0.55);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 11px; }
+    .nav-logo-icon {
+        width: 42px; height: 42px;
+        background: linear-gradient(135deg, #ffb830, #e8931a);
+        border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 20px;
+        box-shadow: 0 4px 18px rgba(255,184,48,0.55);
+        flex-shrink: 0;
+    }
+    .nav-logo-text {
+        font-family: var(--font-d);
+        font-size: 25px; font-weight: 700;
+        color: #fff;
+    }
+    .nav-links { display: flex; align-items: center; gap: 38px; list-style: none; }
+    .nav-links a {
+        color: rgba(255,255,255,0.62);
+        font-size: 14px; font-weight: 500;
+        position: relative;
+        transition: color 0.25s;
+    }
+    .nav-links a::after {
+        content: '';
+        position: absolute;
+        bottom: -4px; left: 0; right: 0;
+        height: 1.5px;
+        background: var(--accent);
+        transform: scaleX(0);
+        transform-origin: right;
+        transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
+
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .btn-outline {
+        padding: 9px 24px;
+        border: 1px solid rgba(255,255,255,0.18);
+        border-radius: 10px;
+        color: rgba(255,255,255,0.82);
+        background: rgba(255,255,255,0.04);
+        font-size: 14px; font-weight: 500;
+        cursor: pointer;
+        transition: all 0.25s;
+    }
+    .btn-outline:hover {
+        border-color: rgba(255,255,255,0.45);
+        background: rgba(255,255,255,0.09);
+        color: #fff;
+    }
+    .btn-accent {
+        padding: 9px 24px;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #ffb830, #f09c20);
+        color: #0d1b2a;
+        font-size: 14px; font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(255,184,48,0.42);
+        transition: all 0.25s;
+    }
+    .btn-accent:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 7px 24px rgba(255,184,48,0.60);
+    }
+
+    /* ── HERO ───────────────────────────────────── */
+    .hero {
+        position: relative;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        overflow: hidden;
+        background: radial-gradient(ellipse 140% 90% at 70% 50%, #0d2845 0%, #060c13 58%);
+    }
+    #hero-canvas {
+        position: absolute; inset: 0;
+        width: 100%; height: 100%;
+        pointer-events: none; z-index: 1;
+    }
+    /* Globe canvas — right side */
+    #globe-canvas {
+        position: absolute;
+        right: -80px; top: 50%;
+        transform: translateY(-50%);
+        width: 640px; height: 640px;
+        pointer-events: none; z-index: 2;
+    }
+    /* Fade edges over globe */
+    .hero::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(90deg,
+            #060c13 22%,
+            rgba(6,12,19,0.55) 52%,
+            rgba(6,12,19,0.20) 72%,
+            #060c13 100%);
+        z-index: 3; pointer-events: none;
+    }
+    .hero-mountains { z-index: 4; opacity: 0.45; }
+
+    .hero-content {
+        position: relative; z-index: 5;
+        padding: 140px 64px 200px;
+        max-width: 680px;
+        /* start hidden — GSAP reveals */
+        opacity: 0;
+    }
+    .hero-badge {
+        display: inline-flex;
+        align-items: center; gap: 8px;
+        background: rgba(255,184,48,0.10);
+        border: 1px solid rgba(255,184,48,0.28);
+        color: var(--accent);
+        font-size: 12px; font-weight: 600;
+        padding: 7px 18px;
+        border-radius: 100px;
+        margin-bottom: 32px;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(6px);
+    }
+    .hero-title {
+        font-family: var(--font-d);
+        font-size: clamp(44px, 5.6vw, 82px);
+        font-weight: 800;
+        line-height: 1.04;
+        letter-spacing: -2.5px;
+        color: #fff;
+        margin-bottom: 26px;
+    }
+    .hero-title .line-wrap { display: block; overflow: hidden; }
+    .hero-title .accent-word { color: var(--accent); font-style: italic; }
+    .hero-title .dim-word {
+        background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .hero-subtitle {
+        font-size: clamp(15px, 1.8vw, 18px);
+        color: rgba(255,255,255,0.52);
+        max-width: 500px;
+        margin-bottom: 50px;
+        line-height: 1.78;
+    }
+    .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+
+    .btn-hero-primary {
+        padding: 16px 40px;
+        background: linear-gradient(135deg, #ffb830, #f09c20);
+        color: #0d1b2a;
+        font-size: 15px; font-weight: 700;
+        border: none; border-radius: 14px;
+        cursor: pointer;
+        position: relative; overflow: hidden;
+        box-shadow: 0 6px 26px rgba(255,184,48,0.48);
+        transition: all 0.3s;
+    }
+    .btn-hero-primary::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.22), transparent);
+        opacity: 0; transition: opacity 0.3s;
+    }
+    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 38px rgba(255,184,48,0.64); }
+    .btn-hero-primary:hover::after { opacity: 1; }
+
+    .btn-hero-ghost {
+        padding: 16px 40px;
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.82);
+        font-size: 15px; font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 14px;
+        cursor: pointer;
+        display: inline-flex; align-items: center; gap: 9px;
+        backdrop-filter: blur(8px);
+        transition: all 0.3s;
+    }
+    .btn-hero-ghost:hover {
+        border-color: rgba(255,255,255,0.38);
+        background: rgba(255,255,255,0.11);
+        transform: translateY(-2px);
+        color: #fff;
+    }
+
+    .hero-scroll-hint {
+        position: absolute; bottom: 42px; left: 64px;
+        display: flex; flex-direction: column;
+        align-items: flex-start; gap: 10px;
+        z-index: 5; opacity: 0;
+    }
+    .scroll-mouse {
+        width: 26px; height: 42px;
+        border: 1.5px solid rgba(255,255,255,0.20);
+        border-radius: 13px; position: relative;
+    }
+    .scroll-mouse::after {
+        content: '';
+        position: absolute;
+        top: 7px; left: 50%;
+        transform: translateX(-50%);
+        width: 4px; height: 8px;
+        background: var(--accent); border-radius: 2px;
+        animation: scrollBob 2s ease infinite;
+    }
+    @keyframes scrollBob {
+        0%,100% { top: 7px; opacity: 1; }
+        50% { top: 22px; opacity: 0.25; }
+    }
+    .scroll-label {
+        font-size: 10px; color: rgba(255,255,255,0.28);
+        letter-spacing: 1.5px; text-transform: uppercase;
+    }
+
+    /* ── STATS STRIP ────────────────────────────── */
+    .stats-strip {
+        position: relative; overflow: hidden;
+        background: rgba(255,255,255,0.022);
+        border-top: 1px solid rgba(255,255,255,0.055);
+        border-bottom: 1px solid rgba(255,255,255,0.055);
+        padding: 42px 60px;
+        display: flex; justify-content: center; gap: 0;
+        flex-wrap: wrap;
+    }
+    .stats-strip::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(255,184,48,0.055), transparent);
+        pointer-events: none;
+    }
+    .stat { text-align: center; padding: 0 72px; position: relative; }
+    .stat + .stat::before {
+        content: '';
+        position: absolute; left: 0; top: 15%; bottom: 15%;
+        width: 1px; background: rgba(255,255,255,0.07);
+    }
+    .stat-num {
+        font-family: var(--font-d);
+        font-size: 44px; font-weight: 700;
+        color: var(--accent); line-height: 1;
+        letter-spacing: -1px;
+    }
+    .stat-lbl {
+        font-size: 12.5px; color: rgba(255,255,255,0.38);
+        margin-top: 8px; font-weight: 500; letter-spacing: 0.3px;
+    }
+
+    /* ── SHARED SECTIONS ────────────────────────── */
+    .section { padding: 120px 64px; }
+
+    .section-tag {
+        display: inline-flex; align-items: center; gap: 10px;
+        font-size: 11px; font-weight: 700;
+        letter-spacing: 3px; text-transform: uppercase;
+        color: var(--accent); margin-bottom: 18px;
+    }
+    .section-tag::before {
+        content: ''; width: 22px; height: 2px;
+        background: var(--accent); border-radius: 2px; flex-shrink: 0;
+    }
+    .section-title {
+        font-family: var(--font-d);
+        font-size: clamp(32px, 4vw, 54px);
+        font-weight: 700; color: #fff;
+        line-height: 1.12; margin-bottom: 18px;
+        letter-spacing: -0.8px;
+    }
+    .section-title span { color: var(--accent); }
+    .section-sub {
+        font-size: 16.5px; color: rgba(255,255,255,0.44);
+        line-height: 1.76;
+    }
+
+    /* ── FEATURES ───────────────────────────────── */
+    .features-section {
+        background: linear-gradient(180deg, #060c13 0%, #0a1520 100%);
+        position: relative; overflow: hidden;
+    }
+    .features-section::before {
+        content: '';
+        position: absolute; top: -150px; left: 50%; transform: translateX(-50%);
+        width: 900px; height: 600px;
+        background: radial-gradient(ellipse, rgba(30,107,140,0.10), transparent 65%);
+        pointer-events: none;
+    }
+    .features-head {
+        text-align: center; margin-bottom: 72px;
+        max-width: 580px; margin-left: auto; margin-right: auto;
+    }
+    .features-head .section-sub { max-width: 480px; margin: 0 auto; }
+    /* Center tag in features */
+    .features-head .section-tag { justify-content: center; }
+    .features-head .section-tag::before { display: none; }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 20px; max-width: 1200px; margin: 0 auto;
+    }
+    .f-card {
+        background: var(--glass);
+        border: 1px solid rgba(255,255,255,0.065);
+        border-radius: 24px; padding: 40px 32px;
+        position: relative; overflow: hidden;
+        transition: background 0.4s, border-color 0.4s, transform 0.4s, box-shadow 0.4s;
+    }
+    .f-card::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,184,48,0.07), transparent);
+        opacity: 0; transition: opacity 0.4s;
+    }
+    .f-card::after {
+        content: '';
+        position: absolute; top: 0; left: 0; right: 0; height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,184,48,0.38), transparent);
+        opacity: 0; transition: opacity 0.4s;
+    }
+    .f-card:hover {
+        background: rgba(255,255,255,0.06);
+        border-color: rgba(255,184,48,0.18);
+        transform: translateY(-8px) !important;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,184,48,0.06);
+    }
+    .f-card:hover::before, .f-card:hover::after { opacity: 1; }
+
+    .f-icon {
+        width: 60px; height: 60px;
+        background: rgba(255,184,48,0.09);
+        border: 1px solid rgba(255,184,48,0.18);
+        border-radius: 18px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 28px; margin-bottom: 24px;
+        transition: all 0.3s;
+    }
+    .f-card:hover .f-icon {
+        background: rgba(255,184,48,0.14);
+        border-color: rgba(255,184,48,0.32);
+        transform: scale(1.08) rotate(-3deg);
+    }
+    .f-title { font-size: 18px; font-weight: 650; color: #fff; margin-bottom: 12px; letter-spacing: -0.2px; }
+    .f-desc  { font-size: 14.5px; color: rgba(255,255,255,0.42); line-height: 1.75; }
+
+    /* ── DESTINATIONS ───────────────────────────── */
+    .dest-section {
+        background: #060c13;
+        position: relative; overflow: hidden;
+    }
+    .dest-section::after {
+        content: '';
+        position: absolute; bottom: -100px; right: -100px;
+        width: 600px; height: 600px;
+        background: radial-gradient(ellipse, rgba(30,107,140,0.08), transparent 65%);
+        pointer-events: none;
+    }
+    .dest-head { margin-bottom: 58px; }
+    .dest-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 16px; max-width: 1200px; margin: 0 auto;
+    }
+    .d-card {
+        border-radius: 20px; overflow: hidden;
+        position: relative; aspect-ratio: 3/4;
+        cursor: pointer;
+        transition: box-shadow 0.4s, border-color 0.4s;
+        border: 1px solid rgba(255,255,255,0.04);
+        will-change: transform;
+    }
+    .d-img {
+        position: absolute; inset: 0;
+        width: 100%; height: 100%;
+        object-fit: cover; object-position: center;
+        transition: transform 0.6s cubic-bezier(.4,0,.2,1);
+        pointer-events: none;
+    }
+    .d-overlay {
+        position: absolute; inset: 0;
+        background: linear-gradient(to top, rgba(4,8,16,.92) 0%, rgba(4,8,16,0.18) 52%, transparent 100%);
+    }
+    .d-card:hover .d-img { transform: scale(1.09); }
+    .d-card:hover {
+        box-shadow: 0 22px 64px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,184,48,0.16);
+        border-color: rgba(255,184,48,0.12);
+    }
+    .d-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 22px 18px; }
+    .d-name {
+        font-family: var(--font-d); font-size: 18px; font-weight: 700;
+        color: #fff; margin-bottom: 4px; line-height: 1.2;
+    }
+    .d-region { font-size: 10.5px; color: rgba(255,255,255,0.50); font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; }
+    .d-badge {
+        position: absolute; top: 14px; right: 14px;
+        background: rgba(255,184,48,0.94); color: #0d1b2a;
+        font-size: 10px; font-weight: 700;
+        padding: 4px 10px; border-radius: 100px;
+    }
+
+    /* ── HOW IT WORKS ───────────────────────────── */
+    .hiw-section {
+        background: linear-gradient(180deg, #060c13 0%, #0d1b2a 100%);
+        text-align: center; position: relative; overflow: hidden;
+    }
+    .hiw-section::before {
+        content: '';
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+        width: 800px; height: 800px;
+        background: radial-gradient(ellipse, rgba(255,184,48,0.035), transparent 65%);
+        pointer-events: none;
+    }
+    .hiw-head { margin-bottom: 80px; }
+    /* Center tag in hiw */
+    .hiw-head .section-tag { justify-content: center; }
+    .hiw-head .section-tag::before { display: none; }
+
+    .steps-row {
+        display: flex; justify-content: center;
+        max-width: 900px; margin: 0 auto;
+        position: relative; gap: 0;
+    }
+    .steps-row::before {
+        content: '';
+        position: absolute; top: 37px; left: 20%; right: 20%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(255,184,48,0.18), transparent);
+    }
+    .step-item {
+        flex: 1; padding: 0 28px;
+    }
+    .step-num {
+        width: 74px; height: 74px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,184,48,0.20);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-family: var(--font-d); font-size: 28px; font-weight: 700;
+        color: var(--accent); margin: 0 auto 24px;
+        position: relative; z-index: 1;
+        transition: all 0.35s;
+    }
+    .step-item:hover .step-num {
+        background: rgba(255,184,48,0.10);
+        border-color: rgba(255,184,48,0.45);
+        box-shadow: 0 0 32px rgba(255,184,48,0.22);
+        transform: scale(1.06);
+    }
+    .step-title { font-size: 17px; font-weight: 650; color: #fff; margin-bottom: 10px; }
+    .step-desc  { font-size: 14px; color: rgba(255,255,255,0.42); line-height: 1.7; }
+
+    /* ── CTA ────────────────────────────────────── */
+    .cta-section {
+        padding: 130px 64px;
+        text-align: center;
+        position: relative; overflow: hidden;
+        background: #060c13;
+    }
+    .cta-section::before {
+        content: '';
+        position: absolute; inset: 0;
+        background:
+            radial-gradient(ellipse 90% 110% at 50% 50%, rgba(27,73,101,0.55) 0%, transparent 70%),
+            radial-gradient(ellipse 60% 60% at 50% -10%, rgba(255,184,48,0.07) 0%, transparent 60%);
+        pointer-events: none;
+    }
+    .cta-section::after {
+        content: '';
+        position: absolute; inset: 0;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        pointer-events: none;
+    }
+    .cta-title {
+        font-family: var(--font-d);
+        font-size: clamp(34px, 4.5vw, 62px);
+        font-weight: 700; color: #fff;
+        margin-bottom: 18px;
+        letter-spacing: -1.5px; line-height: 1.08;
+        position: relative; z-index: 1;
+    }
+    .cta-sub {
+        font-size: 17px; color: rgba(255,255,255,0.50);
+        margin-bottom: 50px; position: relative; z-index: 1;
+    }
+    .cta-btns {
+        display: flex; gap: 14px;
+        justify-content: center; flex-wrap: wrap;
+        position: relative; z-index: 1;
+    }
+
+    /* ── FOOTER ─────────────────────────────────── */
+    footer {
+        background: #030810;
+        padding: 40px 64px;
+        display: flex; align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid rgba(255,255,255,0.04);
+        flex-wrap: wrap; gap: 16px;
+    }
+    .footer-brand { display: flex; align-items: center; gap: 12px; }
+    .footer-brand span { font-family: var(--font-d); font-size: 20px; font-weight: 700; color: #fff; }
+    footer p { font-size: 13px; color: rgba(255,255,255,0.22); }
+
+    /* ── MODAL ──────────────────────────────────── */
+    .modal-bg {
+        position: fixed; inset: 0;
+        background: rgba(3,8,16,0.92);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        z-index: 2000;
+        display: flex; align-items: center; justify-content: center;
+        padding: 24px; opacity: 0; pointer-events: none;
+        transition: opacity 0.35s cubic-bezier(.4,0,.2,1);
+    }
+    .modal-bg.open { opacity: 1; pointer-events: all; }
+    .modal-box {
+        background: linear-gradient(160deg, #0d1f32 0%, #0f2b3e 100%);
+        border: 1px solid rgba(255,255,255,0.09);
+        border-radius: 28px; padding: 52px 48px;
+        max-width: 540px; width: 100%;
+        position: relative;
+        transform: translateY(34px) scale(0.97);
+        transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
+        box-shadow: 0 40px 80px rgba(0,0,0,0.65);
+    }
+    .modal-bg.open .modal-box { transform: translateY(0) scale(1); }
+    .modal-close-btn {
+        position: absolute; top: 16px; right: 16px;
+        width: 36px; height: 36px;
+        background: rgba(255,255,255,0.07);
+        border: none; border-radius: 9px;
+        color: rgba(255,255,255,0.52);
+        cursor: pointer; font-size: 18px;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .modal-close-btn:hover { background: rgba(255,255,255,0.13); color: #fff; }
+    .modal-heading {
+        font-family: var(--font-d); font-size: 30px; font-weight: 700;
+        color: #fff; text-align: center; margin-bottom: 8px;
+    }
+    .modal-subtext {
+        font-size: 15px; color: rgba(255,255,255,0.48);
+        text-align: center; margin-bottom: 38px;
+    }
+    .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .role-option {
+        background: rgba(255,255,255,0.042);
+        border: 1.5px solid rgba(255,255,255,0.08);
+        border-radius: 18px; padding: 30px 18px;
+        text-align: center; cursor: pointer;
+        transition: all 0.28s; display: block;
+    }
+    .role-option:hover {
+        background: rgba(255,184,48,0.08);
+        border-color: rgba(255,184,48,0.40);
+        transform: translateY(-5px);
+        box-shadow: 0 14px 36px rgba(0,0,0,0.35);
+    }
+    .role-emoji { font-size: 38px; margin-bottom: 13px; display: block; }
+    .role-name  { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 6px; }
+    .role-hint  { font-size: 12.5px; color: rgba(255,255,255,0.42); line-height: 1.55; }
+    .modal-admin-note {
+        text-align: center; font-size: 13px; color: rgba(255,255,255,0.35);
+    }
+    .modal-admin-note a { color: var(--accent); font-weight: 500; }
+    .modal-admin-note a:hover { text-decoration: underline; }
+
+    /* ── RESPONSIVE ─────────────────────────────── */
+    @media (max-width: 1200px) {
+        #globe-canvas { width: 520px; height: 520px; right: -100px; }
+    }
+    @media (max-width: 1024px) {
+        .hero::before { background: linear-gradient(90deg, #060c13 24%, rgba(6,12,19,0.5) 58%, #060c13 100%); }
+        #globe-canvas { width: 420px; height: 420px; right: -80px; opacity: 0.55; }
+        .dest-grid { grid-template-columns: repeat(3, 1fr); }
+        .hero-content { max-width: 580px; }
+    }
+    @media (max-width: 768px) {
+        .navbar, .navbar.scrolled { padding: 14px 20px; }
+        .nav-links { display: none; }
+        .section { padding: 80px 22px; }
+        .cta-section { padding: 80px 22px; }
+        .stats-strip { padding: 28px 20px; }
+        .stat { padding: 16px 28px; }
+        .dest-grid { grid-template-columns: repeat(2, 1fr); }
+        .steps-row { flex-direction: column; gap: 40px; align-items: center; }
+        .steps-row::before { display: none; }
+        .role-grid { grid-template-columns: 1fr; }
+        .modal-box { padding: 36px 22px; }
+        footer { padding: 28px 22px; justify-content: center; text-align: center; }
+        #globe-canvas { width: 320px; height: 320px; right: -50px; opacity: 0.22; }
+        .hero-content { padding: 130px 22px 170px; }
+        .hero-scroll-hint { left: 50%; transform: translateX(-50%); align-items: center; }
+    }
+    @media (max-width: 480px) {
+        #globe-canvas { display: none; }
+        .hero::before { background: #060c13; opacity: 0.7; }
+        .hero-title { font-size: 38px; letter-spacing: -1px; }
+        .stat-num { font-size: 34px; }
+        .stat { padding: 14px 18px; }
+    }
+
+    @keyframes float {
+        0%,100% { transform: translateY(-50%) translateY(0px); }
+        50%       { transform: translateY(-50%) translateY(-14px); }
+    }
+    </style>
 </head>
 <body>
 
@@ -35,46 +701,43 @@
 ══════════════════════════════════════ -->
 <section class="hero" id="home">
     <canvas id="hero-canvas"></canvas>
+    <canvas id="globe-canvas"></canvas>
 
-    <!-- Layered mountain silhouette -->
     <svg class="hero-mountains" viewBox="0 0 1440 230" fill="none"
          preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <polygon
-            points="0,230 150,68 260,115 400,32 540,102 680,18 820,88 960,38 1100,80 1240,34 1360,72 1440,48 1440,230"
-            fill="rgba(13,27,42,0.5)"/>
-        <polygon
-            points="0,230 100,108 220,148 360,62 490,118 630,44 770,108 900,55 1050,95 1190,52 1310,85 1410,60 1440,72 1440,230"
-            fill="rgba(13,27,42,0.75)"/>
-        <polygon
-            points="0,230 80,148 200,170 340,118 460,155 600,108 720,142 840,108 980,138 1120,112 1260,132 1390,115 1440,120 1440,230"
-            fill="#0d1b2a"/>
+        <polygon points="0,230 150,68 260,115 400,32 540,102 680,18 820,88 960,38 1100,80 1240,34 1360,72 1440,48 1440,230"
+            fill="rgba(6,12,19,0.45)"/>
+        <polygon points="0,230 100,108 220,148 360,62 490,118 630,44 770,108 900,55 1050,95 1190,52 1310,85 1410,60 1440,72 1440,230"
+            fill="rgba(6,12,19,0.72)"/>
+        <polygon points="0,230 80,148 200,170 340,118 460,155 600,108 720,142 840,108 980,138 1120,112 1260,132 1390,115 1440,120 1440,230"
+            fill="#060c13"/>
     </svg>
 
-    <div class="hero-content">
-        <div class="hero-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+    <div class="hero-content" id="heroContent">
+        <div class="hero-badge" id="heroBadge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
             Pakistan's Smart Travel Platform
         </div>
 
-        <h1 class="hero-title">
-            <span class="line-wrap">Discover</span>
-            <span class="line-wrap"><span class="accent-word">Pakistan's</span></span>
-            <span class="line-wrap">Hidden Wonders</span>
+        <h1 class="hero-title" id="heroTitle">
+            <span class="line-wrap"><span class="dim-word" id="h1">Explore the</span></span>
+            <span class="line-wrap"><span class="accent-word" id="h2">World</span></span>
+            <span class="line-wrap"><span class="dim-word" id="h3">with Tripify</span></span>
         </h1>
 
-        <p class="hero-subtitle">
+        <p class="hero-subtitle" id="heroSub">
             From the sky-high peaks of Hunza to the emerald valleys of Swat —
             plan unforgettable journeys across Pakistan's most breathtaking destinations.
         </p>
 
-        <div class="hero-cta">
+        <div class="hero-cta" id="heroCta">
             <button class="btn-hero-primary" onclick="openModal()">
                 Start Exploring Free
             </button>
             <a href="src/html/pages/auth/login.html" class="btn-hero-ghost">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                      stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
                     <polyline points="10 17 15 12 10 7"/>
@@ -85,39 +748,60 @@
         </div>
     </div>
 
-    <div class="hero-scroll-hint">
+    <div class="hero-scroll-hint" id="scrollHint">
         <div class="scroll-mouse"></div>
         <span class="scroll-label">Scroll to explore</span>
     </div>
 </section>
 
+<!-- ══════════════════════════════════════
+     STATS STRIP
+══════════════════════════════════════ -->
+<div class="stats-strip" id="statsStrip">
+    <div class="stat">
+        <div class="stat-num" data-target="10" data-suffix="+">0</div>
+        <div class="stat-lbl">Destinations</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num" data-target="21" data-suffix="+">0</div>
+        <div class="stat-lbl">Verified Hotels</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num" data-target="80" data-suffix="+">0</div>
+        <div class="stat-lbl">Room Types</div>
+    </div>
+    <div class="stat">
+        <div class="stat-num" data-target="100" data-suffix="%">0</div>
+        <div class="stat-lbl">Free to Join</div>
+    </div>
+</div>
 
 <!-- ══════════════════════════════════════
      FEATURES
 ══════════════════════════════════════ -->
 <section class="section features-section" id="features">
-    <div class="features-head reveal">
+    <div class="features-head">
         <span class="section-tag">Why Tripify</span>
         <h2 class="section-title">Everything You Need to<br><span>Travel Smart</span></h2>
         <p class="section-sub">From trip planning to hotel booking and local discovery — built specifically for Pakistan's wanderers.</p>
     </div>
     <div class="features-grid">
-        <div class="f-card" style="transition-delay:0.00s">
+        <div class="f-card">
             <div class="f-icon">🗺️</div>
             <h3 class="f-title">Smart Trip Planning</h3>
             <p class="f-desc">Build multi-destination itineraries with ease. Set budgets, pick stops, and organize your entire journey in one place.</p>
         </div>
-        <div class="f-card" style="transition-delay:0.10s">
+        <div class="f-card">
             <div class="f-icon">🏨</div>
             <h3 class="f-title">Hotel Bookings</h3>
             <p class="f-desc">Browse and book verified hotels at every destination. Real reviews from real travelers before you commit.</p>
         </div>
-        <div class="f-card" style="transition-delay:0.20s">
+        <div class="f-card">
             <div class="f-icon">🧭</div>
             <h3 class="f-title">Destination Guides</h3>
-            <p class="f-desc">Deep-dive destination guides covering weather, culture, visa tips, seasonal data, and souvenirs.</p>
+            <p class="f-desc">Deep-dive guides covering weather, culture, visa tips, seasonal data, and souvenirs for every region.</p>
         </div>
-        <div class="f-card" style="transition-delay:0.30s">
+        <div class="f-card">
             <div class="f-icon">🛡️</div>
             <h3 class="f-title">Travel Safety</h3>
             <p class="f-desc">Up-to-date emergency contacts, travel guidelines, and safety advisories for every region of Pakistan.</p>
@@ -129,16 +813,14 @@
      DESTINATIONS
 ══════════════════════════════════════ -->
 <section class="section dest-section" id="destinations">
-    <div class="dest-head reveal">
+    <div class="dest-head">
         <span class="section-tag">Top Destinations</span>
         <h2 class="section-title">Explore <span>Pakistan's</span> Finest</h2>
         <p class="section-sub">Five iconic destinations, each with its own story, culture, and scenery that will take your breath away.</p>
     </div>
     <div class="dest-grid">
-
-        <!-- Hunza -->
-        <div class="d-card" style="transition-delay:0.00s">
-            <img class="d-img" src="public/assets/images/hunza-valley.jpg" alt="Hunza Valley, Gilgit-Baltistan">
+        <div class="d-card">
+            <img class="d-img" src="public/assets/images/hunza-valley.jpg" alt="Hunza Valley" loading="lazy">
             <div class="d-overlay"></div>
             <span class="d-badge">⭐ Most Popular</span>
             <div class="d-info">
@@ -146,20 +828,16 @@
                 <div class="d-region">Gilgit-Baltistan</div>
             </div>
         </div>
-
-        <!-- Murree -->
-        <div class="d-card" style="transition-delay:0.08s">
-            <img class="d-img" src="public/assets/images/murree.jpeg" alt="Murree, Punjab">
+        <div class="d-card">
+            <img class="d-img" src="public/assets/images/murree.jpeg" alt="Murree" loading="lazy">
             <div class="d-overlay"></div>
             <div class="d-info">
                 <div class="d-name">Murree</div>
                 <div class="d-region">Punjab</div>
             </div>
         </div>
-
-        <!-- Swat -->
-        <div class="d-card" style="transition-delay:0.16s">
-            <img class="d-img" src="public/assets/images/swat.jpg" alt="Swat Valley, Khyber Pakhtunkhwa">
+        <div class="d-card">
+            <img class="d-img" src="public/assets/images/swat.jpg" alt="Swat Valley" loading="lazy">
             <div class="d-overlay"></div>
             <span class="d-badge">🌿 Scenic</span>
             <div class="d-info">
@@ -167,10 +845,8 @@
                 <div class="d-region">Khyber Pakhtunkhwa</div>
             </div>
         </div>
-
-        <!-- Skardu -->
-        <div class="d-card" style="transition-delay:0.24s">
-            <img class="d-img" src="public/assets/images/skardu.jpeg" alt="Skardu, Gilgit-Baltistan">
+        <div class="d-card">
+            <img class="d-img" src="public/assets/images/skardu.jpeg" alt="Skardu" loading="lazy">
             <div class="d-overlay"></div>
             <span class="d-badge">🏔️ K2 Gateway</span>
             <div class="d-info">
@@ -178,17 +854,14 @@
                 <div class="d-region">Gilgit-Baltistan</div>
             </div>
         </div>
-
-        <!-- Naran -->
-        <div class="d-card" style="transition-delay:0.32s">
-            <img class="d-img" src="public/assets/images/naran kaghan.jpg" alt="Naran Kaghan, Khyber Pakhtunkhwa">
+        <div class="d-card">
+            <img class="d-img" src="public/assets/images/naran kaghan.jpg" alt="Naran Kaghan" loading="lazy">
             <div class="d-overlay"></div>
             <div class="d-info">
                 <div class="d-name">Naran Kaghan</div>
                 <div class="d-region">Khyber Pakhtunkhwa</div>
             </div>
         </div>
-
     </div>
 </section>
 
@@ -196,22 +869,22 @@
      HOW IT WORKS
 ══════════════════════════════════════ -->
 <section class="section hiw-section" id="how-it-works">
-    <div class="hiw-head reveal">
+    <div class="hiw-head">
         <span class="section-tag">Get Started</span>
         <h2 class="section-title">Up &amp; Running in <span>3 Steps</span></h2>
     </div>
     <div class="steps-row">
-        <div class="step-item" style="transition-delay:0.00s">
+        <div class="step-item">
             <div class="step-num">1</div>
             <h3 class="step-title">Create Your Account</h3>
             <p class="step-desc">Sign up as a Tourist or Hotel Manager in under two minutes — completely free.</p>
         </div>
-        <div class="step-item" style="transition-delay:0.15s">
+        <div class="step-item">
             <div class="step-num">2</div>
             <h3 class="step-title">Explore &amp; Plan</h3>
             <p class="step-desc">Browse destinations, compare hotels, and build your personalized trip itinerary.</p>
         </div>
-        <div class="step-item" style="transition-delay:0.30s">
+        <div class="step-item">
             <div class="step-num">3</div>
             <h3 class="step-title">Book &amp; Travel</h3>
             <p class="step-desc">Confirm your bookings, pack your bags, and discover the real Pakistan!</p>
@@ -220,15 +893,15 @@
 </section>
 
 <!-- ══════════════════════════════════════
-     CTA SECTION
+     CTA
 ══════════════════════════════════════ -->
-<section class="cta-section">
+<section class="cta-section" id="cta">
     <h2 class="cta-title">Ready to Explore Pakistan?</h2>
     <p class="cta-sub">Join Tripify today — it's free and takes less than a minute.</p>
     <div class="cta-btns">
         <button class="btn-hero-primary" onclick="openModal()">Create Free Account</button>
         <a href="src/html/pages/auth/login.html" class="btn-hero-ghost">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none"
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
                 <polyline points="10 17 15 12 10 7"/>
@@ -244,7 +917,7 @@
 ══════════════════════════════════════ -->
 <footer>
     <div class="footer-brand">
-        <div class="nav-logo-icon" style="width:32px;height:32px;font-size:16px;">✈</div>
+        <div class="nav-logo-icon" style="width:32px;height:32px;font-size:15px;">✈</div>
         <span>Tripify</span>
     </div>
     <p>&copy; 2026 Tripify — Built for Pakistan's wanderers.</p>
@@ -256,10 +929,8 @@
 <div class="modal-bg" id="modalBg" onclick="handleBgClick(event)">
     <div class="modal-box">
         <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">✕</button>
-
         <h2 class="modal-heading">Join Tripify As…</h2>
         <p class="modal-subtext">Pick your account type to get started</p>
-
         <div class="role-grid">
             <a href="src/html/pages/auth/register.html" class="role-option">
                 <span class="role-emoji">🧳</span>
@@ -272,7 +943,6 @@
                 <div class="role-hint">List and manage your hotel property on Tripify</div>
             </a>
         </div>
-
         <p class="modal-admin-note">
             Already have an account?
             <a href="src/html/pages/auth/login.html">Log in here</a>
@@ -287,90 +957,325 @@
 ══════════════════════════════════════ -->
 <script>
 (function () {
-    'use strict';
+'use strict';
 
-    /* ── Navbar scroll effect ─────────────── */
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-        navbar.classList.toggle('scrolled', window.scrollY > 50);
+/* ──────────────────────────────────────
+   NAVBAR SCROLL
+────────────────────────────────────── */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+    navbar.classList.toggle('scrolled', window.scrollY > 50);
+}, { passive: true });
+
+/* ──────────────────────────────────────
+   PARTICLE CANVAS (background stars)
+────────────────────────────────────── */
+const canvas = document.getElementById('hero-canvas');
+const ctx    = canvas.getContext('2d');
+
+function resizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas, { passive: true });
+
+function mkParticle() {
+    return {
+        x:     Math.random() * canvas.width,
+        y:     Math.random() * canvas.height,
+        r:     Math.random() * 1.2 + 0.2,
+        vx:    (Math.random() - 0.5) * 0.20,
+        vy:    -Math.random() * 0.30 - 0.06,
+        alpha: Math.random() * 0.35 + 0.06,
+        life:  1,
+        decay: Math.random() * 0.0022 + 0.0007,
+    };
+}
+const particles = [];
+for (let i = 0; i < 160; i++) particles.push(mkParticle());
+
+function drawParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy;
+        p.life -= p.decay;
+        if (p.life <= 0 || p.y < -10) {
+            particles[i]   = mkParticle();
+            particles[i].y = canvas.height + 4;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${(p.alpha * p.life).toFixed(3)})`;
+        ctx.fill();
+    }
+    requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+/* ──────────────────────────────────────
+   THREE.JS GLOBE
+────────────────────────────────────── */
+(function initGlobe() {
+    const gc = document.getElementById('globe-canvas');
+    if (!gc || typeof THREE === 'undefined') return;
+
+    const SIZE = 640;
+    const scene    = new THREE.Scene();
+    const camera   = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+    camera.position.z = 2.7;
+
+    const renderer = new THREE.WebGLRenderer({ canvas: gc, alpha: true, antialias: true });
+    renderer.setSize(SIZE, SIZE);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    /* — dot sphere via Fibonacci lattice — */
+    const N = 3200;
+    const pos = new Float32Array(N * 3);
+    const phi = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < N; i++) {
+        const y   = 1 - (i / (N - 1)) * 2;
+        const rad = Math.sqrt(Math.max(0, 1 - y * y));
+        const ang = phi * i;
+        pos[i*3]   = rad * Math.cos(ang);
+        pos[i*3+1] = y;
+        pos[i*3+2] = rad * Math.sin(ang);
+    }
+    const dotGeo = new THREE.BufferGeometry();
+    dotGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const dotMat = new THREE.PointsMaterial({
+        color: 0x4FC3F7, size: 0.013,
+        transparent: true, opacity: 0.72,
+        sizeAttenuation: true
+    });
+    const dots = new THREE.Points(dotGeo, dotMat);
+    scene.add(dots);
+
+    /* — latitude grid lines — */
+    const gridGroup = new THREE.Group();
+    const lineMat = (op) => new THREE.LineBasicMaterial({
+        color: 0x1e6b8c, transparent: true, opacity: op
+    });
+    for (let lat = -60; lat <= 60; lat += 30) {
+        const cosLat = Math.cos(lat * Math.PI / 180);
+        const sinLat = Math.sin(lat * Math.PI / 180);
+        const pts = [];
+        for (let i = 0; i <= 80; i++) {
+            const a = (i / 80) * Math.PI * 2;
+            pts.push(new THREE.Vector3(cosLat * Math.cos(a), sinLat, cosLat * Math.sin(a)));
+        }
+        gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(0.14)));
+    }
+    /* longitude lines */
+    for (let lon = 0; lon < 360; lon += 30) {
+        const lonRad = lon * Math.PI / 180;
+        const pts = [];
+        for (let i = 0; i <= 80; i++) {
+            const lat = (i / 80) * Math.PI * 2 - Math.PI;
+            pts.push(new THREE.Vector3(
+                Math.cos(lat) * Math.cos(lonRad),
+                Math.sin(lat),
+                Math.cos(lat) * Math.sin(lonRad)
+            ));
+        }
+        gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(0.09)));
+    }
+    scene.add(gridGroup);
+
+    /* — outer glow ring — */
+    const glowGeo  = new THREE.SphereGeometry(1.08, 32, 32);
+    const glowMat  = new THREE.MeshBasicMaterial({
+        color: 0x1e6b8c, transparent: true, opacity: 0.04,
+        side: THREE.BackSide
+    });
+    scene.add(new THREE.Mesh(glowGeo, glowMat));
+
+    /* — mouse parallax — */
+    let mx = 0, my = 0;
+    document.addEventListener('mousemove', e => {
+        mx = (e.clientX / window.innerWidth  - 0.5) * 0.5;
+        my = (e.clientY / window.innerHeight - 0.5) * 0.25;
     }, { passive: true });
 
-    /* ── Particle canvas ──────────────────── */
-    const canvas = document.getElementById('hero-canvas');
-    const ctx    = canvas.getContext('2d');
+    let raf = true;
+    (function tick() {
+        if (!raf) return;
+        requestAnimationFrame(tick);
+        const speed = 0.0025;
+        dots.rotation.y       += speed;
+        gridGroup.rotation.y  += speed;
+        camera.position.x += (mx * 0.28 - camera.position.x) * 0.04;
+        camera.position.y += (-my * 0.28 - camera.position.y) * 0.04;
+        camera.lookAt(scene.position);
+        renderer.render(scene, camera);
+    })();
 
-    function resizeCanvas() {
-        canvas.width  = window.innerWidth;
-        canvas.height = window.innerHeight;
+    /* resize globe canvas */
+    function onResize() {
+        const w = window.innerWidth;
+        const s = w <= 480 ? 0 : w <= 768 ? 320 : w <= 1024 ? 420 : w <= 1200 ? 520 : 640;
+        if (s === 0) { gc.style.display = 'none'; raf = false; return; }
+        gc.style.display = '';
+        raf = true;
+        renderer.setSize(s, s);
     }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+})();
 
-    function mkParticle() {
-        return {
-            x:     Math.random() * canvas.width,
-            y:     Math.random() * canvas.height,
-            r:     Math.random() * 1.4 + 0.3,
-            vx:    (Math.random() - 0.5) * 0.28,
-            vy:    -Math.random() * 0.38 - 0.08,
-            alpha: Math.random() * 0.45 + 0.08,
-            life:  1,
-            decay: Math.random() * 0.0028 + 0.0009,
-        };
+/* ──────────────────────────────────────
+   GSAP ANIMATIONS
+────────────────────────────────────── */
+gsap.registerPlugin(ScrollTrigger);
+
+/* Navbar slide in */
+gsap.from('.navbar', {
+    y: -30, opacity: 0, duration: 0.9,
+    ease: 'power3.out', delay: 0.1
+});
+
+/* Hero — staggered entrance */
+const heroTl = gsap.timeline({ delay: 0.25 });
+heroTl
+    .to('#heroContent', { opacity: 1, duration: 0 })
+    .from('#heroBadge', { y: -22, opacity: 0, duration: 0.7, ease: 'power3.out' })
+    .from('#h1',  { y: 38, opacity: 0, duration: 0.75, ease: 'power3.out' }, '-=0.3')
+    .from('#h2',  { y: 38, opacity: 0, duration: 0.75, ease: 'power3.out' }, '-=0.55')
+    .from('#h3',  { y: 38, opacity: 0, duration: 0.75, ease: 'power3.out' }, '-=0.55')
+    .from('#heroSub',  { y: 24, opacity: 0, duration: 0.7,  ease: 'power3.out' }, '-=0.45')
+    .from('#heroCta',  { y: 20, opacity: 0, duration: 0.65, ease: 'power3.out' }, '-=0.4')
+    .to('#scrollHint', { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.1');
+
+/* Globe fade in */
+gsap.from('#globe-canvas', {
+    opacity: 0, scale: 0.85, duration: 1.6,
+    ease: 'power3.out', delay: 0.5
+});
+
+/* ── Stats counters ── */
+function animateCounter(el, target, suffix, dur) {
+    let startTime = null;
+    function step(ts) {
+        if (!startTime) startTime = ts;
+        const p = Math.min((ts - startTime) / dur, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.floor(ease * target) + suffix;
+        if (p < 1) requestAnimationFrame(step);
     }
+    requestAnimationFrame(step);
+}
 
-    const particles = [];
-    for (let i = 0; i < 140; i++) particles.push(mkParticle());
-
-    function drawParticles() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        for (let i = 0; i < particles.length; i++) {
-            const p = particles[i];
-            p.x  += p.vx;
-            p.y  += p.vy;
-            p.life -= p.decay;
-            if (p.life <= 0 || p.y < -10) {
-                particles[i]   = mkParticle();
-                particles[i].y = canvas.height + 4;
-            }
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(255,255,255,${(p.alpha * p.life).toFixed(3)})`;
-            ctx.fill();
-        }
-        requestAnimationFrame(drawParticles);
+ScrollTrigger.create({
+    trigger: '#statsStrip',
+    start: 'top 85%',
+    once: true,
+    onEnter: () => {
+        document.querySelectorAll('.stat-num').forEach(el => {
+            animateCounter(
+                el,
+                parseInt(el.dataset.target, 10),
+                el.dataset.suffix || '',
+                1800
+            );
+        });
+        gsap.from('.stat', {
+            y: 24, opacity: 0, duration: 0.7,
+            stagger: 0.12, ease: 'power3.out'
+        });
     }
-    drawParticles();
+});
 
-    /* ── Intersection observer — scroll reveal ─ */
-    const revealObs = new IntersectionObserver((entries) => {
-        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
-    }, { threshold: 0.10 });
+/* ── Feature cards ── */
+gsap.fromTo('.features-head',
+    { y: 36, opacity: 0 },
+    { scrollTrigger: { trigger: '.features-section', start: 'top 78%', once: true },
+      y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
+);
+gsap.fromTo('.f-card',
+    { y: 52, opacity: 0 },
+    { scrollTrigger: { trigger: '.features-grid', start: 'top 80%', once: true },
+      y: 0, opacity: 1, duration: 0.75, stagger: 0.12, ease: 'power3.out' }
+);
 
-    document.querySelectorAll(
-        '.reveal, .f-card, .d-card, .step-item'
-    ).forEach(el => revealObs.observe(el));
+/* ── Destination cards ── */
+gsap.fromTo('.dest-head',
+    { y: 32, opacity: 0 },
+    { scrollTrigger: { trigger: '.dest-section', start: 'top 78%', once: true },
+      y: 0, opacity: 1, duration: 0.75, ease: 'power3.out' }
+);
+gsap.fromTo('.d-card',
+    { scale: 0.88, y: 32, opacity: 0 },
+    { scrollTrigger: { trigger: '.dest-grid', start: 'top 82%', once: true },
+      scale: 1, y: 0, opacity: 1, duration: 0.7, stagger: 0.10, ease: 'power3.out' }
+);
 
-    /* ── Modal ─────────────────────────────── */
-    const bg = document.getElementById('modalBg');
+/* ── Steps ── */
+gsap.fromTo('.hiw-head',
+    { y: 32, opacity: 0 },
+    { scrollTrigger: { trigger: '.hiw-section', start: 'top 78%', once: true },
+      y: 0, opacity: 1, duration: 0.75, ease: 'power3.out' }
+);
+gsap.fromTo('.step-item',
+    { y: 36, opacity: 0 },
+    { scrollTrigger: { trigger: '.steps-row', start: 'top 82%', once: true },
+      y: 0, opacity: 1, duration: 0.7, stagger: 0.15, ease: 'power3.out' }
+);
 
-    window.openModal = function () {
-        bg.classList.add('open');
-        document.body.style.overflow = 'hidden';
-    };
+/* ── CTA ── */
+gsap.fromTo('.cta-title, .cta-sub, .cta-btns',
+    { y: 32, opacity: 0 },
+    { scrollTrigger: { trigger: '.cta-section', start: 'top 80%', once: true },
+      y: 0, opacity: 1, duration: 0.75, stagger: 0.12, ease: 'power3.out' }
+);
 
-    window.closeModal = function () {
-        bg.classList.remove('open');
-        document.body.style.overflow = '';
-    };
+/* ── Parallax on hero mountains ── */
+gsap.to('.hero-mountains', {
+    scrollTrigger: {
+        trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true
+    },
+    y: 60, ease: 'none'
+});
 
-    window.handleBgClick = function (e) {
-        if (e.target === bg) window.closeModal();
-    };
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') window.closeModal();
+/* ──────────────────────────────────────
+   3D TILT ON DESTINATION CARDS
+────────────────────────────────────── */
+document.querySelectorAll('.d-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+        const r   = card.getBoundingClientRect();
+        const x   = (e.clientX - r.left) / r.width  - 0.5;
+        const y   = (e.clientY - r.top)  / r.height - 0.5;
+        card.style.transform =
+            `perspective(700px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg) translateZ(10px) scale(1.02)`;
+    }, { passive: true });
+    card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+        card.style.transition = 'transform 0.5s cubic-bezier(.4,0,.2,1), box-shadow 0.4s, border-color 0.4s';
+        setTimeout(() => { card.style.transition = ''; }, 500);
     });
+    card.addEventListener('mouseenter', () => {
+        card.style.transition = 'box-shadow 0.4s, border-color 0.4s';
+    });
+});
+
+/* ──────────────────────────────────────
+   MODAL
+────────────────────────────────────── */
+const modalBg = document.getElementById('modalBg');
+
+window.openModal = function () {
+    modalBg.classList.add('open');
+    document.body.style.overflow = 'hidden';
+};
+window.closeModal = function () {
+    modalBg.classList.remove('open');
+    document.body.style.overflow = '';
+};
+window.handleBgClick = function (e) {
+    if (e.target === modalBg) window.closeModal();
+};
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') window.closeModal();
+});
 
 })();
 </script>

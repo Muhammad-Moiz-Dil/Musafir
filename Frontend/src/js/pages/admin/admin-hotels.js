@@ -125,10 +125,10 @@
     if (!h) return;
     editingId = hotelId;
     document.getElementById('editHotelName').value      = h.name || '';
-    document.getElementById('editPricePerNight').value  = h.pricePerNight || '';
-    document.getElementById('editStarRating').value     = h.stars || 0;
-    document.getElementById('editTotalRooms').value     = h.totalRooms || '';
-    document.getElementById('editAvailableRooms').value = h.availableRooms || '';
+    document.getElementById('editPricePerNight').value  = h.pricePerNight ?? '';
+    document.getElementById('editStarRating').value     = h.stars ?? 0;
+    document.getElementById('editTotalRooms').value     = h.totalRooms ?? '';
+    document.getElementById('editAvailableRooms').value = h.availableRooms ?? '';
     document.getElementById('editDescription').value    = h.description || '';
     document.getElementById('editIsActive').value       = h.isActive ? 'true' : 'false';
     clearErrors();
@@ -256,19 +256,89 @@
   document.getElementById('addContactNumber').addEventListener('input', function(){
     const digits = this.value.replace(/\D/g,'').slice(0,11);
     this.value = digits.length > 4 ? digits.slice(0,4)+'-'+digits.slice(4) : digits;
+    if (this.classList.contains('err') && PHONE_RE.test(this.value)) {
+      this.classList.remove('err');
+      const e = document.getElementById('addContactNumberError'); if (e) e.textContent = '';
+    }
   });
   document.getElementById('addContactNumber').addEventListener('blur', function(){
     const v = this.value.trim();
     if (!v) addFieldErr('addContactNumber','Contact number is required');
     else if (!PHONE_RE.test(v)) addFieldErr('addContactNumber','Format must be 03XX-XXXXXXX');
+    else { this.classList.remove('err'); const e = document.getElementById('addContactNumberError'); if (e) e.textContent = ''; }
+  });
+  document.getElementById('addEmail').addEventListener('input', function(){
+    const v = this.value.trim();
+    const errEl = document.getElementById('addEmailError');
+    if (!v || !v.includes('@')) {
+      this.classList.remove('err');
+      if (errEl) errEl.textContent = '';
+      return;
+    }
+    const result = Validator.hotelEmail(v);
+    if (result.ok) {
+      this.classList.remove('err');
+      if (errEl) errEl.textContent = '';
+    } else {
+      this.classList.add('err');
+      if (errEl) errEl.textContent = result.error;
+    }
   });
   document.getElementById('addEmail').addEventListener('blur', function(){
     const v = this.value.trim();
-    if (!v) addFieldErr('addEmail','Email is required');
-    else if (!EMAIL_RE.test(v)) addFieldErr('addEmail','Enter a valid email address');
+    const errEl = document.getElementById('addEmailError');
+    if (!v) { addFieldErr('addEmail', 'Email is required'); return; }
+    const result = Validator.hotelEmail(v);
+    if (result.ok) { this.classList.remove('err'); if (errEl) errEl.textContent = ''; }
+    else { addFieldErr('addEmail', result.error); }
+  });
+  document.getElementById('addAddress').addEventListener('input', function(){
+    if (this.classList.contains('err') && this.value.trim()) {
+      this.classList.remove('err');
+      const e = document.getElementById('addAddressError'); if (e) e.textContent = '';
+    }
   });
   document.getElementById('addAddress').addEventListener('blur', function(){
     if (!this.value.trim()) addFieldErr('addAddress','Address is required');
+    else { this.classList.remove('err'); const e = document.getElementById('addAddressError'); if (e) e.textContent = ''; }
+  });
+
+  // Clear red border on other add-form fields as soon as input becomes valid
+  document.getElementById('addHotelName').addEventListener('input', function(){
+    if (this.classList.contains('err') && this.value.trim()) {
+      this.classList.remove('err');
+      const e = document.getElementById('addHotelNameError'); if (e) e.textContent = '';
+    }
+  });
+  document.getElementById('addPricePerNight').addEventListener('input', function(){
+    if (this.classList.contains('err') && this.value.trim() && parseFloat(this.value) >= 1) {
+      this.classList.remove('err');
+      const e = document.getElementById('addPricePerNightError'); if (e) e.textContent = '';
+    }
+  });
+  document.getElementById('addTotalRooms').addEventListener('input', function(){
+    if (this.classList.contains('err') && this.value.trim() && parseInt(this.value) >= 1) {
+      this.classList.remove('err');
+      const e = document.getElementById('addTotalRoomsError'); if (e) e.textContent = '';
+    }
+  });
+  document.getElementById('addAvailableRooms').addEventListener('input', function(){
+    if (this.classList.contains('err') && this.value.trim() !== '' && parseInt(this.value) >= 0) {
+      this.classList.remove('err');
+      const e = document.getElementById('addAvailableRoomsError'); if (e) e.textContent = '';
+    }
+  });
+  document.getElementById('addDestination').addEventListener('change', function(){
+    if (this.value && this.classList.contains('err')) {
+      this.classList.remove('err');
+      const e = document.getElementById('addDestinationError'); if (e) e.textContent = '';
+    }
+  });
+  document.getElementById('addManager').addEventListener('change', function(){
+    if (this.value && this.classList.contains('err')) {
+      this.classList.remove('err');
+      const e = document.getElementById('addManagerError'); if (e) e.textContent = '';
+    }
   });
 
   // ── Add Hotel Modal ────────────────────────────────
@@ -333,7 +403,6 @@
     if (errEl) errEl.textContent = msg;
   }
   const PHONE_RE = /^03\d{2}-\d{7}$/;
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   function validateAddForm(){
     clearAddErrors();
@@ -356,8 +425,8 @@
     if (ok && parseInt(avail)>parseInt(total))        { addFieldErr('addAvailableRooms','Cannot exceed total rooms'); ok=false; }
     if (!contact)                                     { addFieldErr('addContactNumber','Contact number is required'); ok=false; }
     else if (!PHONE_RE.test(contact))                 { addFieldErr('addContactNumber','Format must be 03XX-XXXXXXX'); ok=false; }
-    if (!email)                                       { addFieldErr('addEmail','Email is required'); ok=false; }
-    else if (!EMAIL_RE.test(email))                   { addFieldErr('addEmail','Enter a valid email address'); ok=false; }
+    if (!email) { addFieldErr('addEmail', 'Email is required'); ok=false; }
+    else { const er = Validator.hotelEmail(email); if (!er.ok) { addFieldErr('addEmail', er.error); ok=false; } }
     if (!address)                                     { addFieldErr('addAddress','Address is required'); ok=false; }
     return ok;
   }

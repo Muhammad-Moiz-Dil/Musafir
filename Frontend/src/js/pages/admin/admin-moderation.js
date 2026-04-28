@@ -96,7 +96,7 @@
 
       const canDelete = f.contentType !== 'LOG'; // logs can only be dismissed
       const deleteBtn = canDelete
-        ? `<button class="act-btn danger" onclick="doAction('resolve',${f.flagId},this)" title="Delete content & resolve flag">Delete</button>`
+        ? `<button class="act-btn danger" onclick="doDelete(${f.flagId},${f.contentId},'${f.contentType}',this)" title="Permanently delete this review">Delete</button>`
         : '';
 
       return `<tr>
@@ -116,38 +116,60 @@
   }
 
   // ── Actions ────────────────────────────────────────────────────────────────
+  function removeFlagFromState(flagId) {
+    allFlags = allFlags.filter(f => f.flagId !== flagId);
+    document.getElementById('statPending').textContent   = allFlags.length;
+    document.getElementById('statDismissed').textContent = sessionDismissed;
+    document.getElementById('statResolved').textContent  = sessionResolved;
+    const badge = document.getElementById('pendingBadge');
+    if (allFlags.length > 0) { badge.textContent = allFlags.length; badge.style.display=''; }
+    else badge.style.display='none';
+    renderFlags();
+  }
+
   window.doAction = function(type, flagId, btn) {
     const row = btn.closest('tr');
     btn.disabled = true;
     row.querySelectorAll('.act-btn').forEach(b => b.disabled = true);
 
-    const url = type === 'dismiss'
-      ? ENDPOINTS.ADMIN.FLAG_DISMISS(flagId)
-      : ENDPOINTS.ADMIN.FLAG_RESOLVE(flagId);
-
-    fetch(url, { method:'PUT', headers: authHeaders() })
+    fetch(ENDPOINTS.ADMIN.FLAG_DISMISS(flagId), { method:'PUT', headers: authHeaders() })
       .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
       .then(({ ok, data }) => {
         if (ok) {
-          if (type === 'dismiss') {
-            sessionDismissed++;
-            showToast('Flag dismissed — content remains visible.', 'success');
-          } else {
-            sessionResolved++;
-            showToast('Content deleted and flag resolved.', 'success');
-          }
-          // Remove flag from local state and re-render
-          allFlags = allFlags.filter(f => f.flagId !== flagId);
-          document.getElementById('statPending').textContent   = allFlags.length;
-          document.getElementById('statDismissed').textContent = sessionDismissed;
-          document.getElementById('statResolved').textContent  = sessionResolved;
-          const badge = document.getElementById('pendingBadge');
-          if (allFlags.length > 0) { badge.textContent = allFlags.length; badge.style.display=''; }
-          else badge.style.display='none';
-          renderFlags();
+          sessionDismissed++;
+          showToast('Flag dismissed — content remains visible.', 'success');
+          removeFlagFromState(flagId);
         } else {
           row.querySelectorAll('.act-btn').forEach(b => b.disabled = false);
           showToast(data.message || 'Action failed.', 'error');
+        }
+      })
+      .catch(() => {
+        row.querySelectorAll('.act-btn').forEach(b => b.disabled = false);
+        showToast('Connection error. Please try again.', 'error');
+      });
+  };
+
+  window.doDelete = function(flagId, contentId, contentType, btn) {
+    if (!confirm('Permanently delete this review? This cannot be undone.')) return;
+    const row = btn.closest('tr');
+    btn.disabled = true;
+    row.querySelectorAll('.act-btn').forEach(b => b.disabled = true);
+
+    const deleteUrl = contentType === 'HOTEL_REVIEW'
+      ? ENDPOINTS.ADMIN.HOTEL_REVIEW_DELETE(contentId)
+      : ENDPOINTS.ADMIN.REVIEW_DELETE(contentId);
+
+    fetch(deleteUrl, { method:'DELETE', headers: authHeaders() })
+      .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+      .then(({ ok, data }) => {
+        if (ok) {
+          sessionResolved++;
+          showToast('Review permanently deleted.', 'success');
+          removeFlagFromState(flagId);
+        } else {
+          row.querySelectorAll('.act-btn').forEach(b => b.disabled = false);
+          showToast(data.message || 'Delete failed.', 'error');
         }
       })
       .catch(() => {

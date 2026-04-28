@@ -13,5 +13,7 @@ public interface FlaggedContentRepository extends JpaRepository<FlaggedContent, 
 
     List<FlaggedContent> findByStatusOrderByCreatedAtDesc(FlaggedContent.FlagStatus status);
 
+    List<FlaggedContent> findByContentTypeAndContentId(String contentType, Integer contentId);
+
     long countByStatus(FlaggedContent.FlagStatus status);
 }

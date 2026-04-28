@@ -148,6 +148,7 @@ td{padding:13px 16px;font-size:13.5px;color:var(--text-2);vertical-align:middle}
 .cat-health{background:#ECFDF5;color:#10B981}
 .cat-transport{background:#FFFBEB;color:#F59E0B}
 .cat-general{background:#F1F5F9;color:#64748B}
+.badge-gray{background:#F1F5F9;color:#64748B}
 /* Loading skeleton */
 .skeleton{background:linear-gradient(90deg,#e2e8f0 25%,#f1f5f9 50%,#e2e8f0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;display:inline-block}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}

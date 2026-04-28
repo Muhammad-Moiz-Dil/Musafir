@@ -16,10 +16,100 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('open');
 }
 
-// ── Seasonal Data Modal ───────────────────────────────────────────────────────
+// ── Seasonal Data — strict validation ─────────────────────────────────────────
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_KEYS  = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
 let currentSeasonalDestId = null;
+
+// Strict numeric regex: optional leading minus, digits, at most one decimal point.
+// Rejects: letters, scientific notation (e/E), multiple dots, spaces, special chars.
+const STRICT_NUM_RE = /^-?\d+(\.\d+)?$/;
+
+function _parseStrict(raw) {
+  const v = (raw == null ? '' : String(raw)).trim();
+  if (!v) return { empty: true };
+  if (/\s/.test(v))               return { err: 'No spaces allowed.' };
+  if (!STRICT_NUM_RE.test(v))     return { err: 'Must be a plain number (no letters, symbols, or scientific notation).' };
+  const n = Number(v);
+  if (!isFinite(n) || isNaN(n))   return { err: 'Must be a finite number.' };
+  return { value: n };
+}
+
+function validateTemp(raw) {
+  const r = _parseStrict(raw);
+  if (r.empty)  return null;
+  if (r.err)    return `Invalid temperature value — ${r.err}`;
+  if (r.value < -89) return 'Temperature must be a number between -89°C and 57°C.';
+  if (r.value > 57)  return 'Temperature must be a number between -89°C and 57°C.';
+  return null;
+}
+
+function validateRainfall(raw) {
+  const r = _parseStrict(raw);
+  if (r.empty)  return null;
+  if (r.err)    return `Invalid rainfall value — ${r.err}`;
+  if (r.value < 0)    return 'Rainfall cannot be negative.';
+  if (r.value > 2000) return 'Rainfall exceeds realistic limit (max 2000 mm).';
+  return null;
+}
+
+// Keyboard blockers — fire before character enters field
+function blockTempKey(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'e' || e.key === 'E') { e.preventDefault(); return; }
+  if (e.key === '-' && e.target.selectionStart !== 0) { e.preventDefault(); return; }
+  if (e.key.length === 1 && !/^[0-9.\-]$/.test(e.key)) e.preventDefault();
+}
+
+function blockRainKey(e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key.length === 1 && !/^[0-9.]$/.test(e.key)) e.preventDefault();
+}
+
+// oninput sanitisers — clean up paste / autofill
+function stripSeasonalTemp(input) {
+  let v = input.value.replace(/[^0-9.\-]/g, '');
+  // Only one leading minus
+  const neg = v.startsWith('-');
+  v = (neg ? '-' : '') + v.replace(/-/g, '');
+  // Only one decimal point
+  const dot = v.indexOf('.');
+  if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '');
+  input.value = v;
+}
+
+function stripSeasonalRain(input) {
+  let v = input.value.replace(/[^0-9.]/g, '');
+  // Only one decimal point
+  const dot = v.indexOf('.');
+  if (dot !== -1) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, '');
+  input.value = v;
+}
+
+// onblur handlers — show / clear inline error
+function blurSeasonalTemp(input, errId) {
+  const err = validateTemp(input.value);
+  _setFieldState(input, document.getElementById(errId), err);
+}
+
+function blurSeasonalRain(input, errId) {
+  const err = validateRainfall(input.value);
+  _setFieldState(input, document.getElementById(errId), err);
+}
+
+function _setFieldState(input, errEl, err) {
+  if (!errEl) return;
+  const val = input.value.trim();
+  if (err) {
+    errEl.textContent = err;
+    errEl.style.display = 'block';
+    input.style.borderColor = 'var(--danger)';
+  } else {
+    errEl.style.display = 'none';
+    input.style.borderColor = val ? '#22c55e' : '';
+  }
+}
 
 async function openSeasonalModal(destId, destName) {
   currentSeasonalDestId = destId;
@@ -27,12 +117,29 @@ async function openSeasonalModal(destId, destName) {
   document.getElementById('seasonalFormErr').style.display = 'none';
 
   const tbody = document.getElementById('seasonalTableBody');
-  tbody.innerHTML = MONTH_NAMES.map((m, i) => `
+  tbody.innerHTML = MONTH_NAMES.map((m, i) => {
+    const idx = i + 1;
+    return `
     <tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:8px 12px;font-weight:600;color:var(--text-1)">${m}</td>
-      <td style="padding:6px 12px"><input type="number" step="0.01" id="s-temp-${i+1}" class="form-input" style="width:100%;padding:6px 10px" placeholder="e.g. 12.5"></td>
-      <td style="padding:6px 12px"><input type="number" step="0.01" min="0" id="s-rain-${i+1}" class="form-input" style="width:100%;padding:6px 10px" placeholder="e.g. 45.0"></td>
-    </tr>`).join('');
+      <td style="padding:8px 12px;font-weight:600;color:var(--text-1);white-space:nowrap">${m}</td>
+      <td style="padding:6px 12px">
+        <input type="text" inputmode="decimal" id="s-temp-${idx}" class="form-input"
+          style="width:100%;padding:6px 10px" placeholder="e.g. 12.5"
+          onkeydown="blockTempKey(event)"
+          oninput="stripSeasonalTemp(this)"
+          onblur="blurSeasonalTemp(this,'s-temp-err-${idx}')">
+        <div id="s-temp-err-${idx}" style="display:none;font-size:11px;color:var(--danger);margin-top:2px;line-height:1.4"></div>
+      </td>
+      <td style="padding:6px 12px">
+        <input type="text" inputmode="decimal" id="s-rain-${idx}" class="form-input"
+          style="width:100%;padding:6px 10px" placeholder="e.g. 45.0"
+          onkeydown="blockRainKey(event)"
+          oninput="stripSeasonalRain(this)"
+          onblur="blurSeasonalRain(this,'s-rain-err-${idx}')">
+        <div id="s-rain-err-${idx}" style="display:none;font-size:11px;color:var(--danger);margin-top:2px;line-height:1.4"></div>
+      </td>
+    </tr>`;
+  }).join('');
 
   document.getElementById('seasonalModal').classList.add('open');
 
@@ -48,7 +155,7 @@ async function openSeasonalModal(destId, destName) {
         if (row.rainfall    != null) document.getElementById(`s-rain-${m}`).value = row.rainfall;
       });
     }
-  } catch (e) { /* no existing data, leave blank */ }
+  } catch (e) { /* no existing data — leave blank */ }
 }
 
 async function saveSeasonalData() {
@@ -57,15 +164,48 @@ async function saveSeasonalData() {
   errEl.style.display = 'none';
   btn.disabled = true; btn.textContent = 'Saving…';
 
-  const months = [];
+  // ── Validate all 12 rows, collect structured errors ────────────────────────
+  const errors = {};
+  MONTH_KEYS.forEach(k => { errors[k] = { temp: null, rainfall: null }; });
+
+  let firstError = null;
+  const months   = [];
+
   for (let m = 1; m <= 12; m++) {
-    const temp = document.getElementById(`s-temp-${m}`).value.trim();
-    const rain = document.getElementById(`s-rain-${m}`).value.trim();
-    months.push({
-      month:       m,
-      temperature: temp !== '' ? parseFloat(temp) : null,
-      rainfall:    rain !== '' ? parseFloat(rain) : null,
-    });
+    const key      = MONTH_KEYS[m - 1];
+    const label    = MONTH_NAMES[m - 1];
+    const tempRaw  = document.getElementById(`s-temp-${m}`).value.trim();
+    const rainRaw  = document.getElementById(`s-rain-${m}`).value.trim();
+
+    const tempErr  = validateTemp(tempRaw);
+    const rainErr  = validateRainfall(rainRaw);
+
+    // Show / clear inline errors
+    _setFieldState(
+      document.getElementById(`s-temp-${m}`),
+      document.getElementById(`s-temp-err-${m}`),
+      tempErr
+    );
+    _setFieldState(
+      document.getElementById(`s-rain-${m}`),
+      document.getElementById(`s-rain-err-${m}`),
+      rainErr
+    );
+
+    if (tempErr) { errors[key].temp = tempErr; if (!firstError) firstError = `${label} — Temperature: ${tempErr}`; }
+    if (rainErr) { errors[key].rainfall = rainErr; if (!firstError) firstError = `${label} — Rainfall: ${rainErr}`; }
+
+    // Parse valid values (empty → null)
+    const tempParsed = (!tempErr && tempRaw !== '') ? Number(tempRaw) : null;
+    const rainParsed = (!rainErr && rainRaw !== '') ? Number(rainRaw) : null;
+    months.push({ month: m, temperature: tempParsed, rainfall: rainParsed });
+  }
+
+  if (firstError) {
+    errEl.textContent = firstError;
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Save All Months';
+    return errors; // structured error object available if needed
   }
 
   try {
@@ -149,10 +289,11 @@ async function saveSeasonalData() {
     const total    = allDests.length;
     const active   = allDests.filter(d => d.isActive).length;
     const inactive = total - active;
-    document.getElementById('statTotal').textContent    = total;
-    document.getElementById('statActive').textContent   = active;
-    document.getElementById('statInactive').textContent = inactive;
-    document.getElementById('statGuidelines').textContent = '—';
+    const withGuidelines = allDests.filter(d => d.guidelineCount > 0).length;
+    document.getElementById('statTotal').textContent      = total;
+    document.getElementById('statActive').textContent     = active;
+    document.getElementById('statInactive').textContent   = inactive;
+    document.getElementById('statGuidelines').textContent = withGuidelines;
   }
 
   // ── Filter / search ───────────────────────────────────────────────────────
@@ -321,6 +462,69 @@ async function saveSeasonalData() {
     const name = document.getElementById('f-name').value.trim();
     if (!name) { nameErr.style.display = 'block'; document.getElementById('f-name').focus(); return; }
 
+    // ── Validate latitude ─────────────────────────────────────────────────────
+    const latRaw = document.getElementById('f-lat').value.trim();
+    let latitude = null;
+    if (latRaw !== '') {
+      if (!/^-?\d+(\.\d{1,4})?$/.test(latRaw)) {
+        errEl.textContent = 'Latitude must be a number with up to 4 decimal places (e.g. 33.7294).';
+        errEl.style.display = 'block'; return;
+      }
+      latitude = parseFloat(latRaw);
+      if (latitude < -90 || latitude > 90) {
+        errEl.textContent = 'Latitude must be between -90 (S) and 90 (N).';
+        errEl.style.display = 'block'; return;
+      }
+      latitude = parseFloat(latitude.toFixed(4));
+    }
+
+    // ── Validate longitude ────────────────────────────────────────────────────
+    const lonRaw = document.getElementById('f-lon').value.trim();
+    let longitude = null;
+    if (lonRaw !== '') {
+      if (!/^-?\d+(\.\d{1,4})?$/.test(lonRaw)) {
+        errEl.textContent = 'Longitude must be a number with up to 4 decimal places (e.g. 74.3587).';
+        errEl.style.display = 'block'; return;
+      }
+      longitude = parseFloat(lonRaw);
+      if (longitude < -180 || longitude > 180) {
+        errEl.textContent = 'Longitude must be between -180 (W) and 180 (E).';
+        errEl.style.display = 'block'; return;
+      }
+      longitude = parseFloat(longitude.toFixed(4));
+    }
+
+    // ── Validate altitude ─────────────────────────────────────────────────────
+    const altRaw = document.getElementById('f-altitude').value.trim();
+    let altitude = null;
+    if (altRaw !== '') {
+      if (!/^\d+(\.\d+)?$/.test(altRaw)) {
+        errEl.textContent = 'Altitude must be a non-negative number (e.g. 2500). No text or negative values.';
+        errEl.style.display = 'block'; return;
+      }
+      altitude = parseFloat(altRaw);
+      if (altitude < 0 || altitude > 9000) {
+        errEl.textContent = 'Altitude must be between 0 and 9,000 metres (highest peak on Earth is 8,849 m).';
+        errEl.style.display = 'block'; return;
+      }
+    }
+
+    // ── Validate best time to visit ───────────────────────────────────────────
+    const bestTimeRaw = document.getElementById('f-besttime').value.trim();
+    if (bestTimeRaw !== '') {
+      const MONTH_RE = /^(Jan(uary)?|Feb(ruary)?|Mar(ch)?|Apr(il)?|May|Jun(e)?|Jul(y)?|Aug(ust)?|Sep(t(ember)?)?|Oct(ober)?|Nov(ember)?|Dec(ember)?)$/i;
+      const tokens = bestTimeRaw.split(/[\s,\-–\/&]+/).map(t => t.trim()).filter(t => t);
+      if (tokens.length === 0) {
+        errEl.textContent = 'Best time field is empty after cleaning. Use month names like "Apr–Oct" or "Dec, Jan".';
+        errEl.style.display = 'block'; return;
+      }
+      const badToken = tokens.find(t => !MONTH_RE.test(t));
+      if (badToken) {
+        errEl.textContent = `"${badToken}" is not a valid month. Use names like Jan, February, Apr–Oct, Dec–Feb.`;
+        errEl.style.display = 'block'; return;
+      }
+    }
+
     const btn = document.getElementById('destSaveBtn');
     btn.disabled = true; btn.textContent = 'Saving…';
 
@@ -329,11 +533,11 @@ async function saveSeasonalData() {
       country:        document.getElementById('f-country').value.trim() || 'Pakistan',
       city:           document.getElementById('f-city').value.trim(),
       description:    document.getElementById('f-desc').value.trim(),
-      latitude:       document.getElementById('f-lat').value.trim()      || null,
-      longitude:      document.getElementById('f-lon').value.trim()      || null,
+      latitude,
+      longitude,
       imageUrl:       document.getElementById('f-img').value             || null,
-      altitude:       document.getElementById('f-altitude').value.trim(),
-      bestTime:       document.getElementById('f-besttime').value.trim(),
+      altitude:       altitude !== null ? String(altitude) : '',
+      bestTime:       bestTimeRaw,
       budgetLevel:    document.getElementById('f-budget').value,
       searchKeywords: document.getElementById('f-kw').value.trim(),
     };
@@ -391,8 +595,24 @@ async function saveSeasonalData() {
   };
 
   // ── Coord helpers ─────────────────────────────────────────────────────────
+
+  // Allow only digits, one decimal point, one leading minus — live on input
   window.stripCoord = function (input) {
-    input.value = input.value.replace(/[^0-9.\-]/g, '');
+    let v = input.value;
+    // Strip everything except digits, dot, leading minus
+    v = v.replace(/[^0-9.\-]/g, '');
+    // Only one decimal point
+    const parts = v.split('.');
+    if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+    // Minus only at the very start
+    if (v.indexOf('-') > 0) v = v.replace(/-/g, '');
+    // Max 4 decimal places
+    if (v.includes('.')) {
+      const [intPart, decPart] = v.split('.');
+      v = intPart + '.' + decPart.slice(0, 4);
+    }
+    input.value = v;
+    clearDestFieldErr(input.closest('.form-group') || input.parentElement);
   };
 
   window.updateCompass = function () {
@@ -402,13 +622,77 @@ async function saveSeasonalData() {
     document.getElementById('lonDir').textContent = isNaN(lon) ? '' : (lon >= 0 ? '(E)' : '(W)');
   };
 
+  // On blur: clamp to valid range and enforce 4 d.p.
   window.formatCoord = function (input, min, max) {
-    let v = parseFloat(input.value);
-    if (isNaN(v)) { input.value = ''; return; }
-    v = Math.max(min, Math.min(max, v));
-    input.value = parseFloat(v.toFixed(4));
+    const raw = input.value.trim();
+    if (raw === '' || raw === '-') { input.value = ''; updateCompass(); return; }
+    const v = parseFloat(raw);
+    if (isNaN(v)) {
+      input.value = '';
+      showDestFieldErr(input, `Enter a number (e.g. ${min < 0 ? min : ''}${((min + max) / 2).toFixed(4)})`);
+      return;
+    }
+    if (v < min || v > max) {
+      input.value = parseFloat(Math.max(min, Math.min(max, v)).toFixed(4));
+      showDestFieldErr(input, `Must be between ${min} and ${max}. Clamped automatically.`);
+    } else {
+      input.value = parseFloat(v.toFixed(4));
+      clearDestFieldErr(input);
+    }
     updateCompass();
   };
+
+  // Strip altitude live: digits and one decimal only, no negatives
+  window.stripAltitude = function (input) {
+    let v = input.value.replace(/[^0-9.]/g, '');
+    const parts = v.split('.');
+    if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+    input.value = v;
+    clearDestFieldErr(input);
+  };
+
+  // On blur: validate altitude
+  window.formatAltitude = function (input) {
+    const raw = input.value.trim();
+    if (raw === '') return;
+    if (!/^\d+(\.\d+)?$/.test(raw)) {
+      input.value = '';
+      showDestFieldErr(input, 'Altitude must be a positive number (e.g. 2500)');
+      return;
+    }
+    const v = parseFloat(raw);
+    if (v < 0 || v > 9000) {
+      input.value = parseFloat(Math.max(0, Math.min(9000, v)).toFixed(1));
+      showDestFieldErr(input, 'Altitude must be between 0 and 9,000 m. Clamped automatically.');
+    } else {
+      clearDestFieldErr(input);
+    }
+  };
+
+  // Best time: strip any character that is not a letter, space, comma, hyphen
+  window.stripBestTime = function (input) {
+    input.value = input.value.replace(/[^a-zA-Z ,\-–]/g, '');
+  };
+
+  // Shared inline error helpers
+  function showDestFieldErr(inputEl, msg) {
+    let errEl = inputEl.nextElementSibling;
+    if (!errEl || !errEl.classList.contains('dest-field-err')) {
+      errEl = document.createElement('span');
+      errEl.className = 'dest-field-err';
+      errEl.style.cssText = 'display:block;font-size:11.5px;color:#ef4444;margin-top:3px';
+      inputEl.parentNode.insertBefore(errEl, inputEl.nextSibling);
+    }
+    errEl.textContent = msg;
+    inputEl.style.borderColor = '#ef4444';
+  }
+
+  function clearDestFieldErr(inputEl) {
+    if (!inputEl || !inputEl.style) return;
+    const errEl = inputEl.nextElementSibling;
+    if (errEl && errEl.classList.contains('dest-field-err')) errEl.textContent = '';
+    inputEl.style.borderColor = '';
+  }
 
   // ── Guidelines modal ──────────────────────────────────────────────────────
   window.openGuidelinesModal = async function (destId, destName) {
@@ -428,13 +712,13 @@ async function saveSeasonalData() {
 
   async function loadGuidelines() {
     const list = document.getElementById('guidelinesList');
-    list.innerHTML = '<div style="color:var(--text-3);font-size:13px;padding:4px 0">Loading…</div>';
+    list.innerHTML = '<div style="color:var(--text-3);font-size:13px;padding:8px 0">Loading…</div>';
     try {
       const res  = await fetch(`${API_CONFIG.BASE_URL}/admin/guidelines?destId=${currentGuidelineDestId}`, { headers: getHeaders() });
       if (res.status === 401) { doLogout(); return; }
       const data = await res.json();
       if (!res.ok || !Array.isArray(data) || !data.length) {
-        list.innerHTML = '<div style="color:var(--text-3);font-size:13px;padding:4px 0">No guidelines yet. Add the first one below.</div>';
+        list.innerHTML = '<div style="color:var(--text-2);font-size:13px;padding:12px 14px;background:var(--bg);border:1px dashed var(--border);border-radius:var(--r-sm);text-align:center">No guidelines yet for this destination. Use the form below to add the first one.</div>';
         return;
       }
       list.innerHTML = data.map(g => `
@@ -452,7 +736,7 @@ async function saveSeasonalData() {
           </div>
         </div>`).join('');
     } catch (e) {
-      list.innerHTML = '<div style="color:var(--danger);font-size:13px">Failed to load guidelines.</div>';
+      list.innerHTML = '<div style="color:var(--danger);font-size:13px;padding:10px 14px;background:var(--danger-lt);border-radius:var(--r-sm)">Failed to load guidelines — is the backend running?</div>';
     }
   }
 
@@ -537,7 +821,9 @@ async function saveSeasonalData() {
     document.getElementById('emergencyModalTitle').textContent = `Emergency — ${destName}`;
     document.getElementById('emergencyFormErr').style.display = 'none';
     ['em-police','em-ambulance','em-fire','em-helpline','em-hospital','em-embassy','em-covid']
-      .forEach(id => { document.getElementById(id).value = ''; });
+      .forEach(id => { const el = document.getElementById(id); if (el) { el.value = ''; el.style.borderColor = ''; } });
+    ['em-police-err','em-ambulance-err','em-fire-err','em-helpline-err','em-hospital-err','em-embassy-err']
+      .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
     document.getElementById('emergencyModal').classList.add('open');
 
     try {
@@ -555,11 +841,154 @@ async function saveSeasonalData() {
     } catch (e) { /* leave blank */ }
   };
 
+  // ── Emergency contacts — strict Pakistani phone validation ──────────────────
+
+  // Per-field strict regex patterns
+  const EM_PATTERNS = {
+    'em-police':    /^(03\d{2}-\d{7}|03\d{9}|0\d{2}-\d{7}|0\d{9})$/,
+    'em-ambulance': /^(\d{4}|03\d{9}|0\d{9}|03\d{2}-\d{7}|0\d{2}-\d{7})$/,
+    'em-fire':      /^\d{2}$/,
+    'em-helpline':  /^(\d{4}|03\d{9}|0\d{9}|03\d{2}-\d{7}|0\d{2}-\d{7})$/,
+    'em-embassy':   /^(03\d{2}-\d{7}|03\d{9}|0\d{2}-\d{7}|0\d{9})$/,
+  };
+
+  const EM_HINTS = {
+    'em-police':    'e.g. 0301-1234567, 03011234567, 042-1234567, 0421234567',
+    'em-ambulance': 'e.g. 1122, 0301-1234567, 042-1234567',
+    'em-fire':      'Exactly 2 digits (e.g. 16)',
+    'em-helpline':  'e.g. 1422, 0301-1234567, 042-1234567',
+    'em-embassy':   'e.g. 0301-1234567, 03011234567, 042-1234567, 0421234567',
+  };
+
+  // Returns null if valid, or an error string if invalid (all fields are optional)
+  function validateEmPhone(val, fieldId) {
+    if (!val) return null;
+    if (val.includes('--'))   return 'Consecutive hyphens are not allowed.';
+    if (val.startsWith('-'))  return 'Hyphen cannot be at the start.';
+    if (val.endsWith('-'))    return 'Hyphen cannot be at the end.';
+    if (!EM_PATTERNS[fieldId].test(val))
+      return `Invalid format — ${EM_HINTS[fieldId]}.`;
+    return null;
+  }
+
+  function validateEmHospital(val) {
+    if (!val) return null;
+    if (val.length < 3)   return 'Must be at least 3 characters.';
+    if (val.length > 100) return 'Must be 100 characters or fewer.';
+    if (!/^[A-Za-z ]+$/.test(val)) return 'Only letters and spaces allowed (no numbers or symbols).';
+    return null;
+  }
+
+  // Keyboard: only digits and hyphen — block everything else
+  window.blockEmPhoneKey = function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key.length === 1 && !/^[0-9\-]$/.test(e.key)) e.preventDefault();
+  };
+
+  // oninput: strip any invalid chars from paste/autofill, enforce maxlength
+  window.stripEmPhone = function (input, maxLen) {
+    let v = input.value.replace(/[^0-9\-]/g, '');
+    if (maxLen && v.length > maxLen) v = v.slice(0, maxLen);
+    input.value = v;
+  };
+
+  // oninput for hospital: letters and spaces only
+  window.stripEmHospital = function (input) {
+    input.value = input.value.replace(/[^A-Za-z ]/g, '');
+  };
+
+  // onblur for phone fields — show/clear inline error
+  window.blurEmPhone = function (input, errId) {
+    const val = input.value.trim();
+    const errEl = document.getElementById(errId);
+    if (!errEl) return;
+    const err = validateEmPhone(val, input.id);
+    if (err) {
+      errEl.textContent = err;
+      errEl.style.display = 'block';
+      input.style.borderColor = 'var(--danger)';
+    } else {
+      errEl.style.display = 'none';
+      input.style.borderColor = val ? '#22c55e' : '';
+    }
+  };
+
+  // onblur for hospital field
+  window.blurEmHospital = function (input, errId) {
+    const val = input.value.trim();
+    const errEl = document.getElementById(errId);
+    if (!errEl) return;
+    const err = validateEmHospital(val);
+    if (err) {
+      errEl.textContent = err;
+      errEl.style.display = 'block';
+      input.style.borderColor = 'var(--danger)';
+    } else {
+      errEl.style.display = 'none';
+      input.style.borderColor = val ? '#22c55e' : '';
+    }
+  };
+
   window.saveEmergency = async function () {
     const btn   = document.getElementById('emergencySaveBtn');
     const errEl = document.getElementById('emergencyFormErr');
     errEl.style.display = 'none';
     btn.disabled = true; btn.textContent = 'Saving…';
+
+    // ── Validate all fields and collect structured errors ────────────────────
+    const phoneFields = [
+      { id: 'em-police',    label: 'Police Number',       errId: 'em-police-err' },
+      { id: 'em-ambulance', label: 'Ambulance Number',    errId: 'em-ambulance-err' },
+      { id: 'em-fire',      label: 'Fire Service',        errId: 'em-fire-err' },
+      { id: 'em-helpline',  label: 'Tourist Helpline',    errId: 'em-helpline-err' },
+      { id: 'em-embassy',   label: 'Embassy / Consulate', errId: 'em-embassy-err' },
+    ];
+
+    const errors = {
+      policeNumber: null, ambulanceNumber: null, fireService: null,
+      touristHelpline: null, hospital: null, embassyContact: null,
+    };
+    const errKeys = ['policeNumber','ambulanceNumber','fireService','touristHelpline',null,'embassyContact'];
+
+    let firstErrorField = null;
+    for (let i = 0; i < phoneFields.length; i++) {
+      const f   = phoneFields[i];
+      const val = document.getElementById(f.id).value.trim();
+      const err = validateEmPhone(val, f.id);
+      const errInline = document.getElementById(f.errId);
+      const inputEl   = document.getElementById(f.id);
+      if (err) {
+        if (errKeys[i]) errors[errKeys[i]] = err;
+        if (errInline) { errInline.textContent = err; errInline.style.display = 'block'; }
+        inputEl.style.borderColor = 'var(--danger)';
+        if (!firstErrorField) firstErrorField = { label: f.label, err };
+      } else {
+        if (errInline) errInline.style.display = 'none';
+        inputEl.style.borderColor = val ? '#22c55e' : '';
+      }
+    }
+
+    // Hospital
+    const hospVal = document.getElementById('em-hospital').value.trim();
+    const hospErr = validateEmHospital(hospVal);
+    const hospErrEl = document.getElementById('em-hospital-err');
+    const hospInput = document.getElementById('em-hospital');
+    if (hospErr) {
+      errors.hospital = hospErr;
+      if (hospErrEl) { hospErrEl.textContent = hospErr; hospErrEl.style.display = 'block'; }
+      hospInput.style.borderColor = 'var(--danger)';
+      if (!firstErrorField) firstErrorField = { label: 'Nearest Hospital', err: hospErr };
+    } else {
+      if (hospErrEl) hospErrEl.style.display = 'none';
+      hospInput.style.borderColor = hospVal ? '#22c55e' : '';
+    }
+
+    if (firstErrorField) {
+      errEl.textContent = `${firstErrorField.label}: ${firstErrorField.err}`;
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Save Contacts';
+      return;
+    }
 
     const payload = {
       policeNumber:      document.getElementById('em-police').value.trim(),

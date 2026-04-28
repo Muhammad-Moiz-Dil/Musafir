@@ -157,7 +157,7 @@ function clearForm() {
   });
   document.getElementById('fCapacity').value = 2;
   document.getElementById('fTotal').value    = 1;
-  ['eHotelId','eTypeName','ePrice'].forEach(id => document.getElementById(id).classList.remove('show'));
+  ['eHotelId','eTypeName','ePrice','eCapacity','eTotal','eAvailable'].forEach(id => document.getElementById(id).classList.remove('show'));
 }
 
 async function saveRoom() {
@@ -166,16 +166,22 @@ async function saveRoom() {
   const hotelId   = parseInt(document.getElementById('fHotelId').value);
   const typeName  = document.getElementById('fTypeName').value.trim();
   const price     = parseFloat(document.getElementById('fPrice').value);
-  const capacity  = parseInt(document.getElementById('fCapacity').value) || 2;
-  const total     = parseInt(document.getElementById('fTotal').value) || 1;
+  const capacity  = parseInt(document.getElementById('fCapacity').value);
+  const total     = parseInt(document.getElementById('fTotal').value);
   const available = parseInt(document.getElementById('fAvailable').value);
 
   if (!editingId && !hotelId) { document.getElementById('eHotelId').classList.add('show'); valid = false; }
   else document.getElementById('eHotelId').classList.remove('show');
   if (!typeName) { document.getElementById('eTypeName').classList.add('show'); valid = false; }
   else document.getElementById('eTypeName').classList.remove('show');
-  if (!price || price <= 0) { document.getElementById('ePrice').classList.add('show'); valid = false; }
+  if (isNaN(price) || price <= 0) { document.getElementById('ePrice').classList.add('show'); valid = false; }
   else document.getElementById('ePrice').classList.remove('show');
+  if (isNaN(capacity) || capacity < 1) { document.getElementById('eCapacity').classList.add('show'); valid = false; }
+  else document.getElementById('eCapacity').classList.remove('show');
+  if (isNaN(total) || total < 1) { document.getElementById('eTotal').classList.add('show'); valid = false; }
+  else document.getElementById('eTotal').classList.remove('show');
+  if (editingId && (isNaN(available) || available < 0 || available > total)) { document.getElementById('eAvailable').classList.add('show'); valid = false; }
+  else document.getElementById('eAvailable').classList.remove('show');
   if (!valid) return;
 
   const body = {
@@ -251,5 +257,28 @@ function showToast(msg, type='success') {
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 3000);
 }
+
+(function initNumericGuards() {
+  const intFields = new Set(['fCapacity','fTotal','fAvailable']);
+  ['fCapacity','fTotal','fAvailable','fPrice'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const isInt = intFields.has(id);
+    el.addEventListener('keydown', e => {
+      const deny = ['-','+','e','E'];
+      if (isInt) deny.push('.');
+      if (deny.includes(e.key)) e.preventDefault();
+    });
+    el.addEventListener('input', () => {
+      if (el.value === '') return;
+      const min = el.min !== '' ? parseFloat(el.min) : 0;
+      const max = el.max !== '' ? parseFloat(el.max) : Infinity;
+      const v = isInt ? parseInt(el.value) : parseFloat(el.value);
+      if (isNaN(v)) { el.value = min; return; }
+      if (v < min) el.value = String(min);
+      else if (isFinite(max) && v > max) el.value = String(max);
+    });
+  });
+})();
 
 load();

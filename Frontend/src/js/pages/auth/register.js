@@ -135,7 +135,7 @@
             return false;
         }
         if (!Validator.email(v)) {
-            showError('emailError', 'Please enter a valid email address.');
+            showError('emailError', 'Please use a valid email from Gmail, Yahoo, Outlook, Hotmail, iCloud, or similar providers.');
             setInputState(emailInput, 'is-error');
             return false;
         }
@@ -240,7 +240,7 @@
         const cnicOk    = validateCNIC();
 
         if (!emailOk) {
-            showAlert('error', 'Please enter a valid email address.');
+            showAlert('error', 'Please use a valid email from Gmail, Yahoo, Outlook, Hotmail, iCloud, or similar providers.');
             return;
         }
 

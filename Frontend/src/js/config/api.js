@@ -126,8 +126,10 @@ const ENDPOINTS = {
         REVIEWS:         `${API_CONFIG.BASE_URL}/admin/reviews`,
         FLAG:            `${API_CONFIG.BASE_URL}/admin/flag`,
         FLAGS:           `${API_CONFIG.BASE_URL}/admin/flags`,
-        FLAG_DISMISS:    (id) => `${API_CONFIG.BASE_URL}/admin/flags/${id}/dismiss`,
-        FLAG_RESOLVE:    (id) => `${API_CONFIG.BASE_URL}/admin/flags/${id}/resolve`,
-        FLAGS_COUNT:     `${API_CONFIG.BASE_URL}/admin/flags/count`,
+        FLAG_DISMISS:         (id) => `${API_CONFIG.BASE_URL}/admin/flags/${id}/dismiss`,
+        FLAG_RESOLVE:         (id) => `${API_CONFIG.BASE_URL}/admin/flags/${id}/resolve`,
+        FLAGS_COUNT:          `${API_CONFIG.BASE_URL}/admin/flags/count`,
+        REVIEW_DELETE:        (id) => `${API_CONFIG.BASE_URL}/admin/reviews/${id}`,
+        HOTEL_REVIEW_DELETE:  (id) => `${API_CONFIG.BASE_URL}/admin/hotel-reviews/${id}`,
     },
 };

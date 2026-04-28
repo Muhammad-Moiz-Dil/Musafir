@@ -30,6 +30,19 @@ applyProfile(user);
 })();
 function doLogout(){ AuthService.logout(); }
 
+function validateEmail(raw) {
+  if (!raw || raw.trim() === '') return { ok: true, email: null };
+  const email = raw.trim().toLowerCase();
+  if (/\s/.test(email)) return { ok: false, msg: 'Email contains invalid characters' };
+  if ((email.match(/@/g) || []).length !== 1) return { ok: false, msg: 'Invalid email format' };
+  const [local, domain] = email.split('@');
+  const LOCAL_RE = /^[a-zA-Z0-9]+([._-]?[a-zA-Z0-9]+)*$/;
+  if (!local || !LOCAL_RE.test(local)) return { ok: false, msg: 'Invalid email format' };
+  const SUPPORTED = ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com'];
+  if (!SUPPORTED.includes(domain)) return { ok: false, msg: 'Email domain is not supported' };
+  return { ok: true, email };
+}
+
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toastHm');
   t.textContent = msg;
@@ -377,10 +390,9 @@ window.saveHotelInfo = async function() {
 
   const address  = document.getElementById('editAddress').value.trim();
   const contact  = document.getElementById('editContact').value.trim();
-  const email    = document.getElementById('editEmail').value.trim();
   const price    = document.getElementById('editPrice').value.trim();
   const PHONE_RE = /^03\d{2}-\d{7}$/;
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailResult = validateEmail(document.getElementById('editEmail').value);
 
   let valid = true;
   if (!address) {
@@ -400,11 +412,13 @@ window.saveHotelInfo = async function() {
     document.getElementById('editContact').classList.add('is-err');
     valid = false;
   }
-  if (email && !EMAIL_RE.test(email)) {
-    document.getElementById('editEmailErr').textContent = 'Enter a valid email address';
+  if (!emailResult.ok) {
+    document.getElementById('editEmailErr').textContent = emailResult.msg;
     document.getElementById('editEmailErr').classList.add('show');
     document.getElementById('editEmail').classList.add('is-err');
     valid = false;
+  } else {
+    document.getElementById('editEmail').classList.remove('is-err');
   }
   if (!price || parseFloat(price) < 1) {
     document.getElementById('editPriceErr').textContent = 'Enter a valid base rate (min 1)';
@@ -420,7 +434,7 @@ window.saveHotelInfo = async function() {
     const res = await fetch(ENDPOINTS.HOTELS.UPDATE_INFO(currentHotelId), {
       method: 'PUT',
       headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address, contactNumber: contact, email, pricePerNight: parseFloat(price) })
+      body: JSON.stringify({ address, contactNumber: contact, email: emailResult.email, pricePerNight: parseFloat(price) })
     });
     const data = await res.json().catch(() => ({}));
     if (res.status === 401) { AuthService.logout(); return; }

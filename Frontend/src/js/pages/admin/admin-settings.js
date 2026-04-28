@@ -42,7 +42,6 @@ const TOGGLE_MAP = {
   'FEATURE_WEATHER_SCHEDULER': 'toggleWeather',
   'FEATURE_BOOKING':           'toggleBooking',
   'FEATURE_REVIEWS':           'toggleReviews',
-  'FEATURE_MAINTENANCE_MODE':  'toggleMaintenance',
 };
 
 // ─── Load settings from DB ─────────────────────────────────────────────────
@@ -52,18 +51,12 @@ async function loadSettings() {
     if (!res.ok) throw new Error();
     const list = await res.json();
     list.forEach(s => {
-      if (s.key === 'BASE_TRAVEL_COST_PER_DAY') {
-        document.getElementById('baseCostField').value = s.value;
-      }
-      // API keys: never populate into the field — just leave placeholder
-      // Feature toggles
       const cbId = TOGGLE_MAP[s.key];
       if (cbId) {
         document.getElementById(cbId).checked = (s.value === 'true');
       }
     });
   } catch {
-    document.getElementById('baseCostField').placeholder = 'Failed to load';
     showToast('error', 'Could not load settings from server.');
   }
 }
@@ -71,10 +64,6 @@ async function loadSettings() {
 // ─── Save all changes ──────────────────────────────────────────────────────
 async function saveAllChanges() {
   const updates = [];
-
-  // Base cost
-  const baseCost = document.getElementById('baseCostField').value.trim();
-  if (baseCost) updates.push({ key: 'BASE_TRAVEL_COST_PER_DAY', value: baseCost });
 
   // Feature toggles
   Object.entries(TOGGLE_MAP).forEach(([dbKey, cbId]) => {

@@ -281,39 +281,6 @@
         letter-spacing: 1.5px; text-transform: uppercase;
     }
 
-    /* ── STATS STRIP ────────────────────────────── */
-    .stats-strip {
-        position: relative; overflow: hidden;
-        background: rgba(255,255,255,0.022);
-        border-top: 1px solid rgba(255,255,255,0.055);
-        border-bottom: 1px solid rgba(255,255,255,0.055);
-        padding: 42px 60px;
-        display: flex; justify-content: center; gap: 0;
-        flex-wrap: wrap;
-    }
-    .stats-strip::before {
-        content: '';
-        position: absolute; inset: 0;
-        background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(255,184,48,0.055), transparent);
-        pointer-events: none;
-    }
-    .stat { text-align: center; padding: 0 72px; position: relative; }
-    .stat + .stat::before {
-        content: '';
-        position: absolute; left: 0; top: 15%; bottom: 15%;
-        width: 1px; background: rgba(255,255,255,0.07);
-    }
-    .stat-num {
-        font-family: var(--font-d);
-        font-size: 44px; font-weight: 700;
-        color: var(--accent); line-height: 1;
-        letter-spacing: -1px;
-    }
-    .stat-lbl {
-        font-size: 12.5px; color: rgba(255,255,255,0.38);
-        margin-top: 8px; font-weight: 500; letter-spacing: 0.3px;
-    }
-
     /* ── SHARED SECTIONS ────────────────────────── */
     .section { padding: 120px 64px; }
 
@@ -649,8 +616,6 @@
         .nav-links { display: none; }
         .section { padding: 80px 22px; }
         .cta-section { padding: 80px 22px; }
-        .stats-strip { padding: 28px 20px; }
-        .stat { padding: 16px 28px; }
         .dest-grid { grid-template-columns: repeat(2, 1fr); }
         .steps-row { flex-direction: column; gap: 40px; align-items: center; }
         .steps-row::before { display: none; }
@@ -665,8 +630,6 @@
         #globe-canvas { display: none; }
         .hero::before { background: #060c13; opacity: 0.7; }
         .hero-title { font-size: 38px; letter-spacing: -1px; }
-        .stat-num { font-size: 34px; }
-        .stat { padding: 14px 18px; }
     }
 
     @keyframes float {
@@ -753,28 +716,6 @@
         <span class="scroll-label">Scroll to explore</span>
     </div>
 </section>
-
-<!-- ══════════════════════════════════════
-     STATS STRIP
-══════════════════════════════════════ -->
-<div class="stats-strip" id="statsStrip">
-    <div class="stat">
-        <div class="stat-num" data-target="10" data-suffix="+">0</div>
-        <div class="stat-lbl">Destinations</div>
-    </div>
-    <div class="stat">
-        <div class="stat-num" data-target="21" data-suffix="+">0</div>
-        <div class="stat-lbl">Verified Hotels</div>
-    </div>
-    <div class="stat">
-        <div class="stat-num" data-target="80" data-suffix="+">0</div>
-        <div class="stat-lbl">Room Types</div>
-    </div>
-    <div class="stat">
-        <div class="stat-num" data-target="100" data-suffix="%">0</div>
-        <div class="stat-lbl">Free to Join</div>
-    </div>
-</div>
 
 <!-- ══════════════════════════════════════
      FEATURES
@@ -1150,39 +1091,6 @@ heroTl
 gsap.from('#globe-canvas', {
     opacity: 0, scale: 0.85, duration: 1.6,
     ease: 'power3.out', delay: 0.5
-});
-
-/* ── Stats counters ── */
-function animateCounter(el, target, suffix, dur) {
-    let startTime = null;
-    function step(ts) {
-        if (!startTime) startTime = ts;
-        const p = Math.min((ts - startTime) / dur, 1);
-        const ease = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.floor(ease * target) + suffix;
-        if (p < 1) requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
-}
-
-ScrollTrigger.create({
-    trigger: '#statsStrip',
-    start: 'top 85%',
-    once: true,
-    onEnter: () => {
-        document.querySelectorAll('.stat-num').forEach(el => {
-            animateCounter(
-                el,
-                parseInt(el.dataset.target, 10),
-                el.dataset.suffix || '',
-                1800
-            );
-        });
-        gsap.from('.stat', {
-            y: 24, opacity: 0, duration: 0.7,
-            stagger: 0.12, ease: 'power3.out'
-        });
-    }
 });
 
 /* ── Feature cards ── */

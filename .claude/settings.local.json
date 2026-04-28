@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(del \"C:\\\\Users\\\\Rafay Dil\\\\Desktop\\\\Tripify\\\\Frontend\\\\src\\\\html\\\\pages\\\\admin\\\\admin-weather.html\" \"C:\\\\Users\\\\Rafay Dil\\\\Desktop\\\\Tripify\\\\Frontend\\\\src\\\\css\\\\pages\\\\admin\\\\admin-weather.css\" \"C:\\\\Users\\\\Rafay Dil\\\\Desktop\\\\Tripify\\\\Frontend\\\\src\\\\js\\\\pages\\\\admin\\\\admin-weather.js\")"
+    ]
+  }
+}

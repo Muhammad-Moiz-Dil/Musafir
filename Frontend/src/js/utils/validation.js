@@ -4,8 +4,45 @@ const Validator = {
         return value !== null && value !== undefined && String(value).trim().length > 0;
     },
 
+    // Accepted email providers
+    _allowedDomains: new Set([
+        // Google
+        'gmail.com', 'googlemail.com',
+        // Yahoo
+        'yahoo.com', 'yahoo.co.uk', 'yahoo.co.in', 'yahoo.com.pk',
+        'yahoo.fr', 'yahoo.de', 'yahoo.es', 'yahoo.ca', 'yahoo.com.au', 'ymail.com',
+        // Microsoft
+        'outlook.com', 'hotmail.com', 'hotmail.co.uk', 'hotmail.fr',
+        'live.com', 'live.co.uk', 'msn.com',
+        // Apple
+        'icloud.com', 'me.com', 'mac.com',
+        // Privacy / other popular
+        'protonmail.com', 'proton.me', 'tutanota.com', 'fastmail.com',
+        'zoho.com', 'mail.com', 'gmx.com', 'gmx.net', 'aol.com',
+        // Tripify internal
+        'tripify.com',
+    ]),
+
     email(value) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value).trim());
+        const v = String(value).trim().toLowerCase();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) return false;
+        const domain = v.split('@')[1];
+        // Allow known providers
+        if (this._allowedDomains.has(domain)) return true;
+        // Allow institutional / government / edu addresses (.edu, .ac.*, .edu.pk, .gov.*, .org)
+        if (/\.(edu|ac\.[a-z]{2,}|edu\.[a-z]{2,}|gov(\.[a-z]{2,})?|org)$/.test(domain)) return true;
+        return false;
+    },
+
+    // Strict email for hotel contact — only the 5 common consumer providers
+    hotelEmail(value) {
+        const v = String(value || '').trim().toLowerCase();
+        if (!v) return { ok: false, error: 'Email is required' };
+        const STRICT = /^[a-zA-Z0-9]+([._-]?[a-zA-Z0-9]+)*@(gmail\.com|yahoo\.com|outlook\.com|hotmail\.com|icloud\.com)$/;
+        if (STRICT.test(v)) return { ok: true, error: null };
+        const basicFormat = /^[a-zA-Z0-9]+([._-]?[a-zA-Z0-9]+)*@[^\s@]+\.[^\s@]+$/.test(v);
+        if (basicFormat) return { ok: false, error: 'Email domain is not supported. Use Gmail, Yahoo, Outlook, Hotmail, or iCloud.' };
+        return { ok: false, error: 'Invalid email format' };
     },
 
     // Only letters, spaces, dots, hyphens, apostrophes — no numbers

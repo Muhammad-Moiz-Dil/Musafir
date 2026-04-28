@@ -30,10 +30,8 @@ function showToast(icon, msg, dur = 3500) {
 
 // ── Helpers ────────────────────────────────────────────────
 function hotelImg(imageUrl) {
-    if (!imageUrl) return '../../../../public/assets/images/lahore.jpg';
-    // Uploaded file (served by backend)
+    if (!imageUrl) return null;
     if (imageUrl.startsWith('/')) return 'http://localhost:8080' + imageUrl;
-    // Legacy filename stored in DB → map to local asset folder
     return '../../../../public/assets/images/' + imageUrl;
 }
 
@@ -147,10 +145,13 @@ function renderHotels() {
     const amenityIcons = {'WiFi':'📶','Pool':'🏊','Spa':'💆','Restaurant':'🍽️','Gym':'💪','Parking':'🅿️','Breakfast':'🍳','Mountain View':'🏔️','River View':'🌊','Garden':'🌿','Fireplace':'🔥','Campfire':'🔥','Meals':'🍴','Bonfire':'🔥','Camel Safari':'🐪','Jeep Safari':'🚙'};
     document.getElementById('hotelsGrid').innerHTML = items.map(h => {
         const amenities = (h.amenities || '').split(',').map(a => a.trim()).filter(Boolean).slice(0, 5);
+        const imgSrc = hotelImg(h.imageUrl);
         return `<div class="hotel-card">
             <div class="hotel-img">
-                <img src="${hotelImg(h.imageUrl)}" alt="${h.name}" loading="lazy" onerror="this.src='../../../../public/assets/images/lahore.jpg'">
-                <div class="hotel-img-overlay"></div>
+                ${imgSrc
+                    ? `<img src="${imgSrc}" alt="${h.name}" loading="lazy"><div class="hotel-img-overlay"></div>`
+                    : `<div style="width:100%;height:100%;background:linear-gradient(135deg,#e2e8f0,#cbd5e1);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style="font-size:11px;color:#94a3b8;font-weight:500">No photo</span></div>`
+                }
                 ${h.stars ? `<span style="position:absolute;top:10px;right:10px;background:rgba(245,166,35,0.9);color:#1a1a1a;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">${'★'.repeat(h.stars)} ${h.stars}-Star</span>` : ''}
             </div>
             <div class="hotel-body">
@@ -190,8 +191,13 @@ function openHotelDetail(id) {
 
     // Fill hotel header
     const imgEl = document.getElementById('mHotelImg');
-    imgEl.src = hotelImg(currentHotel.imageUrl);
-    imgEl.style.display = 'block';
+    const modalImgSrc = hotelImg(currentHotel.imageUrl);
+    if (modalImgSrc) {
+        imgEl.src = modalImgSrc;
+        imgEl.style.display = 'block';
+    } else {
+        imgEl.style.display = 'none';
+    }
     document.getElementById('mHotelName').textContent = currentHotel.name;
     document.getElementById('mHotelLoc').textContent  = '📍 ' + (currentHotel.destinationName || '');
     const rating = parseFloat(currentHotel.averageRating) || 0;

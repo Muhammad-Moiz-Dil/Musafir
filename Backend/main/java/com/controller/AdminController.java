@@ -121,7 +121,8 @@ public class AdminController {
         m.put("altitude",      d.getAltitude()       != null ? d.getAltitude()      : "");
         m.put("bestTime",      d.getBestTime()        != null ? d.getBestTime()      : "");
         m.put("budgetLevel",   d.getBudgetLevel()    != null ? d.getBudgetLevel()   : "");
-        m.put("isActive",      Boolean.TRUE.equals(d.getIsActive()));
+        m.put("isActive",       Boolean.TRUE.equals(d.getIsActive()));
+        m.put("guidelineCount", guidelineRepo.countByDestinationId(d.getDestinationId()));
         return m;
     }
 
@@ -573,10 +574,10 @@ public class AdminController {
 
     /**
      * PUT /api/admin/flags/{id}/resolve
-     * Marks the flag as Resolved (content actioned — deleted if it's a review).
+     * Marks the flag as Resolved — content is preserved.
+     * Use DELETE /api/admin/reviews/{id} to explicitly remove a review.
      */
     @PutMapping("/flags/{id}/resolve")
-    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> resolveFlag(@PathVariable Integer id, Authentication auth) {
         if (!isAdmin(auth)) return forbidden();
 
@@ -584,20 +585,54 @@ public class AdminController {
         if (flag == null) return ResponseEntity.status(404).body(Map.of("message", "Flag not found"));
 
         User admin = userRepo.findByEmail(auth.getName()).orElse(null);
-
-        // Delete the actual content
-        switch (flag.getContentType()) {
-            case "REVIEW"       -> reviewRepo.deleteById(flag.getContentId());
-            case "HOTEL_REVIEW" -> hotelReviewRepo.deleteById(flag.getContentId());
-            // LOG entries are kept — just mark flag resolved
-        }
-
         flag.setStatus(FlaggedContent.FlagStatus.Resolved);
         if (admin != null) flag.setReviewedBy(admin.getUserId());
         flag.setResolvedAt(java.time.LocalDateTime.now());
         flagRepo.save(flag);
 
-        return ResponseEntity.ok(Map.of("message", "Content removed and flag resolved"));
+        return ResponseEntity.ok(Map.of("message", "Flag resolved — content preserved"));
+    }
+
+    /**
+     * DELETE /api/admin/reviews/{id}
+     * Explicitly removes a destination review (and resolves any open flag on it).
+     */
+    @DeleteMapping("/reviews/{id}")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> deleteReview(@PathVariable Integer id, Authentication auth) {
+        if (!isAdmin(auth)) return forbidden();
+        if (reviewRepo.findById(id).isEmpty())
+            return ResponseEntity.status(404).body(Map.of("message", "Review not found"));
+        reviewRepo.deleteById(id);
+        flagRepo.findByContentTypeAndContentId("REVIEW", id).stream()
+                .filter(f -> f.getStatus() == FlaggedContent.FlagStatus.Pending)
+                .forEach(f -> {
+                    f.setStatus(FlaggedContent.FlagStatus.Resolved);
+                    f.setResolvedAt(java.time.LocalDateTime.now());
+                    flagRepo.save(f);
+                });
+        return ResponseEntity.ok(Map.of("message", "Review deleted"));
+    }
+
+    /**
+     * DELETE /api/admin/hotel-reviews/{id}
+     * Explicitly removes a hotel review (and resolves any open flag on it).
+     */
+    @DeleteMapping("/hotel-reviews/{id}")
+    @org.springframework.transaction.annotation.Transactional
+    public ResponseEntity<?> deleteHotelReview(@PathVariable Integer id, Authentication auth) {
+        if (!isAdmin(auth)) return forbidden();
+        if (hotelReviewRepo.findById(id).isEmpty())
+            return ResponseEntity.status(404).body(Map.of("message", "Hotel review not found"));
+        hotelReviewRepo.deleteById(id);
+        flagRepo.findByContentTypeAndContentId("HOTEL_REVIEW", id).stream()
+                .filter(f -> f.getStatus() == FlaggedContent.FlagStatus.Pending)
+                .forEach(f -> {
+                    f.setStatus(FlaggedContent.FlagStatus.Resolved);
+                    f.setResolvedAt(java.time.LocalDateTime.now());
+                    flagRepo.save(f);
+                });
+        return ResponseEntity.ok(Map.of("message", "Hotel review deleted"));
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1040,7 +1075,18 @@ public class AdminController {
             try { s.setPrice(new BigDecimal(priceObj.toString())); } catch (Exception ignored) {}
         }
 
-        return ResponseEntity.status(201).body(souvenirToMap(souvenirRepo.save(s)));
+        Souvenir saved = souvenirRepo.save(s);
+        // Build response directly using already-known values to avoid lazy-fetch on destination
+        Map<String, Object> resp = new LinkedHashMap<>();
+        resp.put("id",          saved.getSouvenirId());
+        resp.put("destId",      destId);
+        resp.put("name",        saved.getName()        != null ? saved.getName()        : "");
+        resp.put("description", saved.getDescription() != null ? saved.getDescription() : "");
+        resp.put("price",       saved.getPrice()       != null ? saved.getPrice()       : BigDecimal.ZERO);
+        resp.put("imageUrl",    saved.getImageUrl()    != null ? saved.getImageUrl()    : "");
+        resp.put("vendorName",  saved.getVendorName()  != null ? saved.getVendorName()  : "");
+        resp.put("isActive",    true);
+        return ResponseEntity.status(201).body(resp);
     }
 
     /** PUT /api/admin/souvenirs/{id} — update souvenir */

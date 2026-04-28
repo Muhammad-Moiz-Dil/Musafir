@@ -148,7 +148,8 @@
     <div class="form-row-2">
       <div class="form-row" style="margin-bottom:0">
         <label class="form-label">Capacity (guests) *</label>
-        <input class="form-input" id="fCapacity" type="number" min="1" max="20" value="2">
+        <input class="form-input" id="fCapacity" type="number" min="1" value="2">
+        <div class="form-error" id="eCapacity">Capacity must be at least 1</div>
       </div>
       <div class="form-row" style="margin-bottom:0">
         <label class="form-label">Price per Night (PKR) *</label>
@@ -160,10 +161,12 @@
       <div class="form-row" style="margin-bottom:0">
         <label class="form-label">Total Rooms *</label>
         <input class="form-input" id="fTotal" type="number" min="1" value="1">
+        <div class="form-error" id="eTotal">Must be at least 1</div>
       </div>
       <div class="form-row" style="margin-bottom:0" id="availRow">
         <label class="form-label">Available Rooms</label>
         <input class="form-input" id="fAvailable" type="number" min="0" value="1">
+        <div class="form-error" id="eAvailable">Cannot exceed total rooms</div>
       </div>
     </div>
     <div class="form-row" style="margin-top:16px">

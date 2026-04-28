@@ -11,9 +11,12 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepo;
+    private final EmailService           emailService;
 
-    public NotificationService(NotificationRepository notificationRepo) {
+    public NotificationService(NotificationRepository notificationRepo,
+                               EmailService emailService) {
         this.notificationRepo = notificationRepo;
+        this.emailService     = emailService;
     }
 
     /** Last 20 notifications for a user, all types, newest first. */
@@ -52,6 +55,9 @@ public class NotificationService {
         n.setReferenceId(referenceId);
         n.setReferenceType(referenceType);
         n.setIsRead(false);
-        return notificationRepo.save(n);
+        Notification saved = notificationRepo.save(n);
+        // Fire email asynchronously — never blocks the caller
+        emailService.sendNotificationEmail(userId, type, title, message);
+        return saved;
     }
 }

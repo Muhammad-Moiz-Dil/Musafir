@@ -18,4 +18,7 @@ public interface TravelGuidelineRepository extends JpaRepository<TravelGuideline
 
     /** Fallback: all guidelines for a destination when no safety-specific ones exist. */
     List<TravelGuideline> findByDestinationId(Integer destinationId);
+
+    /** Count of guidelines for a destination — used in admin stats. */
+    long countByDestinationId(Integer destinationId);
 }

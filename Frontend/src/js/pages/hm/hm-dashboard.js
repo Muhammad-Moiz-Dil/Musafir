@@ -575,8 +575,11 @@ async function loadAccountProfile() {
 
         // Stats
         document.getElementById('apstatMember').textContent = data.memberSince ? data.memberSince.split(' ')[1] : '—';
-        const bkEl = document.getElementById('statTotalBookings');
-        document.getElementById('apstatBookings').textContent = bkEl ? bkEl.textContent : '0';
+        // Fetch bookings count directly — reading from statTotalBookings is unreliable due to async timing
+        fetch(ENDPOINTS.BOOKINGS.ALL, { headers: { 'Authorization': 'Bearer ' + token } })
+            .then(r => r.ok ? r.json() : null)
+            .then(bData => { if (bData) document.getElementById('apstatBookings').textContent = bData.totalCount ?? '—'; })
+            .catch(() => {});
 
         // View rows
         document.getElementById('infoViewName').textContent    = data.fullName    || '—';
@@ -588,7 +591,8 @@ async function loadAccountProfile() {
         // Pre-fill edit fields
         document.getElementById('infoFullName').value = data.fullName    || '';
         document.getElementById('infoEmail').value    = data.email       || '';
-        document.getElementById('infoPhone').value    = data.phoneNumber || '';
+        const prefillDigits = (data.phoneNumber || '').replace(/\D/g, '').slice(0, 11);
+        document.getElementById('infoPhone').value    = prefillDigits.length > 4 ? prefillDigits.slice(0, 4) + '-' + prefillDigits.slice(4) : prefillDigits;
         document.getElementById('infoCnic').value     = data.cnic        || '';
         document.getElementById('infoAddress').value  = data.address     || '';
     } catch(e) { /* silently fail */ }
@@ -617,6 +621,20 @@ window.toggleInfoEdit = function(forceClose) {
     }
 };
 
+function validateEmail(raw) {
+    if (!raw) return { ok: false, msg: 'Email is required' };
+    const email = raw.trim().toLowerCase();
+    if (!email) return { ok: false, msg: 'Email is required' };
+    if (/\s/.test(email)) return { ok: false, msg: 'Email contains invalid characters' };
+    if ((email.match(/@/g) || []).length !== 1) return { ok: false, msg: 'Invalid email format' };
+    const [local, domain] = email.split('@');
+    const LOCAL_RE = /^[a-zA-Z0-9]+([._-]?[a-zA-Z0-9]+)*$/;
+    if (!local || !LOCAL_RE.test(local)) return { ok: false, msg: 'Invalid email format' };
+    const SUPPORTED = ['gmail.com','yahoo.com','outlook.com','hotmail.com','icloud.com'];
+    if (!SUPPORTED.includes(domain)) return { ok: false, msg: 'Email domain is not supported' };
+    return { ok: true, email };
+}
+
 window.saveProfile = async function() {
     ['errFullName','errEmail','errPhone','errCnic','errAddress'].forEach(id => {
         const el = document.getElementById(id); if (el) el.textContent = '';
@@ -625,7 +643,8 @@ window.saveProfile = async function() {
 
     const fullName = document.getElementById('infoFullName').value.trim();
     const email    = document.getElementById('infoEmail').value.trim();
-    const phone    = document.getElementById('infoPhone').value.trim();
+    const phoneDigits = document.getElementById('infoPhone').value.replace(/\D/g, '').slice(0, 11);
+    const phone       = phoneDigits.length > 4 ? phoneDigits.slice(0, 4) + '-' + phoneDigits.slice(4) : phoneDigits;
     const cnic     = document.getElementById('infoCnic').value.trim();
     const address  = document.getElementById('infoAddress').value.trim();
 
@@ -637,12 +656,9 @@ window.saveProfile = async function() {
     } else {
         document.getElementById('infoFullName').classList.remove('is-error');
     }
-    if (!email) {
-        document.getElementById('errEmail').textContent = 'Email is required.';
-        document.getElementById('infoEmail').classList.add('is-error');
-        valid = false;
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        document.getElementById('errEmail').textContent = 'Enter a valid email address.';
+    const emailResult = validateEmail(email);
+    if (!emailResult.ok) {
+        document.getElementById('errEmail').textContent = emailResult.msg;
         document.getElementById('infoEmail').classList.add('is-error');
         valid = false;
     } else {
@@ -652,8 +668,8 @@ window.saveProfile = async function() {
         document.getElementById('errPhone').textContent = 'Phone number is required.';
         document.getElementById('infoPhone').classList.add('is-error');
         valid = false;
-    } else if (!/^03[0-9]{9}$/.test(phone)) {
-        document.getElementById('errPhone').textContent = 'Enter an 11-digit Pakistani number starting with 03 (e.g. 03001234567).';
+    } else if (!/^03\d{2}-\d{7}$/.test(phone)) {
+        document.getElementById('errPhone').textContent = 'Format must be 03XX-XXXXXXX (e.g. 0300-1234567).';
         document.getElementById('infoPhone').classList.add('is-error');
         valid = false;
     } else {
@@ -698,7 +714,7 @@ window.saveProfile = async function() {
         const res = await fetch(ENDPOINTS.USER.PROFILE, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ fullName, email, phoneNumber: phone, cnic: cnicFormatted, address })
+            body: JSON.stringify({ fullName, email, phoneNumber: phoneDigits, cnic: cnicFormatted, address })
         });
         const data = await res.json();
 
@@ -776,7 +792,8 @@ window.handleAvatarUpload = async function(input) {
 };
 
 window.autoFormatPhone = function(input) {
-    input.value = input.value.replace(/\D/g, '').slice(0, 11);
+    const digits = input.value.replace(/\D/g, '').slice(0, 11);
+    input.value = digits.length > 4 ? digits.slice(0, 4) + '-' + digits.slice(4) : digits;
 };
 
 window.autoFormatCnic = function(input) {

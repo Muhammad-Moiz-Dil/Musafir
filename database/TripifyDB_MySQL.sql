@@ -834,7 +834,7 @@ SELECT 'TripifyDB setup complete!' AS Status;
 -- UPDATE Hotels SET manager_id = (SELECT user_id FROM Users WHERE email = 'shahzaib@example.com') WHERE destination_id IN (1,2,3,4,5,6);
 -- UPDATE Hotels SET manager_id = (SELECT user_id FROM Users WHERE email = 'manager2@example.com') WHERE destination_id IN (7,8,9,10);
 
-
+ 
 SELECT *FROM RoomTypes;
 SELECT *FROM Users;
 SELECT *FROM Hotels;

@@ -136,25 +136,19 @@
         <span>unread weather alert(s) for your destinations.</span>
     </div>
 
-    <!-- Destination Weather Search -->
+    <!-- City Weather Search -->
     <div class="wa-search-box">
-        <h3>🔍 Check Weather for Any Destination</h3>
+        <h3>🔍 Check Weather for Any City</h3>
         <div class="wa-search-row">
-            <div class="dest-search-wrap" id="destSearchWrap" style="flex:1;min-width:200px;">
-                <div class="dest-search-input-row">
-                    <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" id="destSearchInput" class="dest-search-input" placeholder="Search destination…" autocomplete="off">
-                    <button type="button" class="dest-search-clear" id="destSearchClear">✕</button>
-                </div>
-                <div class="dest-search-dropdown" id="destSearchDropdown"></div>
-            </div>
-            <span class="wa-search-sep">or type a city</span>
-            <input type="text" id="destInput" placeholder="e.g. Karachi, Peshawar…"
+            <input type="text" id="cityInput" class="wa-city-input"
+                   placeholder="Type any city — Hunza, Karachi, Lahore, Dubai, London…"
+                   autocomplete="off"
                    onkeydown="if(event.key==='Enter') lookupWeather()">
             <button class="wa-lookup-btn" id="lookupBtn" onclick="lookupWeather()">
                 ⚡ Check Weather
             </button>
         </div>
+        <div id="cityInputErr" style="font-size:12px;color:#ef4444;margin-top:6px;display:none"></div>
         <div class="wa-lookup-result" id="lookupResult" style="display:none"></div>
     </div>
 

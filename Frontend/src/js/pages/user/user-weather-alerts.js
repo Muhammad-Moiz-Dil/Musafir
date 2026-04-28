@@ -274,72 +274,30 @@ async function loadAlerts() {
     }
 }
 
-// ── Destination search widget ──────────────────────────────────
-(function(){
-    const tok = sessionStorage.getItem('tripify_token');
-    const input = document.getElementById('destSearchInput');
-    const dropdown = document.getElementById('destSearchDropdown');
-    const clearBtn = document.getElementById('destSearchClear');
-    let timer;
-    async function search(q) {
-        try {
-            const res = await fetch(ENDPOINTS.DESTINATIONS.SEARCH + '?q=' + encodeURIComponent(q.trim()), {
-                headers: { 'Authorization': 'Bearer ' + tok }
-            });
-            if (res.status === 401) { window.location.href = '../auth/login.html'; return; }
-            const data = await res.json();
-            showDropdown(Array.isArray(data) ? data : []);
-        } catch(e) { showDropdown([]); }
-    }
-    function showDropdown(items) {
-        if (!items.length) {
-            dropdown.innerHTML = '<div class="dest-no-result">🔍 No destination found</div>';
-            dropdown.style.display = 'block'; return;
-        }
-        dropdown.innerHTML = items.map(d =>
-            `<div class="dest-search-item" data-name="${d.name}">${d.name}${d.city ? ` <span class="dsrc-city">— ${d.city}</span>` : ''}</div>`
-        ).join('');
-        dropdown.style.display = 'block';
-        dropdown.querySelectorAll('.dest-search-item').forEach(el => {
-            el.addEventListener('mousedown', e => {
-                e.preventDefault();
-                input.value = el.dataset.name;
-                clearBtn.style.display = 'inline';
-                hideDropdown();
-                document.getElementById('destInput').value = '';
-                lookupWeather();
-            });
-        });
-    }
-    function hideDropdown() { dropdown.style.display = 'none'; }
-    input.addEventListener('input', e => {
-        clearBtn.style.display = e.target.value ? 'inline' : 'none';
-        clearTimeout(timer);
-        if (!e.target.value.trim()) { hideDropdown(); return; }
-        timer = setTimeout(() => search(e.target.value), 300);
-    });
-    clearBtn.addEventListener('click', () => {
-        input.value = ''; clearBtn.style.display = 'none'; hideDropdown();
-    });
-    document.addEventListener('click', e => {
-        if (!e.target.closest('#destSearchWrap')) hideDropdown();
-    });
-})();
-
-// ── Destination weather lookup ─────────────────────────────────
+// ── City weather lookup ────────────────────────────────────────
 async function lookupWeather() {
-    const searchVal = document.getElementById('destSearchInput').value.trim();
-    const inputVal  = document.getElementById('destInput').value.trim();
-    const name = searchVal || inputVal;
+    const cityInput = document.getElementById('cityInput');
+    const errEl     = document.getElementById('cityInputErr');
+    const name      = cityInput.value.trim();
+
+    errEl.style.display = 'none';
 
     if (!name) {
-        showToast('⚠️', 'Please select or type a destination name.');
+        errEl.textContent   = 'Please enter a city name.';
+        errEl.style.display = 'block';
+        cityInput.focus();
+        return;
+    }
+
+    if (!/^[a-zA-Z0-9\s\-',\.]+$/.test(name)) {
+        errEl.textContent   = 'Please use letters and numbers only.';
+        errEl.style.display = 'block';
         return;
     }
 
     const btn    = document.getElementById('lookupBtn');
     const result = document.getElementById('lookupResult');
-    btn.disabled = true;
+    btn.disabled    = true;
     btn.textContent = 'Loading…';
     result.style.display = 'block';
     result.innerHTML = `<div class="wa-card wa-card-loading">
@@ -352,25 +310,33 @@ async function lookupWeather() {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (res.status === 401) { AuthService.logout(); return; }
-        if (!res.ok) throw new Error(res.status);
+
+        if (res.status === 404 || !res.ok) {
+            result.innerHTML = `<div class="wa-lookup-error">
+                🔍 City "<strong>${escLookup(name)}</strong>" not found. Check the spelling or try a nearby major city.
+            </div>`;
+            return;
+        }
 
         const w = await res.json();
         if (w.error) {
             result.innerHTML = `<div class="wa-lookup-error">
-                ⚠️ Unable to load weather for "<strong>${escLookup(name)}</strong>". Please try again later.
+                ⚠️ Weather data unavailable for "<strong>${escLookup(name)}</strong>". Try again later.
             </div>`;
             return;
         }
 
         const emoji = conditionEmoji(w.condition);
         result.innerHTML = `
-        <div class="wa-card${w.isAlert ? ' alert-card' : ''}" style="max-width:340px">
+        <div class="wa-card${w.isAlert ? ' alert-card' : ''}" style="max-width:380px">
             ${w.isAlert ? '<div class="wa-alert-badge">⚠ Alert</div>' : ''}
-            <div class="wa-card-dest">${escLookup(w.destinationName)}</div>
+            <div class="wa-card-dest">${escLookup(w.destinationName || name)}</div>
             ${w.city ? `<div class="wa-card-city">📍 ${escLookup(w.city)}</div>` : ''}
             <div class="wa-card-main">
                 <div class="wa-card-icon">
-                    ${w.iconUrl ? `<img src="${w.iconUrl}" alt="${w.condition}" onerror="this.style.display='none'">` : `<span style="font-size:40px">${emoji}</span>`}
+                    ${w.iconUrl
+                        ? `<img src="${w.iconUrl}" alt="${w.condition}" onerror="this.style.display='none'">`
+                        : `<span style="font-size:40px">${emoji}</span>`}
                 </div>
                 <div>
                     <div class="wa-card-temp">${w.temp != null ? w.temp + '°C' : '--'}</div>
@@ -378,18 +344,20 @@ async function lookupWeather() {
                 </div>
             </div>
             <div class="wa-card-meta">
-                <span>💧 ${w.humidity != null ? w.humidity + '%' : '--'}</span>
-                <span>💨 ${w.windSpeed != null ? w.windSpeed + ' m/s' : '--'}</span>
+                <span>💧 ${w.humidity   != null ? w.humidity   + '%'   : '--'}</span>
+                <span>💨 ${w.windSpeed  != null ? w.windSpeed  + ' m/s': '--'}</span>
                 <span>🌡 Feels ${w.feelsLike != null ? w.feelsLike + '°C' : '--'}</span>
             </div>
-            ${w.isAlert ? `<div style="margin-top:10px;padding:8px 10px;background:rgba(239,68,68,0.1);border-radius:var(--r-sm);font-size:12px;color:#fca5a5">⚠️ Unfavourable weather conditions detected. Exercise caution.</div>` : ''}
+            ${w.isAlert ? `<div style="margin-top:10px;padding:8px 10px;background:rgba(239,68,68,0.1);border-radius:var(--r-sm);font-size:12px;color:#fca5a5">
+                ⚠️ Unfavourable conditions detected. Exercise caution when travelling.
+            </div>` : ''}
         </div>`;
     } catch (_) {
         result.innerHTML = `<div class="wa-lookup-error">
-            ⚠️ Unable to load weather for "<strong>${escLookup(name)}</strong>". Please try again later.
+            ⚠️ Could not reach the weather service. Make sure the backend is running.
         </div>`;
     } finally {
-        btn.disabled = false;
+        btn.disabled    = false;
         btn.textContent = '⚡ Check Weather';
     }
 }

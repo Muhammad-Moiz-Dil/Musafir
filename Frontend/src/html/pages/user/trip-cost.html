@@ -102,23 +102,15 @@
             <!-- Source location -->
             <div class="form-group">
                 <label class="form-label">🚀 Starting City</label>
-                <select class="form-select" id="srcCity" onchange="onSrcChange()">
-                    <option value="">— Select your starting city —</option>
-                </select>
+                <input type="text" class="form-input" id="srcCity" placeholder="e.g. Islamabad, Lahore, Karachi…" autocomplete="off">
                 <span class="field-error" id="srcErr"></span>
             </div>
 
-            <!-- Destination search -->
+            <!-- Destination -->
             <div class="form-group">
                 <label class="form-label">📍 Destination</label>
-                <div class="dest-search-wrap" id="destSearchWrap">
-                    <div class="dest-search-input-row">
-                        <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input type="text" id="destSearchInput" class="dest-search-input" placeholder="Search destination…" autocomplete="off">
-                        <button type="button" class="dest-search-clear" id="destSearchClear">✕</button>
-                    </div>
-                    <div class="dest-search-dropdown" id="destSearchDropdown"></div>
-                </div>
+                <input type="text" class="form-input" id="destSearchInput" placeholder="e.g. Hunza Valley, Naran, Lahore…" autocomplete="off">
+                <span class="field-error" id="destErr"></span>
             </div>
 
             <div class="form-group">
@@ -127,8 +119,8 @@
                     <option value="car">Private Car (12 km/L)</option>
                     <option value="suv">SUV / 4x4 (8 km/L)</option>
                     <option value="bus">Bus / Shared Van</option>
-                    <option value="flight">Domestic Flight</option>
                 </select>
+                <span id="transportNote" style="display:none;font-size:11.5px;color:var(--t2);margin-top:4px;"></span>
             </div>
 
             <div class="form-group">
@@ -139,7 +131,8 @@
 
             <div class="form-group">
                 <label class="form-label">⛽ Petrol Price (Rs./litre)</label>
-                <input type="number" class="form-input" id="petrolPrice" min="100" max="1000" value="295" placeholder="e.g. 295">
+                <input type="number" class="form-input" id="petrolPrice" min="1" max="10000" value="295" placeholder="e.g. 295" oninput="clearError('petrol')">
+                <span class="field-error" id="petrolErr"></span>
             </div>
 
             <div class="form-group">
@@ -156,7 +149,7 @@
 
             <!-- Hotel search (API-backed) -->
             <div class="form-group">
-                <label class="form-label">🏨 Search Hotel</label>
+                <label class="form-label">🏨 Search Hotel <span style="font-size:11px;color:var(--t2);font-weight:400">(optional)</span></label>
                 <div class="dest-search-wrap" id="hotelSearchWrap" style="display:block">
                     <div class="dest-search-input-row">
                         <svg class="dest-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -188,11 +181,20 @@
 
             <div class="form-group">
                 <label class="form-label">🍽️ Meal Preference</label>
-                <select class="form-select" id="mealPref">
-                    <option value="local">Local Dhabas (Rs. 400/meal)</option>
-                    <option value="mid" selected>Mid-Range (Rs. 800/meal)</option>
-                    <option value="restaurant">Restaurant (Rs. 1,500/meal)</option>
+                <select class="form-select" id="mealPref" onchange="onMealPrefChange()">
+                    <option value="150">🌮 Street Food (Rs. 150/meal)</option>
+                    <option value="400">🍛 Local Dhaba (Rs. 400/meal)</option>
+                    <option value="800" selected>🍽️ Mid-Range (Rs. 800/meal)</option>
+                    <option value="1500">🍴 Restaurant (Rs. 1,500/meal)</option>
+                    <option value="3000">✨ Fine Dining (Rs. 3,000/meal)</option>
+                    <option value="custom">✏️ Custom…</option>
                 </select>
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                    <label style="font-size:12px;color:var(--t2);white-space:nowrap;flex-shrink:0">Rs. per meal:</label>
+                    <input type="number" class="form-input" id="mealPrice" min="1" max="50000" value="800"
+                           style="flex:1" oninput="onMealPriceInput()">
+                </div>
+                <span class="field-error" id="mealPriceErr"></span>
             </div>
 
             <button class="btn btn-primary btn-full" style="margin-top:6px" id="calcBtn" onclick="calculate()">

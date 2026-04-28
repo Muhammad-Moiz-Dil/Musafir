@@ -87,7 +87,7 @@ async function getOsrmRoute(orig, dest, profile) {
     const url = 'https://router.project-osrm.org/route/v1/' + profile + '/' +
         orig.lng + ',' + orig.lat + ';' +
         dest.lng + ',' + dest.lat +
-        '?steps=true&overview=full&geometries=geojson&alternatives=true';
+        '?overview=full&geometries=geojson&alternatives=true';
     const res = await fetch(url);
     if (!res.ok) throw new Error('osrm-failed');
     return res.json();
@@ -134,17 +134,6 @@ function placeMarker(latlng, title, color) {
     activeMarkers.push(m);
 }
 
-// ── Build step text from OSRM maneuver ──
-function buildInstruction(step) {
-    const type = step.maneuver.type, mod = step.maneuver.modifier || '', name = step.name || 'unnamed road';
-    const map_ = { 'depart':'Start on', 'arrive':'Arrive at', 'turn':'Turn '+mod+' onto',
-        'new name':'Continue onto', 'continue':'Continue '+(mod?mod+' on':'on'),
-        'merge':'Merge onto', 'on ramp':'Take ramp onto', 'off ramp':'Take exit onto',
-        'fork':'Keep '+mod+' toward', 'roundabout':'Enter roundabout', 'rotary':'Enter rotary',
-        'end of road':'At end of road turn '+mod+' onto' };
-    return (map_[type] || 'Continue onto') + ' ' + name;
-}
-
 // ── Find Route ──
 async function findRoute() {
     const originText = document.getElementById('originInput').value.trim();
@@ -153,6 +142,10 @@ async function findRoute() {
     if (!originText && !destText) { showToast('⚠️', 'Please enter both a starting point and a destination.'); return; }
     if (!originText) { showToast('⚠️', 'Please enter a starting location (From).'); return; }
     if (!destText)   { showToast('⚠️', 'Please enter a destination (To).'); return; }
+    if (originText.toLowerCase() === destText.toLowerCase()) {
+        showToast('⚠️', 'Starting point and destination cannot be the same. Please enter different locations.', 4000);
+        return;
+    }
     if (!window._mapsReady) { showToast('❌', 'Map is not ready yet. Please wait a moment.', 3000); return; }
 
     const btn = document.getElementById('findBtn');
@@ -214,18 +207,6 @@ function applyRoute(idx, orig, dest) {
     document.getElementById('statMode').textContent = { DRIVING:'🚗 Driving', TRANSIT:'🚌 Transit' }[travelMode];
     document.getElementById('routeSummary').style.display = 'block';
 
-    let html = '', n = 1;
-    (route.legs || []).forEach(leg => {
-        (leg.steps || []).forEach(step => {
-            const dist = step.distance >= 1000 ? (step.distance/1000).toFixed(1)+' km' : Math.round(step.distance)+' m';
-            html += '<div class="step-item"><div class="step-num">'+n+++'</div><div>' +
-                    '<div class="step-text">'+buildInstruction(step)+'</div>' +
-                    '<div class="step-dist">'+dist+' · '+formatDuration(step.duration)+'</div>' +
-                    '</div></div>';
-        });
-    });
-    document.getElementById('stepsContainer').innerHTML = html;
-
     document.querySelectorAll('.alt-route').forEach((el, i) => el.classList.toggle('active', i === idx));
 }
 
@@ -246,11 +227,6 @@ function renderAlternatives() {
 function switchRoute(idx) {
     applyRoute(idx);
     showToast('🗺️', 'Switched to Route ' + (idx + 1));
-}
-
-function toggleSteps() {
-    const w = document.getElementById('stepsWrap');
-    w.style.display = w.style.display === 'none' ? 'block' : 'none';
 }
 
 // ── Google Maps error handler (called by Maps when key is invalid/rejected) ──

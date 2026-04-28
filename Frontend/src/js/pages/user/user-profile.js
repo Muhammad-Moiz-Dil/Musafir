@@ -53,9 +53,21 @@ function populateUI(u) {
     document.getElementById('dispAddress').textContent     = u.address     || 'Not provided';
     document.getElementById('dispMemberSince').textContent = u.memberSince || '—';
 
-    // Wishlist count
-    var wl = JSON.parse(sessionStorage.getItem('tripify_wishlist') || '[]');
-    document.getElementById('wishCount').textContent = wl.length;
+    // Wishlist count — fetched live so removals are reflected immediately
+    loadWishlistCount();
+}
+
+// ── Fetch live wishlist count from backend ─────────────────
+async function loadWishlistCount() {
+    try {
+        var res = await fetch(ENDPOINTS.FAVORITES.IDS, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (res.ok) {
+            var ids = await res.json();
+            document.getElementById('wishCount').textContent = Array.isArray(ids) ? ids.length : 0;
+        }
+    } catch (e) { /* keep whatever is already displayed */ }
 }
 
 // ── Fetch full profile from API ────────────────────────────
@@ -364,7 +376,13 @@ window.changePassword = async function () {
         document.getElementById('pwConfirm').value = '';
         document.getElementById('pwStrength').className = 'pw-strength';
         document.getElementById('pwSuccess').classList.add('show');
-        showToast('🔒', 'Password changed successfully!');
+        showToast('🔒', 'Password changed! Logging you out in 3 seconds…', 3000);
+
+        // Clear session and redirect so the user must login with the new password
+        setTimeout(function () {
+            sessionStorage.clear();
+            window.location.href = '../auth/login.html';
+        }, 3000);
     } catch (e) {
         showToast('❌', 'Network error.');
     } finally {

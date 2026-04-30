@@ -4,17 +4,24 @@
 ══════════════════════════════════════════════════════════ */
 
 :root {
-    --ap-bg0:       #060c13;
-    --ap-bg1:       #0a1624;
-    --ap-bg2:       #0d1b2a;
+    /* Base darks — rich navy instead of pure black */
+    --ap-bg0:       #0B1220;
+    --ap-bg1:       #0F1B3D;
+    --ap-bg2:       #1A2A6C;
+    /* Left-panel brand accent (gold — kept for Tripify logo/bullets) */
     --ap-accent:    #ffb830;
     --ap-accent2:   #f09c20;
-    --ap-glass:     rgba(255,255,255,0.05);
+    /* Right-panel form accent (indigo → purple) */
+    --ap-indigo:    #6366F1;
+    --ap-purple:    #8B5CF6;
+    --ap-indigo-lo: rgba(99,102,241,0.18);
+    /* Shared */
+    --ap-glass:     rgba(255,255,255,0.045);
     --ap-border:    rgba(255,255,255,0.09);
     --ap-text:      rgba(255,255,255,0.88);
     --ap-dim:       rgba(255,255,255,0.45);
-    --ap-input-bg:  rgba(255,255,255,0.055);
-    --ap-input-b:   rgba(255,255,255,0.11);
+    --ap-input-bg:  rgba(255,255,255,0.06);
+    --ap-input-b:   rgba(255,255,255,0.13);
     --ap-error:     #ff7070;
     --ap-success:   #4ade80;
 }
@@ -117,7 +124,11 @@ body {
 
 /* ── RIGHT FORM AREA ──────────────────────────────── */
 .auth-form-area {
-    background: var(--ap-bg0);
+    /* Rich indigo/navy gradient — removes flat black */
+    background:
+        radial-gradient(ellipse 160% 110% at 80% 20%, rgba(26,42,108,0.55) 0%, transparent 60%),
+        radial-gradient(ellipse 120% 90%  at 20% 80%, rgba(99,102,241,0.10) 0%, transparent 55%),
+        linear-gradient(160deg, #0F1B3D 0%, #0B1220 55%, #0d1428 100%);
     position: relative;
     overflow: hidden;
     flex: 1;
@@ -127,13 +138,13 @@ body {
     padding: 40px 48px;
 }
 
-/* Ambient glow blobs (CSS-only animation) */
+/* Ambient indigo/purple orbs */
 .auth-form-area::before {
     content: '';
     position: absolute;
-    top: 15%; left: 10%;
-    width: 450px; height: 450px;
-    background: radial-gradient(ellipse, rgba(27,73,101,0.18) 0%, transparent 65%);
+    top: 10%; left: 5%;
+    width: 500px; height: 500px;
+    background: radial-gradient(ellipse, rgba(99,102,241,0.18) 0%, transparent 65%);
     border-radius: 50%;
     pointer-events: none;
     animation: floatOrb 9s ease-in-out infinite;
@@ -142,9 +153,9 @@ body {
 .auth-form-area::after {
     content: '';
     position: absolute;
-    bottom: 10%; right: 8%;
-    width: 350px; height: 350px;
-    background: radial-gradient(ellipse, rgba(255,184,48,0.05) 0%, transparent 65%);
+    bottom: 8%; right: 5%;
+    width: 380px; height: 380px;
+    background: radial-gradient(ellipse, rgba(139,92,246,0.13) 0%, transparent 65%);
     border-radius: 50%;
     pointer-events: none;
     animation: floatOrb 12s ease-in-out 3s infinite reverse;
@@ -158,13 +169,14 @@ body {
 
 /* ── AUTH CARD ──────────────────────────────────── */
 .auth-card {
-    background: rgba(8,18,30,0.97);
-    border: 1px solid var(--ap-border);
+    background: rgba(10,16,30,0.97);
+    border: 1px solid rgba(99,102,241,0.16);
     border-radius: 24px;
     padding: 48px 44px 42px;
     box-shadow:
         0 2px 0 rgba(255,255,255,0.04) inset,
-        0 28px 72px rgba(0,0,0,0.60),
+        0 28px 72px rgba(0,0,0,0.65),
+        0 0 40px rgba(99,102,241,0.06),
         0 0 0 1px rgba(255,255,255,0.03);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
@@ -173,13 +185,13 @@ body {
     animation: cardSlideUp 0.6s cubic-bezier(0.16,1,0.3,1) both;
 }
 
-/* Top edge shimmer line */
+/* Top edge shimmer line — indigo */
 .auth-card::before {
     content: '';
     position: absolute;
     top: 0; left: 10%; right: 10%;
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255,184,48,0.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(99,102,241,0.45), rgba(139,92,246,0.30), transparent);
     border-radius: 1px;
 }
 
@@ -239,12 +251,12 @@ body {
 .form-label .optional { color: rgba(255,255,255,0.28); font-weight: 400; }
 
 /* ── INPUTS ─────────────────────────────────────── */
-.input-icon { color: rgba(255,255,255,0.28); }
-.input-wrapper:focus-within .input-icon { color: var(--ap-accent); }
+.input-icon { color: rgba(255,255,255,0.30); }
+.input-wrapper:focus-within .input-icon { color: var(--ap-indigo); }
 
 .form-input {
-    background: var(--ap-input-bg);
-    border: 1.5px solid var(--ap-input-b);
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.13);
     border-radius: 12px;
     color: #fff;
     font-size: 14.5px;
@@ -253,26 +265,26 @@ body {
     outline: none;
     width: 100%;
 }
-.form-input::placeholder { color: rgba(255,255,255,0.20); }
+.form-input::placeholder { color: rgba(255,255,255,0.22); }
 .form-input:hover {
-    border-color: rgba(255,255,255,0.22);
-    background: rgba(255,255,255,0.075);
+    border-color: rgba(255,255,255,0.24);
+    background: rgba(255,255,255,0.085);
 }
 .form-input:focus {
-    border-color: var(--ap-accent);
-    background: rgba(255,184,48,0.05);
-    box-shadow: 0 0 0 3.5px rgba(255,184,48,0.14);
+    border-color: var(--ap-indigo);
+    background: rgba(99,102,241,0.07);
+    box-shadow: 0 0 0 3.5px rgba(99,102,241,0.20);
     color: #fff;
 }
 .form-input.is-valid {
     border-color: #4ade80;
-    background: rgba(74,222,128,0.04);
-    box-shadow: 0 0 0 3px rgba(74,222,128,0.10);
+    background: rgba(74,222,128,0.05);
+    box-shadow: 0 0 0 3px rgba(74,222,128,0.12);
 }
 .form-input.is-error {
     border-color: #ff7070;
     background: rgba(255,112,112,0.05);
-    box-shadow: 0 0 0 3px rgba(255,112,112,0.10);
+    box-shadow: 0 0 0 3px rgba(255,112,112,0.12);
 }
 
 /* Password toggle */
@@ -314,16 +326,16 @@ body {
     border-radius: 12px;
 }
 
-/* ── SUBMIT BUTTON ──────────────────────────────── */
+/* ── SUBMIT BUTTON — indigo → purple gradient ───── */
 .btn-submit {
-    background: linear-gradient(135deg, #ffb830 0%, #f09c20 100%);
-    color: #0d1b2a;
+    background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+    color: #ffffff;
     font-size: 15px;
     font-weight: 700;
-    letter-spacing: 0.1px;
+    letter-spacing: 0.2px;
     border-radius: 13px;
     padding: 14px 24px;
-    box-shadow: 0 6px 22px rgba(255,184,48,0.42);
+    box-shadow: 0 6px 24px rgba(99,102,241,0.45);
     margin-top: 24px;
     border: none;
     cursor: pointer;
@@ -340,27 +352,30 @@ body {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.20), transparent);
+    background: linear-gradient(135deg, rgba(255,255,255,0.18), transparent);
     opacity: 0;
     transition: opacity 0.26s;
 }
 .btn-submit:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 34px rgba(255,184,48,0.58);
+    box-shadow: 0 12px 38px rgba(99,102,241,0.62);
 }
 .btn-submit:hover::before { opacity: 1; }
-.btn-submit:active { transform: translateY(0); box-shadow: 0 4px 14px rgba(255,184,48,0.36); }
-.btn-submit:disabled { opacity: 0.52; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-submit:active { transform: translateY(0); box-shadow: 0 4px 14px rgba(99,102,241,0.38); }
+.btn-submit:disabled { opacity: 0.50; cursor: not-allowed; transform: none; box-shadow: none; }
 
 /* Spinner */
 .btn-submit .spinner {
-    border-color: rgba(13,27,42,0.30);
-    border-top-color: #0d1b2a;
+    border-color: rgba(255,255,255,0.28);
+    border-top-color: #ffffff;
 }
 
-/* ── BOTTOM ROLE LINKS (login.html inline styles) ── */
-/* Override the hardcoded inline colour values */
-.auth-card p a { color: var(--ap-accent) !important; }
+/* ── SUBTITLE & BOTTOM ROLE LINKS ───────────────── */
+.auth-card__subtitle a       { color: #818CF8; }
+.auth-card__subtitle a:hover { color: #A5B4FC; text-decoration: none; }
+/* Override hardcoded inline colours in login.html role links */
+.auth-card p a       { color: #818CF8 !important; }
+.auth-card p a:hover { color: #A5B4FC !important; }
 
 /* ── RESPONSIVE ─────────────────────────────────── */
 @media (max-width: 1024px) {

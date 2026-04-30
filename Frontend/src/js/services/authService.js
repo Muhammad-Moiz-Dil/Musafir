@@ -50,7 +50,8 @@ const AuthService = {
     logout() {
         sessionStorage.removeItem('tripify_token');
         sessionStorage.removeItem('tripify_user');
-        window.location.href = '/src/html/pages/auth/login.html';
+        sessionStorage.removeItem('tripify_wishlist');
+        window.location.replace('../../../../index.html');
     },
 
     getToken() {
@@ -66,3 +67,14 @@ const AuthService = {
         return !!this.getToken();
     },
 };
+
+// Redirect to landing page if back-navigation brings up a protected page without a token
+window.addEventListener('pageshow', function (e) {
+    if (e.persisted && !sessionStorage.getItem('tripify_token')) {
+        const path = window.location.pathname;
+        const isPublic = path.includes('/auth/') || path.endsWith('index.html') || path.endsWith('/');
+        if (!isPublic) {
+            window.location.replace('../../../../index.html');
+        }
+    }
+});

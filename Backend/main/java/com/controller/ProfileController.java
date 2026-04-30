@@ -264,7 +264,9 @@ public class ProfileController {
         m.put("cnic",           u.getCnic()           != null ? u.getCnic()           : "");
         m.put("address",        u.getAddress()        != null ? u.getAddress()        : "");
         m.put("profilePicture", u.getProfilePicture() != null ? u.getProfilePicture() : "");
-        m.put("memberSince",    u.getCreatedAt()      != null ? u.getCreatedAt().format(fmt) : "January 2026");
+        m.put("memberSince",    u.getCreatedAt()  != null ? u.getCreatedAt().format(fmt) : "January 2026");
+        DateTimeFormatter loginFmt = DateTimeFormatter.ofPattern("d MMM yyyy, h:mm a");
+        m.put("lastLogin",      u.getLastLogin()  != null ? u.getLastLogin().format(loginFmt) : "—");
         return m;
     }
 

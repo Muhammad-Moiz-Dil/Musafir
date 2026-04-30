@@ -72,14 +72,25 @@ function initMap() {
 }
 
 // ── Geocode with Nominatim ──
+// Searches Pakistan first; if no confident result, falls back to global search.
 async function geocode(query) {
-    const url = 'https://nominatim.openstreetmap.org/search?q=' +
-        encodeURIComponent(query) + '&format=json&limit=1&accept-language=en';
-    const res = await fetch(url, { headers: { 'User-Agent': 'Tripify/1.0' } });
-    if (!res.ok) throw new Error('geocode-failed');
-    const data = await res.json();
-    if (!data.length) return null;
-    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    const search = async (q) => {
+        const url = 'https://nominatim.openstreetmap.org/search?q=' +
+            encodeURIComponent(q) + '&format=json&limit=1&accept-language=en';
+        const res = await fetch(url, { headers: { 'User-Agent': 'Tripify/1.0' } });
+        if (!res.ok) throw new Error('geocode-failed');
+        const data = await res.json();
+        if (!data.length) return null;
+        if ((parseFloat(data[0].importance) || 0) < 0.20) return null;
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    };
+
+    // Try with Pakistan bias first to avoid IATA / global-code ambiguity (e.g. LHR → Lahore not London)
+    const pkResult = await search(query + ', Pakistan');
+    if (pkResult) return pkResult;
+
+    // Fall back to global search for non-Pakistani locations
+    return search(query);
 }
 
 // ── Route with OSRM ──
@@ -142,6 +153,11 @@ async function findRoute() {
     if (!originText && !destText) { showToast('⚠️', 'Please enter both a starting point and a destination.'); return; }
     if (!originText) { showToast('⚠️', 'Please enter a starting location (From).'); return; }
     if (!destText)   { showToast('⚠️', 'Please enter a destination (To).'); return; }
+
+    // Must contain at least 2 letters — blocks pure numbers ("1111") and gibberish
+    const hasLetters = s => (s.match(/[a-zA-Z]/g) || []).length >= 2;
+    if (!hasLetters(originText)) { showToast('❌', 'Please enter a valid starting location.', 4500); return; }
+    if (!hasLetters(destText))   { showToast('❌', 'Please enter a valid destination.', 4500); return; }
     if (originText.toLowerCase() === destText.toLowerCase()) {
         showToast('⚠️', 'Starting point and destination cannot be the same. Please enter different locations.', 4000);
         return;
@@ -155,8 +171,8 @@ async function findRoute() {
 
     try {
         const [orig, dest] = await Promise.all([geocode(originText), geocode(destText)]);
-        if (!orig) { showToast('❌', 'Could not find "' + originText + '". Try adding ", Pakistan".', 4500); return; }
-        if (!dest) { showToast('❌', 'Could not find "' + destText + '". Try adding ", Pakistan".', 4500); return; }
+        if (!orig) { showToast('❌', 'Please enter a valid starting location.', 4500); return; }
+        if (!dest) { showToast('❌', 'Please enter a valid destination.', 4500); return; }
 
         // TRANSIT uses the driving road network on the map (buses follow roads)
         const profile = 'driving';

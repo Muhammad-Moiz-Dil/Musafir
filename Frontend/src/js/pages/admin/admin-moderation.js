@@ -187,11 +187,7 @@
 
   window.filterFlags = renderFlags;
 
-  window.doLogout = function() {
-    sessionStorage.removeItem('tripify_token');
-    sessionStorage.removeItem('tripify_user');
-    window.location.href = '../auth/admin-login.html';
-  };
+  window.doLogout = function() { AuthService.logout(); };
 
   // ── Init ───────────────────────────────────────────────────────────────────
   loadFlags();

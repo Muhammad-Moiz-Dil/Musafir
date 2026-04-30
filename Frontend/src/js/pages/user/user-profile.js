@@ -164,12 +164,14 @@ window.saveProfile = async function () {
 
     if (!body.fullName) { showFieldError('fullName', 'Full name is required.'); return; }
 
-    // Phone: optional, but if provided must be exactly 11 digits starting with 03
+    // Phone: optional, but if provided must be a valid Pakistani number
     if (body.phoneNumber) {
-        if (!/^03[0-9]{9}$/.test(body.phoneNumber)) {
-            showFieldError('phoneNumber', 'Enter an 11-digit Pakistani number starting with 03 (e.g. 03001234567).');
+        var digitsOnly = body.phoneNumber.replace(/\D/g, '');
+        if (!/^(03[0-9]{9}|923[0-9]{9})$/.test(digitsOnly)) {
+            showFieldError('phoneNumber', 'Enter a valid Pakistani number (e.g. 0323-6666960 or +923236666960).');
             return;
         }
+        body.phoneNumber = digitsOnly; // send clean digits to API
     }
 
     // CNIC validation — must be empty OR a valid Pakistani CNIC

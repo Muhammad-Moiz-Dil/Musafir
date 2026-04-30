@@ -1,16 +1,10 @@
 
+        /* login.html panel — deep ocean navy (left side only) */
         .auth-panel {
-            background: linear-gradient(160deg, #0d1b2a 0%, #1b4965 50%, #1e6b8c 100%);
+            background: linear-gradient(155deg, #060f1c 0%, #0d2640 42%, #1b4965 100%);
         }
-        .btn-submit {
-            background: linear-gradient(135deg, #1b4965 0%, #2580b3 100%);
-            box-shadow: 0 4px 14px rgba(27,73,101,0.40);
-        }
-        .btn-submit:hover {
-            box-shadow: 0 6px 20px rgba(27,73,101,0.50);
-        }
+        /* Align focus ring and subtitle links with indigo theme from auth-premium */
+        .form-input:focus { border-color: #6366F1; box-shadow: 0 0 0 3.5px rgba(99,102,241,0.20); }
         .auth-card__subtitle a,
-        .auth-card__subtitle a:hover { color: #1b4965; }
-        .form-input:focus { border-color: #1b4965; box-shadow: 0 0 0 3px rgba(27,73,101,0.15); }
-        a[href="admin-login.html"] { color: #1b4965 !important; }
-    
+        .auth-card__subtitle a:hover { color: #818CF8; }
+        a[href="admin-login.html"] { color: #818CF8 !important; }

@@ -77,9 +77,9 @@ public class ProfileService {
 
         // phoneNumber — only update if non-empty; empty = keep existing value
         if (req.getPhoneNumber() != null) {
-            String phone = req.getPhoneNumber().trim();
+            String phone = req.getPhoneNumber().trim().replaceAll("[\\s\\-]", "");
             if (!phone.isEmpty()) {
-                if (!phone.matches("^03[0-9]{9}$")) {
+                if (!phone.matches("^(03[0-9]{9}|923[0-9]{9})$")) {
                     errors.put("phoneNumber", "Phone number must be 11 digits starting with 03 (e.g. 03001234567).");
                 } else {
                     user.setPhoneNumber(phone);

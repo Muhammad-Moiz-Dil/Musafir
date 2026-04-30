@@ -70,9 +70,9 @@
             // Role-based redirect
             setTimeout(() => {
                 if (data.user.userType === 'Tourist') {
-                    window.location.href = '../user/dashboard.html';
+                    window.location.replace('../user/dashboard.html');
                 } else if (data.user.userType === 'HotelManager') {
-                    window.location.href = '../hm/hm-dashboard.html';
+                    window.location.replace('../hm/hm-dashboard.html');
                 }
             }, 1500);
 

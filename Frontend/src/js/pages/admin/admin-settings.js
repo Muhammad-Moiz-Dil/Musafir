@@ -21,7 +21,8 @@ function getHeaders() {
 function doLogout() {
   sessionStorage.removeItem('tripify_token');
   sessionStorage.removeItem('tripify_user');
-  location.href = '../auth/admin-login.html';
+  sessionStorage.removeItem('tripify_wishlist');
+  window.location.replace('../../../../index.html');
 }
 
 // ─── Toast helpers ─────────────────────────────────────────────────────────
@@ -153,6 +154,17 @@ async function executeConfirm() {
 document.getElementById('confirmOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeConfirm();
 });
+
+// ─── Live moderation badge ─────────────────────────────────────────────────
+(async function () {
+  try {
+    const r = await fetch(ENDPOINTS.ADMIN.FLAGS_COUNT, { headers: getHeaders() });
+    if (!r.ok) return;
+    const { count } = await r.json();
+    const b = document.getElementById('modBadge');
+    if (b) { if (count > 0) { b.textContent = count; b.style.display = ''; } else b.style.display = 'none'; }
+  } catch (e) {}
+})();
 
 // ─── Init ──────────────────────────────────────────────────────────────────
 loadSettings();

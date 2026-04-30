@@ -66,7 +66,7 @@
             submitBtn.classList.remove('loading');
 
             setTimeout(() => {
-                window.location.href = '../admin/admin-dashboard.html';
+                window.location.replace('../admin/admin-dashboard.html');
             }, 1500);
 
         } catch (err) {

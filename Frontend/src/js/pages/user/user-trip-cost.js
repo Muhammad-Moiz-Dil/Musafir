@@ -54,17 +54,21 @@ function findCity(input) {
     );
 }
 
-// ── Geocode any city via Nominatim (free, no key required)
+// ── Geocode any city via Nominatim — Pakistan-biased, with importance filter
 async function geocodeCity(name) {
-    const url = 'https://nominatim.openstreetmap.org/search?q=' +
-                encodeURIComponent(name) +
-                '&format=json&limit=1&addressdetails=0';
-    const res  = await fetch(url, { headers: { 'Accept-Language': 'en' } });
-    const data = await res.json();
-    if (data && data.length > 0) {
+    const search = async (q) => {
+        const url = 'https://nominatim.openstreetmap.org/search?q=' +
+                    encodeURIComponent(q) + '&format=json&limit=1&addressdetails=0';
+        const res  = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        const data = await res.json();
+        if (!data || !data.length) return null;
+        if ((parseFloat(data[0].importance) || 0) < 0.20) return null;
         return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-    }
-    return null;
+    };
+    // Try Pakistan-biased first to avoid global-code ambiguity (e.g. LHR → Lahore not London)
+    const pkResult = await search(name + ', Pakistan');
+    if (pkResult) return pkResult;
+    return search(name);
 }
 
 // ── Haversine distance (km) × 1.3 road factor
@@ -167,6 +171,14 @@ async function onSrcBlur() {
         return;
     }
 
+    if ((val.match(/[a-zA-Z]/g) || []).length < 2) {
+        srcErr.style.color = '#ef4444';
+        srcErr.textContent = 'Please enter a valid starting city.';
+        input.classList.add('invalid');
+        selectedSource = null;
+        return;
+    }
+
     // Always accept the name — coordinates are best-effort for auto-distance
     selectedSource = { name: val, lat: null, lng: null };
     input.classList.remove('invalid');
@@ -245,6 +257,14 @@ async function onDestBlur() {
         return;
     }
 
+    if ((val.match(/[a-zA-Z]/g) || []).length < 2) {
+        destErr.style.color = '#ef4444';
+        destErr.textContent = 'Please enter a valid destination.';
+        input.classList.add('invalid');
+        selectedDestination = null;
+        return;
+    }
+
     // Accept any name — coordinates are best-effort
     selectedDestination = { name: val, lat: null, lng: null, id: null };
     input.classList.remove('invalid');
@@ -290,13 +310,22 @@ function onMealPrefChange() {
 
 // ── When price is manually edited, switch dropdown to "Custom"
 function onMealPriceInput() {
-    const sel = document.getElementById('mealPref');
-    const val = parseFloat(document.getElementById('mealPrice').value);
-    // Check if typed value matches any preset
+    const sel   = document.getElementById('mealPref');
+    const inp   = document.getElementById('mealPrice');
+    const errEl = document.getElementById('mealPriceErr');
+    const val   = parseFloat(inp.value);
+
+    if (!isNaN(val) && val > 1000000) {
+        errEl.textContent = 'Maximum meal price is Rs. 50,000 per meal.';
+        inp.classList.add('invalid');
+        sel.value = 'custom';
+        return;
+    }
+
     const match = [...sel.options].find(o => o.value !== 'custom' && parseFloat(o.value) === val);
     sel.value = match ? match.value : 'custom';
-    document.getElementById('mealPriceErr').textContent = '';
-    document.getElementById('mealPrice').classList.remove('invalid');
+    errEl.textContent = '';
+    inp.classList.remove('invalid');
 }
 
 // ── Clear a field's error state
@@ -456,8 +485,11 @@ function validate() {
 
     // Meal price
     const mealPriceVal = parseFloat(document.getElementById('mealPrice').value);
-    if (isNaN(mealPriceVal) || mealPriceVal < 1) {
-        document.getElementById('mealPriceErr').textContent = 'Please enter a valid meal price (minimum Rs. 1).';
+    if (isNaN(mealPriceVal) || mealPriceVal < 1 || mealPriceVal > 1000000) {
+        document.getElementById('mealPriceErr').textContent =
+            mealPriceVal > 1000000
+                ? 'Maximum meal price is Rs. 50,000 per meal.'
+                : 'Please enter a valid meal price (minimum Rs. 1).';
         document.getElementById('mealPrice').classList.add('invalid');
         ok = false;
     }
@@ -608,7 +640,7 @@ function calculate() {
         const misc     = Math.round((fuelCost + hotelCost + foodCost) * 0.10);
         const total    = fuelCost + hotelCost + foodCost + misc;
 
-        if (total <= 0) throw new Error('Invalid total');
+        if (!isFinite(total) || total <= 0) throw new Error('Invalid total');
 
         const items = [
             { icon: '⛽', label: 'Fuel / Transport',     sub: `${srcLabel} → ${destLabel} (${dist * 2} km)`,              amt: fuelCost,  color: '#f5a623', pct: Math.round(fuelCost  / total * 100) },

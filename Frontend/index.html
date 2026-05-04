@@ -1,1192 +1,1492 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tripify — Discover Pakistan</title>
-    <link rel="icon" type="image/png" href="public/assets/images/favicon.png"/>
+    <title>Tripify — Discover Pakistan | 3D Carousel</title>
+    <link rel="icon" type="image/png" href="public/assets/images/favicon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
-
-    <!-- GSAP + ScrollTrigger -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,700&display=swap"
+        rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-    <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
-
-    <!-- Base styles -->
     <link rel="stylesheet" href="src/css/pages/landing.css">
-
     <style>
-    /* ══════════════════════════════════════════════
-       PREMIUM OVERRIDES — scoped to landing page
-    ══════════════════════════════════════════════ */
+        :root {
+            --bg0: #060c13;
+            --bg1: #0a1520;
+            --bg2: #0d1b2a;
+            --accent: #ffb830;
+            --accent2: #f09c20;
+            --blue: #1e6b8c;
+            --blue-light: #4FC3F7;
+            --glass: rgba(255, 255, 255, 0.045);
+            --glass-b: rgba(255, 255, 255, 0.08);
+            --font-s: 'Inter', 'system-ui', sans-serif;
+            --font-d: 'Playfair Display', Georgia, serif;
+        }
 
-    :root {
-        --bg0:        #060c13;
-        --bg1:        #0a1520;
-        --bg2:        #0d1b2a;
-        --accent:     #ffb830;
-        --accent2:    #f09c20;
-        --blue:       #1e6b8c;
-        --blue-light: #4FC3F7;
-        --glass:      rgba(255,255,255,0.045);
-        --glass-b:    rgba(255,255,255,0.08);
-        --font-s:     'Inter','system-ui',sans-serif;
-        --font-d:     'Playfair Display',Georgia,serif;
-    }
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+        html {
+            scroll-behavior: smooth;
+        }
 
-    body {
-        font-family: var(--font-s);
-        background: var(--bg0);
-        color: #fff;
-        overflow-x: hidden;
-    }
-    a { text-decoration: none; }
+        body {
+            font-family: var(--font-s);
+            background: var(--bg0);
+            color: #fff;
+            overflow-x: hidden;
+        }
 
-    /* ── NAVBAR ─────────────────────────────────── */
-    .navbar {
-        position: fixed;
-        top: 0; left: 0; right: 0;
-        z-index: 1000;
-        padding: 22px 64px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        transition: background 0.4s, padding 0.4s, box-shadow 0.4s;
-    }
-    .navbar.scrolled {
-        background: rgba(6,12,19,0.88);
-        backdrop-filter: blur(22px);
-        -webkit-backdrop-filter: blur(22px);
-        padding: 13px 64px;
-        box-shadow: 0 1px 0 rgba(255,255,255,0.05), 0 8px 40px rgba(0,0,0,0.55);
-    }
-    .nav-logo { display: flex; align-items: center; gap: 11px; }
-    .nav-logo-icon {
-        width: 42px; height: 42px;
-        background: linear-gradient(135deg, #ffb830, #e8931a);
-        border-radius: 12px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 20px;
-        box-shadow: 0 4px 18px rgba(255,184,48,0.55);
-        flex-shrink: 0;
-    }
-    .nav-logo-text {
-        font-family: var(--font-d);
-        font-size: 25px; font-weight: 700;
-        color: #fff;
-    }
-    .nav-links { display: flex; align-items: center; gap: 38px; list-style: none; }
-    .nav-links a {
-        color: rgba(255,255,255,0.62);
-        font-size: 14px; font-weight: 500;
-        position: relative;
-        transition: color 0.25s;
-    }
-    .nav-links a::after {
-        content: '';
-        position: absolute;
-        bottom: -4px; left: 0; right: 0;
-        height: 1.5px;
-        background: var(--accent);
-        transform: scaleX(0);
-        transform-origin: right;
-        transition: transform 0.3s cubic-bezier(.4,0,.2,1);
-    }
-    .nav-links a:hover { color: #fff; }
-    .nav-links a:hover::after { transform: scaleX(1); transform-origin: left; }
+        a {
+            text-decoration: none;
+        }
 
-    .nav-actions { display: flex; align-items: center; gap: 12px; }
-    .btn-outline {
-        padding: 9px 24px;
-        border: 1px solid rgba(255,255,255,0.18);
-        border-radius: 10px;
-        color: rgba(255,255,255,0.82);
-        background: rgba(255,255,255,0.04);
-        font-size: 14px; font-weight: 500;
-        cursor: pointer;
-        transition: all 0.25s;
-    }
-    .btn-outline:hover {
-        border-color: rgba(255,255,255,0.45);
-        background: rgba(255,255,255,0.09);
-        color: #fff;
-    }
-    .btn-accent {
-        padding: 9px 24px;
-        border: none;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #ffb830, #f09c20);
-        color: #0d1b2a;
-        font-size: 14px; font-weight: 700;
-        cursor: pointer;
-        box-shadow: 0 4px 16px rgba(255,184,48,0.42);
-        transition: all 0.25s;
-    }
-    .btn-accent:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 7px 24px rgba(255,184,48,0.60);
-    }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            padding: 22px 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background 0.4s, padding 0.4s, box-shadow 0.4s;
+        }
 
-    /* ── HERO ───────────────────────────────────── */
-    .hero {
-        position: relative;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        overflow: hidden;
-        background: radial-gradient(ellipse 140% 90% at 70% 50%, #0d2845 0%, #060c13 58%);
-    }
-    #hero-canvas {
-        position: absolute; inset: 0;
-        width: 100%; height: 100%;
-        pointer-events: none; z-index: 1;
-    }
-    /* Globe canvas — right side */
-    #globe-canvas {
-        position: absolute;
-        right: -80px; top: 50%;
-        transform: translateY(-50%);
-        width: 640px; height: 640px;
-        pointer-events: none; z-index: 2;
-    }
-    /* Fade edges over globe */
-    .hero::before {
-        content: '';
-        position: absolute; inset: 0;
-        background: linear-gradient(90deg,
-            #060c13 22%,
-            rgba(6,12,19,0.55) 52%,
-            rgba(6,12,19,0.20) 72%,
-            #060c13 100%);
-        z-index: 3; pointer-events: none;
-    }
-    .hero-mountains { z-index: 4; opacity: 0.45; }
+        .navbar.scrolled {
+            background: rgba(6, 12, 19, 0.88);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            padding: 13px 64px;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 40px rgba(0, 0, 0, 0.55);
+        }
 
-    .hero-content {
-        position: relative; z-index: 5;
-        padding: 140px 64px 200px;
-        max-width: 680px;
-        /* start hidden — GSAP reveals */
-        opacity: 0;
-    }
-    .hero-badge {
-        display: inline-flex;
-        align-items: center; gap: 8px;
-        background: rgba(255,184,48,0.10);
-        border: 1px solid rgba(255,184,48,0.28);
-        color: var(--accent);
-        font-size: 12px; font-weight: 600;
-        padding: 7px 18px;
-        border-radius: 100px;
-        margin-bottom: 32px;
-        letter-spacing: 0.5px;
-        backdrop-filter: blur(6px);
-    }
-    .hero-title {
-        font-family: var(--font-d);
-        font-size: clamp(44px, 5.6vw, 82px);
-        font-weight: 800;
-        line-height: 1.04;
-        letter-spacing: -2.5px;
-        color: #fff;
-        margin-bottom: 26px;
-    }
-    .hero-title .line-wrap { display: block; overflow: hidden; }
-    .hero-title .accent-word { color: var(--accent); font-style: italic; }
-    .hero-title .dim-word {
-        background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.6) 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-    .hero-subtitle {
-        font-size: clamp(15px, 1.8vw, 18px);
-        color: rgba(255,255,255,0.52);
-        max-width: 500px;
-        margin-bottom: 50px;
-        line-height: 1.78;
-    }
-    .hero-cta { display: flex; gap: 14px; flex-wrap: wrap; }
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
 
-    .btn-hero-primary {
-        padding: 16px 40px;
-        background: linear-gradient(135deg, #ffb830, #f09c20);
-        color: #0d1b2a;
-        font-size: 15px; font-weight: 700;
-        border: none; border-radius: 14px;
-        cursor: pointer;
-        position: relative; overflow: hidden;
-        box-shadow: 0 6px 26px rgba(255,184,48,0.48);
-        transition: all 0.3s;
-    }
-    .btn-hero-primary::after {
-        content: '';
-        position: absolute; inset: 0;
-        background: linear-gradient(135deg, rgba(255,255,255,0.22), transparent);
-        opacity: 0; transition: opacity 0.3s;
-    }
-    .btn-hero-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 38px rgba(255,184,48,0.64); }
-    .btn-hero-primary:hover::after { opacity: 1; }
+        .nav-logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, #ffb830, #e8931a);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 4px 18px rgba(255, 184, 48, 0.55);
+            flex-shrink: 0;
+        }
 
-    .btn-hero-ghost {
-        padding: 16px 40px;
-        background: rgba(255,255,255,0.06);
-        color: rgba(255,255,255,0.82);
-        font-size: 15px; font-weight: 600;
-        border: 1px solid rgba(255,255,255,0.14);
-        border-radius: 14px;
-        cursor: pointer;
-        display: inline-flex; align-items: center; gap: 9px;
-        backdrop-filter: blur(8px);
-        transition: all 0.3s;
-    }
-    .btn-hero-ghost:hover {
-        border-color: rgba(255,255,255,0.38);
-        background: rgba(255,255,255,0.11);
-        transform: translateY(-2px);
-        color: #fff;
-    }
+        .nav-logo-text {
+            font-family: var(--font-d);
+            font-size: 25px;
+            font-weight: 700;
+            color: #fff;
+        }
 
-    .hero-scroll-hint {
-        position: absolute; bottom: 42px; left: 50%;
-        transform: translateX(-50%);
-        display: flex; flex-direction: column;
-        align-items: center; gap: 10px;
-        z-index: 5; opacity: 0;
-    }
-    .scroll-mouse {
-        width: 26px; height: 42px;
-        border: 1.5px solid rgba(255,255,255,0.20);
-        border-radius: 13px; position: relative;
-    }
-    .scroll-mouse::after {
-        content: '';
-        position: absolute;
-        top: 7px; left: 50%;
-        transform: translateX(-50%);
-        width: 4px; height: 8px;
-        background: var(--accent); border-radius: 2px;
-        animation: scrollBob 2s ease infinite;
-    }
-    @keyframes scrollBob {
-        0%,100% { top: 7px; opacity: 1; }
-        50% { top: 22px; opacity: 0.25; }
-    }
-    .scroll-label {
-        font-size: 10px; color: rgba(255,255,255,0.28);
-        letter-spacing: 1.5px; text-transform: uppercase;
-    }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 38px;
+            list-style: none;
+        }
 
-    /* ── SHARED SECTIONS ────────────────────────── */
-    .section { padding: 120px 64px; }
+        .nav-links a {
+            color: rgba(255, 255, 255, 0.62);
+            font-size: 14px;
+            font-weight: 500;
+            position: relative;
+            transition: color 0.25s;
+        }
 
-    .section-tag {
-        display: inline-flex; align-items: center; gap: 10px;
-        font-size: 11px; font-weight: 700;
-        letter-spacing: 3px; text-transform: uppercase;
-        color: var(--accent); margin-bottom: 18px;
-    }
-    .section-tag::before {
-        content: ''; width: 22px; height: 2px;
-        background: var(--accent); border-radius: 2px; flex-shrink: 0;
-    }
-    .section-title {
-        font-family: var(--font-d);
-        font-size: clamp(32px, 4vw, 54px);
-        font-weight: 700; color: #fff;
-        line-height: 1.12; margin-bottom: 18px;
-        letter-spacing: -0.8px;
-    }
-    .section-title span { color: var(--accent); }
-    .section-sub {
-        font-size: 16.5px; color: rgba(255,255,255,0.44);
-        line-height: 1.76;
-    }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            right: 0;
+            height: 1.5px;
+            background: var(--accent);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s cubic-bezier(.4, 0, .2, 1);
+        }
 
-    /* ── FEATURES ───────────────────────────────── */
-    .features-section {
-        background: linear-gradient(180deg, #060c13 0%, #0a1520 100%);
-        position: relative; overflow: hidden;
-    }
-    .features-section::before {
-        content: '';
-        position: absolute; top: -150px; left: 50%; transform: translateX(-50%);
-        width: 900px; height: 600px;
-        background: radial-gradient(ellipse, rgba(30,107,140,0.10), transparent 65%);
-        pointer-events: none;
-    }
-    .features-head {
-        text-align: center; margin-bottom: 72px;
-        max-width: 580px; margin-left: auto; margin-right: auto;
-    }
-    .features-head .section-sub { max-width: 480px; margin: 0 auto; }
-    /* Center tag in features */
-    .features-head .section-tag { justify-content: center; }
-    .features-head .section-tag::before { display: none; }
+        .nav-links a:hover {
+            color: #fff;
+        }
 
-    .features-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-        gap: 20px; max-width: 1200px; margin: 0 auto;
-    }
-    .f-card {
-        background: var(--glass);
-        border: 1px solid rgba(255,255,255,0.065);
-        border-radius: 24px; padding: 40px 32px;
-        position: relative; overflow: hidden;
-        transition: background 0.4s, border-color 0.4s, transform 0.4s, box-shadow 0.4s;
-    }
-    .f-card::before {
-        content: '';
-        position: absolute; inset: 0;
-        background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(255,184,48,0.07), transparent);
-        opacity: 0; transition: opacity 0.4s;
-    }
-    .f-card::after {
-        content: '';
-        position: absolute; top: 0; left: 0; right: 0; height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,184,48,0.38), transparent);
-        opacity: 0; transition: opacity 0.4s;
-    }
-    .f-card:hover {
-        background: rgba(255,255,255,0.06);
-        border-color: rgba(255,184,48,0.18);
-        transform: translateY(-8px) !important;
-        box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,184,48,0.06);
-    }
-    .f-card:hover::before, .f-card:hover::after { opacity: 1; }
+        .nav-links a:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
 
-    .f-icon {
-        width: 60px; height: 60px;
-        background: rgba(255,184,48,0.09);
-        border: 1px solid rgba(255,184,48,0.18);
-        border-radius: 18px;
-        display: flex; align-items: center; justify-content: center;
-        font-size: 28px; margin-bottom: 24px;
-        transition: all 0.3s;
-    }
-    .f-card:hover .f-icon {
-        background: rgba(255,184,48,0.14);
-        border-color: rgba(255,184,48,0.32);
-        transform: scale(1.08) rotate(-3deg);
-    }
-    .f-title { font-size: 18px; font-weight: 650; color: #fff; margin-bottom: 12px; letter-spacing: -0.2px; }
-    .f-desc  { font-size: 14.5px; color: rgba(255,255,255,0.42); line-height: 1.75; }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
 
-    /* ── DESTINATIONS ───────────────────────────── */
-    .dest-section {
-        background: #060c13;
-        position: relative; overflow: hidden;
-    }
-    .dest-section::after {
-        content: '';
-        position: absolute; bottom: -100px; right: -100px;
-        width: 600px; height: 600px;
-        background: radial-gradient(ellipse, rgba(30,107,140,0.08), transparent 65%);
-        pointer-events: none;
-    }
-    .dest-head { margin-bottom: 58px; }
-    .dest-grid {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 16px; max-width: 1200px; margin: 0 auto;
-    }
-    .d-card {
-        border-radius: 20px; overflow: hidden;
-        position: relative; aspect-ratio: 3/4;
-        cursor: pointer;
-        transition: box-shadow 0.4s, border-color 0.4s;
-        border: 1px solid rgba(255,255,255,0.04);
-        will-change: transform;
-    }
-    .d-img {
-        position: absolute; inset: 0;
-        width: 100%; height: 100%;
-        object-fit: cover; object-position: center;
-        transition: transform 0.6s cubic-bezier(.4,0,.2,1);
-        pointer-events: none;
-    }
-    .d-overlay {
-        position: absolute; inset: 0;
-        background: linear-gradient(to top, rgba(4,8,16,.92) 0%, rgba(4,8,16,0.18) 52%, transparent 100%);
-    }
-    .d-card:hover .d-img { transform: scale(1.09); }
-    .d-card:hover {
-        box-shadow: 0 22px 64px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,184,48,0.16);
-        border-color: rgba(255,184,48,0.12);
-    }
-    .d-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 22px 18px; }
-    .d-name {
-        font-family: var(--font-d); font-size: 18px; font-weight: 700;
-        color: #fff; margin-bottom: 4px; line-height: 1.2;
-    }
-    .d-region { font-size: 10.5px; color: rgba(255,255,255,0.50); font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; }
-    .d-badge {
-        position: absolute; top: 14px; right: 14px;
-        background: rgba(255,184,48,0.94); color: #0d1b2a;
-        font-size: 10px; font-weight: 700;
-        padding: 4px 10px; border-radius: 100px;
-    }
+        .btn-outline {
+            padding: 9px 24px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 10px;
+            color: rgba(255, 255, 255, 0.82);
+            background: rgba(255, 255, 255, 0.04);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
 
-    /* ── HOW IT WORKS ───────────────────────────── */
-    .hiw-section {
-        background: linear-gradient(180deg, #060c13 0%, #0d1b2a 100%);
-        text-align: center; position: relative; overflow: hidden;
-    }
-    .hiw-section::before {
-        content: '';
-        position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
-        width: 800px; height: 800px;
-        background: radial-gradient(ellipse, rgba(255,184,48,0.035), transparent 65%);
-        pointer-events: none;
-    }
-    .hiw-head { margin-bottom: 80px; }
-    /* Center tag in hiw */
-    .hiw-head .section-tag { justify-content: center; }
-    .hiw-head .section-tag::before { display: none; }
+        .btn-outline:hover {
+            border-color: rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.09);
+            color: #fff;
+        }
 
-    .steps-row {
-        display: flex; justify-content: center;
-        max-width: 900px; margin: 0 auto;
-        position: relative; gap: 0;
-    }
-    .steps-row::before {
-        content: '';
-        position: absolute; top: 37px; left: 20%; right: 20%;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, rgba(255,184,48,0.18), transparent);
-    }
-    .step-item {
-        flex: 1; padding: 0 28px;
-    }
-    .step-num {
-        width: 74px; height: 74px;
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,184,48,0.20);
-        border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
-        font-family: var(--font-d); font-size: 28px; font-weight: 700;
-        color: var(--accent); margin: 0 auto 24px;
-        position: relative; z-index: 1;
-        transition: all 0.35s;
-    }
-    .step-item:hover .step-num {
-        background: rgba(255,184,48,0.10);
-        border-color: rgba(255,184,48,0.45);
-        box-shadow: 0 0 32px rgba(255,184,48,0.22);
-        transform: scale(1.06);
-    }
-    .step-title { font-size: 17px; font-weight: 650; color: #fff; margin-bottom: 10px; }
-    .step-desc  { font-size: 14px; color: rgba(255,255,255,0.42); line-height: 1.7; }
+        .btn-accent {
+            padding: 9px 24px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #ffb830, #f09c20);
+            color: #0d1b2a;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(255, 184, 48, 0.42);
+            transition: all 0.25s;
+        }
 
-    /* ── CTA ────────────────────────────────────── */
-    .cta-section {
-        padding: 130px 64px;
-        text-align: center;
-        position: relative; overflow: hidden;
-        background: #060c13;
-    }
-    .cta-section::before {
-        content: '';
-        position: absolute; inset: 0;
-        background:
-            radial-gradient(ellipse 90% 110% at 50% 50%, rgba(27,73,101,0.55) 0%, transparent 70%),
-            radial-gradient(ellipse 60% 60% at 50% -10%, rgba(255,184,48,0.07) 0%, transparent 60%);
-        pointer-events: none;
-    }
-    .cta-section::after {
-        content: '';
-        position: absolute; inset: 0;
-        border-top: 1px solid rgba(255,255,255,0.05);
-        border-bottom: 1px solid rgba(255,255,255,0.05);
-        pointer-events: none;
-    }
-    .cta-title {
-        font-family: var(--font-d);
-        font-size: clamp(34px, 4.5vw, 62px);
-        font-weight: 700; color: #fff;
-        margin-bottom: 18px;
-        letter-spacing: -1.5px; line-height: 1.08;
-        position: relative; z-index: 1;
-    }
-    .cta-sub {
-        font-size: 17px; color: rgba(255,255,255,0.50);
-        margin-bottom: 50px; position: relative; z-index: 1;
-    }
-    .cta-btns {
-        display: flex; gap: 14px;
-        justify-content: center; flex-wrap: wrap;
-        position: relative; z-index: 1;
-    }
+        .btn-accent:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 7px 24px rgba(255, 184, 48, 0.60);
+        }
 
-    /* ── FOOTER ─────────────────────────────────── */
-    footer {
-        background: #030810;
-        padding: 40px 64px;
-        display: flex; align-items: center;
-        justify-content: space-between;
-        border-top: 1px solid rgba(255,255,255,0.04);
-        flex-wrap: wrap; gap: 16px;
-    }
-    .footer-brand { display: flex; align-items: center; gap: 12px; }
-    .footer-brand span { font-family: var(--font-d); font-size: 20px; font-weight: 700; color: #fff; }
-    footer p { font-size: 13px; color: rgba(255,255,255,0.22); }
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            background: radial-gradient(ellipse 140% 90% at 70% 50%, #0d2845 0%, #060c13 58%);
+        }
 
-    /* ── MODAL ──────────────────────────────────── */
-    .modal-bg {
-        position: fixed; inset: 0;
-        background: rgba(3,8,16,0.92);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-        z-index: 2000;
-        display: flex; align-items: center; justify-content: center;
-        padding: 24px; opacity: 0; pointer-events: none;
-        transition: opacity 0.35s cubic-bezier(.4,0,.2,1);
-    }
-    .modal-bg.open { opacity: 1; pointer-events: all; }
-    .modal-box {
-        background: linear-gradient(160deg, #0d1f32 0%, #0f2b3e 100%);
-        border: 1px solid rgba(255,255,255,0.09);
-        border-radius: 28px; padding: 52px 48px;
-        max-width: 540px; width: 100%;
-        position: relative;
-        transform: translateY(34px) scale(0.97);
-        transition: transform 0.45s cubic-bezier(0.16,1,0.3,1);
-        box-shadow: 0 40px 80px rgba(0,0,0,0.65);
-    }
-    .modal-bg.open .modal-box { transform: translateY(0) scale(1); }
-    .modal-close-btn {
-        position: absolute; top: 16px; right: 16px;
-        width: 36px; height: 36px;
-        background: rgba(255,255,255,0.07);
-        border: none; border-radius: 9px;
-        color: rgba(255,255,255,0.52);
-        cursor: pointer; font-size: 18px;
-        display: flex; align-items: center; justify-content: center;
-        transition: all 0.2s;
-    }
-    .modal-close-btn:hover { background: rgba(255,255,255,0.13); color: #fff; }
-    .modal-heading {
-        font-family: var(--font-d); font-size: 30px; font-weight: 700;
-        color: #fff; text-align: center; margin-bottom: 8px;
-    }
-    .modal-subtext {
-        font-size: 15px; color: rgba(255,255,255,0.48);
-        text-align: center; margin-bottom: 38px;
-    }
-    .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-    .role-option {
-        background: rgba(255,255,255,0.042);
-        border: 1.5px solid rgba(255,255,255,0.08);
-        border-radius: 18px; padding: 30px 18px;
-        text-align: center; cursor: pointer;
-        transition: all 0.28s; display: block;
-    }
-    .role-option:hover {
-        background: rgba(255,184,48,0.08);
-        border-color: rgba(255,184,48,0.40);
-        transform: translateY(-5px);
-        box-shadow: 0 14px 36px rgba(0,0,0,0.35);
-    }
-    .role-emoji { font-size: 38px; margin-bottom: 13px; display: block; }
-    .role-name  { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 6px; }
-    .role-hint  { font-size: 12.5px; color: rgba(255,255,255,0.42); line-height: 1.55; }
-    .modal-admin-note {
-        text-align: center; font-size: 13px; color: rgba(255,255,255,0.35);
-    }
-    .modal-admin-note a { color: var(--accent); font-weight: 500; }
-    .modal-admin-note a:hover { text-decoration: underline; }
+        #hero-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
 
-    /* ── RESPONSIVE ─────────────────────────────── */
-    @media (max-width: 1200px) {
-        #globe-canvas { width: 520px; height: 520px; right: -100px; }
-    }
-    @media (max-width: 1024px) {
-        .hero::before { background: linear-gradient(90deg, #060c13 24%, rgba(6,12,19,0.5) 58%, #060c13 100%); }
-        #globe-canvas { width: 420px; height: 420px; right: -80px; opacity: 0.55; }
-        .dest-grid { grid-template-columns: repeat(3, 1fr); }
-        .hero-content { max-width: 580px; }
-    }
-    @media (max-width: 768px) {
-        .navbar, .navbar.scrolled { padding: 14px 20px; }
-        .nav-links { display: none; }
-        .section { padding: 80px 22px; }
-        .cta-section { padding: 80px 22px; }
-        .dest-grid { grid-template-columns: repeat(2, 1fr); }
-        .steps-row { flex-direction: column; gap: 40px; align-items: center; }
-        .steps-row::before { display: none; }
-        .role-grid { grid-template-columns: 1fr; }
-        .modal-box { padding: 36px 22px; }
-        footer { padding: 28px 22px; justify-content: center; text-align: center; }
-        #globe-canvas { width: 320px; height: 320px; right: -50px; opacity: 0.22; }
-        .hero-content { padding: 130px 22px 170px; }
-        .hero-scroll-hint { left: 50%; transform: translateX(-50%); align-items: center; }
-    }
-    @media (max-width: 480px) {
-        #globe-canvas { display: none; }
-        .hero::before { background: #060c13; opacity: 0.7; }
-        .hero-title { font-size: 38px; letter-spacing: -1px; }
-    }
+        #globe-canvas {
+            position: absolute;
+            right: -80px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 640px;
+            height: 640px;
+            pointer-events: none;
+            z-index: 2;
+        }
 
-    @keyframes float {
-        0%,100% { transform: translateY(-50%) translateY(0px); }
-        50%       { transform: translateY(-50%) translateY(-14px); }
-    }
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, #060c13 22%, rgba(6, 12, 19, 0.55) 52%, rgba(6, 12, 19, 0.20) 72%, #060c13 100%);
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .hero-mountains {
+            z-index: 4;
+            opacity: 0.45;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 5;
+            padding: 140px 64px 200px;
+            max-width: 680px;
+            opacity: 0;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 184, 48, 0.10);
+            border: 1px solid rgba(255, 184, 48, 0.28);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 7px 18px;
+            border-radius: 100px;
+            margin-bottom: 32px;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(6px);
+        }
+
+        .hero-title {
+            font-family: var(--font-d);
+            font-size: clamp(44px, 5.6vw, 82px);
+            font-weight: 800;
+            line-height: 1.04;
+            letter-spacing: -2.5px;
+            color: #fff;
+            margin-bottom: 26px;
+        }
+
+        .hero-title .line-wrap {
+            display: block;
+            overflow: hidden;
+        }
+
+        .hero-title .accent-word {
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        .hero-title .dim-word {
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.6) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Rotating text feature - UPDATED TEXT */
+        .feature-wrapper {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 28px;
+        }
+
+        .explore-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .explore-static {
+            font-family: var(--font-d);
+            font-size: 22px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: -0.3px;
+        }
+
+        .rotating-yellow-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ffb830, #f09c20);
+            border-radius: 60px;
+            padding: 6px 22px;
+            min-width: 120px;
+            box-shadow: 0 4px 15px rgba(255, 184, 48, 0.3);
+        }
+
+        .rotate-word-container {
+            position: relative;
+            display: inline-block;
+            min-width: 95px;
+            height: 32px;
+            overflow: hidden;
+        }
+
+        .rotate-word {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            font-size: 18px;
+            font-weight: 800;
+            color: #0d1b2a;
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+            opacity: 0;
+            transform: translateY(100%);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: center;
+        }
+
+        .rotate-word.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .rotate-word.exit {
+            opacity: 0;
+            transform: translateY(-100%);
+        }
+
+        .hero-subtitle {
+            font-size: clamp(15px, 1.8vw, 18px);
+            color: rgba(255, 255, 255, 0.52);
+            max-width: 500px;
+            margin: 0 auto 42px auto;
+            line-height: 1.78;
+            text-align: center;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn-hero-primary {
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #ffb830, #f09c20);
+            color: #0d1b2a;
+            font-size: 15px;
+            font-weight: 700;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 6px 26px rgba(255, 184, 48, 0.48);
+            transition: all 0.3s;
+        }
+
+        .btn-hero-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 38px rgba(255, 184, 48, 0.64);
+        }
+
+        .btn-hero-ghost {
+            padding: 16px 40px;
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.82);
+            font-size: 15px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 14px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s;
+        }
+
+        .btn-hero-ghost:hover {
+            border-color: rgba(255, 255, 255, 0.38);
+            background: rgba(255, 255, 255, 0.11);
+            transform: translateY(-2px);
+            color: #fff;
+        }
+
+        .hero-scroll-hint {
+            position: absolute;
+            bottom: 42px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            z-index: 5;
+            opacity: 0;
+        }
+
+        .scroll-mouse {
+            width: 26px;
+            height: 42px;
+            border: 1.5px solid rgba(255, 255, 255, 0.20);
+            border-radius: 13px;
+            position: relative;
+        }
+
+        .scroll-mouse::after {
+            content: '';
+            position: absolute;
+            top: 7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 2px;
+            animation: scrollBob 2s ease infinite;
+        }
+
+        @keyframes scrollBob {
+
+            0%,
+            100% {
+                top: 7px;
+                opacity: 1;
+            }
+
+            50% {
+                top: 22px;
+                opacity: 0.25;
+            }
+        }
+
+        .scroll-label {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.28);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .section {
+            padding: 120px 64px;
+        }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 18px;
+        }
+
+        .section-tag::before {
+            content: '';
+            width: 22px;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .section-title {
+            font-family: var(--font-d);
+            font-size: clamp(32px, 4vw, 54px);
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.12;
+            margin-bottom: 18px;
+            letter-spacing: -0.8px;
+        }
+
+        .section-title span {
+            color: var(--accent);
+        }
+
+        .section-sub {
+            font-size: 16.5px;
+            color: rgba(255, 255, 255, 0.44);
+            line-height: 1.76;
+        }
+
+        .features-section {
+            background: linear-gradient(180deg, #060c13 0%, #0a1520 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .f-card {
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.065);
+            border-radius: 24px;
+            padding: 40px 32px;
+            transition: all 0.4s;
+        }
+
+        .f-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-8px);
+            border-color: rgba(255, 184, 48, 0.25);
+        }
+
+        .hiw-section {
+            background: linear-gradient(180deg, #060c13 0%, #0d1b2a 100%);
+            text-align: center;
+        }
+
+        .steps-row {
+            display: flex;
+            justify-content: center;
+            max-width: 900px;
+            margin: 0 auto;
+            gap: 40px;
+        }
+
+        .step-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .step-num {
+            width: 74px;
+            height: 74px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 184, 48, 0.20);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .step-title {
+            font-size: 17px;
+            font-weight: 650;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .step-desc {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.42);
+            line-height: 1.7;
+        }
+
+        .cta-section {
+            padding: 130px 64px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            background: #060c13;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse 90% 110% at 50% 50%, rgba(27, 73, 101, 0.55) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-title {
+            font-family: var(--font-d);
+            font-size: clamp(34px, 4.5vw, 62px);
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 18px;
+            letter-spacing: -1.5px;
+            line-height: 1.08;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-sub {
+            font-size: 17px;
+            color: rgba(255, 255, 255, 0.50);
+            margin-bottom: 50px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .cta-btns {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        footer {
+            background: #030810;
+            padding: 40px 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-brand span {
+            font-family: var(--font-d);
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        footer p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.22);
+        }
+
+        .modal-bg {
+            position: fixed;
+            inset: 0;
+            background: rgba(3, 8, 16, 0.92);
+            backdrop-filter: blur(18px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s cubic-bezier(.4, 0, .2, 1);
+        }
+
+        .modal-bg.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-box {
+            background: linear-gradient(160deg, #0d1f32 0%, #0f2b3e 100%);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 28px;
+            padding: 52px 48px;
+            max-width: 540px;
+            width: 100%;
+            position: relative;
+            transform: translateY(34px) scale(0.97);
+            transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.65);
+        }
+
+        .modal-bg.open .modal-box {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.07);
+            border: none;
+            border-radius: 9px;
+            color: rgba(255, 255, 255, 0.52);
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 255, 255, 0.13);
+            color: #fff;
+        }
+
+        .modal-heading {
+            font-family: var(--font-d);
+            font-size: 30px;
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .modal-subtext {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.48);
+            text-align: center;
+            margin-bottom: 38px;
+        }
+
+        .role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .role-option {
+            background: rgba(255, 255, 255, 0.042);
+            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border-radius: 18px;
+            padding: 30px 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.28s;
+            display: block;
+        }
+
+        .role-option:hover {
+            background: rgba(255, 184, 48, 0.08);
+            border-color: rgba(255, 184, 48, 0.40);
+            transform: translateY(-5px);
+        }
+
+        .role-emoji {
+            font-size: 38px;
+            margin-bottom: 13px;
+            display: block;
+        }
+
+        .role-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .role-hint {
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.42);
+            line-height: 1.55;
+        }
+
+        .modal-admin-note {
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .modal-admin-note a {
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        /* 3D CAROUSEL STYLES */
+        .dest-carousel-section {
+            position: relative;
+            width: 100%;
+            padding: 60px 64px;
+            background: #060c13;
+            overflow: hidden;
+        }
+
+        .carousel-stage {
+            position: relative;
+            z-index: 8;
+            width: 100%;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1400px;
+            perspective-origin: 50% 40%;
+        }
+
+        .carousel-track {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+
+        .dest-slide {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 240px;
+            height: 380px;
+            border-radius: 24px;
+            overflow: hidden;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: all 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            will-change: transform;
+        }
+
+        .dest-slide img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+            pointer-events: none;
+        }
+
+        .dest-slide .slide-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(4, 8, 16, 0.96) 0%, rgba(4, 8, 16, 0.45) 45%, rgba(4, 8, 16, 0.15) 70%, transparent 100%);
+            transition: opacity 0.4s;
+        }
+
+        .dest-slide .slide-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 20px;
+            transform: translateY(0);
+            transition: transform 0.4s;
+        }
+
+        .dest-slide .slide-tag {
+            font-size: 10px;
+            font-weight: 600;
+            color: var(--accent);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            opacity: 0;
+            transition: opacity 0.4s 0.1s;
+        }
+
+        .dest-slide .slide-name {
+            font-family: var(--font-d);
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 4px;
+        }
+
+        .dest-slide .slide-region {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.55);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .dest-slide .slide-tagline {
+            font-size: 12.5px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-top: 8px;
+            line-height: 1.55;
+            opacity: 0;
+            transition: opacity 0.4s 0.15s;
+        }
+
+        .dest-slide.is-active {
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 184, 48, 0.22), 0 0 60px rgba(255, 184, 48, 0.08);
+            border-color: rgba(255, 184, 48, 0.18);
+        }
+
+        .dest-slide.is-active img {
+            transform: scale(1.04);
+        }
+
+        .dest-slide.is-active .slide-tag,
+        .dest-slide.is-active .slide-tagline {
+            opacity: 1;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 20;
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.13);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 24px;
+            backdrop-filter: blur(8px);
+            user-select: none;
+        }
+
+        .carousel-nav:hover {
+            background: rgba(255, 184, 48, 0.15);
+            border-color: rgba(255, 184, 48, 0.4);
+            color: var(--accent);
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        .carousel-prev {
+            left: 20px;
+        }
+
+        .carousel-next {
+            right: 20px;
+        }
+
+        .carousel-dots {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+
+        .carousel-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.20);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .carousel-dot.active {
+            background: var(--accent);
+            width: 22px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 1024px) {
+            .dest-carousel-section {
+                padding: 40px 32px;
+            }
+
+            .carousel-stage {
+                height: 420px;
+            }
+
+            .dest-slide {
+                width: 200px;
+                height: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .dest-carousel-section {
+                padding: 30px 16px;
+            }
+
+            .carousel-stage {
+                height: 360px;
+            }
+
+            .dest-slide {
+                width: 170px;
+                height: 270px;
+            }
+
+            .carousel-prev,
+            .carousel-next {
+                width: 36px;
+                height: 36px;
+                font-size: 18px;
+            }
+
+            .carousel-prev {
+                left: 8px;
+            }
+
+            .carousel-next {
+                right: 8px;
+            }
+
+            .dest-slide .slide-name {
+                font-size: 16px;
+            }
+
+            .dest-slide .slide-info {
+                padding: 16px 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .carousel-stage {
+                height: 300px;
+            }
+
+            .dest-slide {
+                width: 140px;
+                height: 230px;
+            }
+
+            .dest-slide .slide-name {
+                font-size: 14px;
+            }
+
+            .dest-slide .slide-tagline {
+                font-size: 10px;
+            }
+        }
+
+        @media(max-width:1200px) {
+            #globe-canvas {
+                width: 520px;
+                height: 520px;
+                right: -100px;
+            }
+        }
+
+        @media(max-width:1024px) {
+            #globe-canvas {
+                width: 420px;
+                height: 420px;
+                right: -80px;
+                opacity: 0.55;
+            }
+
+            .hero-content {
+                max-width: 580px;
+            }
+        }
+
+        @media(max-width:768px) {
+
+            .navbar,
+            .navbar.scrolled {
+                padding: 14px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .section {
+                padding: 80px 22px;
+            }
+
+            .steps-row {
+                flex-direction: column;
+                gap: 30px;
+            }
+
+            #globe-canvas {
+                opacity: 0.3;
+            }
+
+            .explore-static {
+                font-size: 18px;
+            }
+
+            .rotating-yellow-box {
+                padding: 4px 18px;
+                min-width: 100px;
+            }
+
+            .rotate-word {
+                font-size: 15px;
+            }
+
+            .rotate-word-container {
+                min-width: 80px;
+                height: 28px;
+            }
+
+            .hero-content {
+                text-align: center;
+            }
+
+            .hero-badge {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .role-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-box {
+                padding: 36px 22px;
+            }
+
+            footer {
+                padding: 28px 22px;
+                justify-content: center;
+                text-align: center;
+            }
+
+            .cta-section {
+                padding: 80px 22px;
+            }
+        }
+
+        @media(max-width:480px) {
+            #globe-canvas {
+                display: none;
+            }
+
+            .hero-title {
+                font-size: 38px;
+                text-align: center;
+            }
+
+            .explore-row {
+                gap: 6px;
+            }
+
+            .explore-static {
+                font-size: 16px;
+            }
+
+            .rotating-yellow-box {
+                padding: 3px 14px;
+                min-width: 85px;
+            }
+
+            .rotate-word {
+                font-size: 13px;
+            }
+
+            .rotate-word-container {
+                min-width: 70px;
+                height: 24px;
+            }
+
+            .hero-content {
+                padding: 130px 22px 170px;
+                text-align: center;
+            }
+
+            .hero-badge {
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-<!-- ══════════════════════════════════════
-     NAVBAR
-══════════════════════════════════════ -->
-<nav class="navbar" id="navbar">
-    <div class="nav-logo">
-        <div class="nav-logo-icon">✈</div>
-        <span class="nav-logo-text">Tripify</span>
-    </div>
-    <ul class="nav-links">
-        <li><a href="#features">Features</a></li>
-        <li><a href="#destinations">Destinations</a></li>
-        <li><a href="#how-it-works">How It Works</a></li>
-    </ul>
-    <div class="nav-actions">
-        <a href="src/html/pages/auth/login.html" class="btn-outline">Log In</a>
-        <button class="btn-accent" onclick="openModal()">Register</button>
-    </div>
-</nav>
-
-<!-- ══════════════════════════════════════
-     HERO
-══════════════════════════════════════ -->
-<section class="hero" id="home">
-    <canvas id="hero-canvas"></canvas>
-    <canvas id="globe-canvas"></canvas>
-
-    <svg class="hero-mountains" viewBox="0 0 1440 230" fill="none"
-         preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="0,230 150,68 260,115 400,32 540,102 680,18 820,88 960,38 1100,80 1240,34 1360,72 1440,48 1440,230"
-            fill="rgba(6,12,19,0.45)"/>
-        <polygon points="0,230 100,108 220,148 360,62 490,118 630,44 770,108 900,55 1050,95 1190,52 1310,85 1410,60 1440,72 1440,230"
-            fill="rgba(6,12,19,0.72)"/>
-        <polygon points="0,230 80,148 200,170 340,118 460,155 600,108 720,142 840,108 980,138 1120,112 1260,132 1390,115 1440,120 1440,230"
-            fill="#060c13"/>
-    </svg>
-
-    <div class="hero-content" id="heroContent">
-        <div class="hero-badge" id="heroBadge">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </svg>
-            Pakistan's Smart Travel Platform
+    <nav class="navbar" id="navbar">
+        <div class="nav-logo">
+            <div class="nav-logo-icon">✈</div>
+            <span class="nav-logo-text">Tripify</span>
         </div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#carousel">Destinations</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="src/html/pages/auth/login.html" class="btn-outline">Log In</a>
+            <button class="btn-accent" onclick="openModal()">Register</button>
+        </div>
+    </nav>
 
-        <h1 class="hero-title" id="heroTitle">
-            <span class="line-wrap"><span class="dim-word" id="h1">Explore the</span></span>
-            <span class="line-wrap"><span class="accent-word" id="h2">World</span></span>
-            <span class="line-wrap"><span class="dim-word" id="h3">with Tripify</span></span>
-        </h1>
-
-        <p class="hero-subtitle" id="heroSub">
-            From the sky-high peaks of Hunza to the emerald valleys of Swat —
-            plan unforgettable journeys across Pakistan's most breathtaking destinations.
-        </p>
-
-        <div class="hero-cta" id="heroCta">
-            <button class="btn-hero-primary" onclick="openModal()">
-                Start Exploring Free
-            </button>
-            <a href="src/html/pages/auth/login.html" class="btn-hero-ghost">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                    <polyline points="10 17 15 12 10 7"/>
-                    <line x1="15" y1="12" x2="3" y2="12"/>
+    <section class="hero" id="home">
+        <canvas id="hero-canvas"></canvas>
+        <canvas id="globe-canvas"></canvas>
+        <svg class="hero-mountains" viewBox="0 0 1440 230" fill="none" preserveAspectRatio="none">
+            <polygon
+                points="0,230 150,68 260,115 400,32 540,102 680,18 820,88 960,38 1100,80 1240,34 1360,72 1440,48 1440,230"
+                fill="rgba(6,12,19,0.45)" />
+            <polygon
+                points="0,230 100,108 220,148 360,62 490,118 630,44 770,108 900,55 1050,95 1190,52 1310,85 1410,60 1440,72 1440,230"
+                fill="rgba(6,12,19,0.72)" />
+            <polygon
+                points="0,230 80,148 200,170 340,118 460,155 600,108 720,142 840,108 980,138 1120,112 1260,132 1390,115 1440,120 1440,230"
+                fill="#060c13" />
+        </svg>
+        <div class="hero-content" id="heroContent">
+            <div class="hero-badge" id="heroBadge">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polygon
+                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                 </svg>
-                Log In
+                Pakistan's Smart Travel Platform
+            </div>
+            <h1 class="hero-title" id="heroTitle">
+                <span class="line-wrap"><span class="dim-word" id="h1">Explore the</span></span>
+                <span class="line-wrap"><span class="accent-word" id="h2">World</span></span>
+                <span class="line-wrap"><span class="dim-word" id="h3">with Tripify</span></span>
+            </h1>
+
+            <!-- UPDATED: "Explore with" outside, rotating words: fun, joy, enjoyment, adventure, wonder -->
+            <div class="feature-wrapper">
+                <div class="explore-row">
+                    <span class="explore-static">Explore with</span>
+                    <div class="rotating-yellow-box">
+                        <div class="rotate-word-container" id="rotateContainer">
+                            <span class="rotate-word active">fun</span>
+                            <span class="rotate-word">joy</span>
+                            <span class="rotate-word">enjoyment</span>
+                            <span class="rotate-word">adventure</span>
+                            <span class="rotate-word">wonder</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p class="hero-subtitle" id="heroSub">
+                From the sky-high peaks of Hunza to the emerald valleys of Swat —
+                plan unforgettable journeys across Pakistan's most breathtaking destinations.
+            </p>
+            <div class="hero-cta" id="heroCta">
+                <button class="btn-hero-primary" onclick="openModal()">Start Exploring Free</button>
+                <a href="src/html/pages/auth/login.html" class="btn-hero-ghost">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" y1="12" x2="3" y2="12" />
+                    </svg>
+                    Log In
+                </a>
+            </div>
+        </div>
+        <div class="hero-scroll-hint" id="scrollHint">
+            <div class="scroll-mouse"></div>
+            <span class="scroll-label">Scroll to explore</span>
+        </div>
+    </section>
+
+    <section class="section features-section" id="features">
+        <div class="features-head"
+            style="text-align:center;margin-bottom:72px;max-width:580px;margin-left:auto;margin-right:auto;">
+            <span class="section-tag" style="justify-content:center;">Why Tripify</span>
+            <h2 class="section-title">Everything You Need to<br><span>Travel Smart</span></h2>
+            <p class="section-sub">From trip planning to hotel booking and local discovery — built specifically for
+                Pakistan's wanderers.</p>
+        </div>
+        <div class="features-grid">
+            <div class="f-card">
+                <div style="font-size:28px;margin-bottom:20px;">🗺️</div>
+                <h3 style="font-size:18px;font-weight:650;color:#fff;margin-bottom:12px;">Smart Trip Planning</h3>
+                <p style="font-size:14.5px;color:rgba(255,255,255,0.42);line-height:1.75;">Build multi-destination
+                    itineraries with ease. Set budgets, pick stops, and organize your entire journey in one place.</p>
+            </div>
+            <div class="f-card">
+                <div style="font-size:28px;margin-bottom:20px;">🏨</div>
+                <h3 style="font-size:18px;font-weight:650;color:#fff;margin-bottom:12px;">Hotel Bookings</h3>
+                <p style="font-size:14.5px;color:rgba(255,255,255,0.42);line-height:1.75;">Browse and book verified
+                    hotels at every destination. Real reviews from real travelers before you commit.</p>
+            </div>
+            <div class="f-card">
+                <div style="font-size:28px;margin-bottom:20px;">🧭</div>
+                <h3 style="font-size:18px;font-weight:650;color:#fff;margin-bottom:12px;">Destination Guides</h3>
+                <p style="font-size:14.5px;color:rgba(255,255,255,0.42);line-height:1.75;">Deep-dive guides covering
+                    weather, culture, visa tips, seasonal data, and souvenirs for every region.</p>
+            </div>
+            <div class="f-card">
+                <div style="font-size:28px;margin-bottom:20px;">🛡️</div>
+                <h3 style="font-size:18px;font-weight:650;color:#fff;margin-bottom:12px;">Travel Safety</h3>
+                <p style="font-size:14.5px;color:rgba(255,255,255,0.42);line-height:1.75;">Up-to-date emergency
+                    contacts, travel guidelines, and safety advisories for every region of Pakistan.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3D CAROUSEL SECTION -->
+    <section class="dest-carousel-section" id="carousel">
+        <div style="text-align:center;margin-bottom:40px;">
+            <span class="section-tag" style="justify-content:center;">Top Destinations</span>
+            <h2 class="section-title">Explore <span>Pakistan's</span> Finest</h2>
+            <p class="section-sub">Swipe through our 3D carousel — each destination tells its own story</p>
+        </div>
+        <div class="carousel-stage" id="carouselStage">
+            <button class="carousel-nav carousel-prev" id="prevBtn" aria-label="Previous">‹</button>
+            <div class="carousel-track" id="carouselTrack"></div>
+            <button class="carousel-nav carousel-next" id="nextBtn" aria-label="Next">›</button>
+        </div>
+        <div class="carousel-dots" id="carouselDots"></div>
+    </section>
+
+    <section class="section hiw-section" id="how-it-works">
+        <div style="text-align:center;margin-bottom:80px;">
+            <span class="section-tag" style="justify-content:center;">Get Started</span>
+            <h2 class="section-title">Up &amp; Running in <span>3 Steps</span></h2>
+        </div>
+        <div class="steps-row">
+            <div class="step-item">
+                <div class="step-num">1</div>
+                <h3 class="step-title">Create Your Account</h3>
+                <p class="step-desc">Sign up as a Tourist or Hotel Manager in under two minutes — completely free.</p>
+            </div>
+            <div class="step-item">
+                <div class="step-num">2</div>
+                <h3 class="step-title">Explore &amp; Plan</h3>
+                <p class="step-desc">Browse destinations, compare hotels, and build your personalized trip itinerary.
+                </p>
+            </div>
+            <div class="step-item">
+                <div class="step-num">3</div>
+                <h3 class="step-title">Book &amp; Travel</h3>
+                <p class="step-desc">Confirm your bookings, pack your bags, and discover the real Pakistan!</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section" id="cta">
+        <h2 class="cta-title">Ready to Explore Pakistan?</h2>
+        <p class="cta-sub">Join Tripify today — it's free and takes less than a minute.</p>
+        <div class="cta-btns">
+            <button class="btn-hero-primary" onclick="openModal()">Create Free Account</button>
+            <a href="src/html/pages/auth/login.html" class="btn-hero-ghost">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                    <polyline points="10 17 15 12 10 7" />
+                    <line x1="15" y1="12" x2="3" y2="12" />
+                </svg>
+                Already have an account?
             </a>
         </div>
-    </div>
+    </section>
 
-    <div class="hero-scroll-hint" id="scrollHint">
-        <div class="scroll-mouse"></div>
-        <span class="scroll-label">Scroll to explore</span>
-    </div>
-</section>
+    <footer>
+        <div class="footer-brand">
+            <div class="nav-logo-icon" style="width:32px;height:32px;font-size:15px;">✈</div>
+            <span>Tripify</span>
+        </div>
+        <p>&copy; 2026 Tripify — Built for Pakistan's wanderers.</p>
+    </footer>
 
-<!-- ══════════════════════════════════════
-     FEATURES
-══════════════════════════════════════ -->
-<section class="section features-section" id="features">
-    <div class="features-head">
-        <span class="section-tag">Why Tripify</span>
-        <h2 class="section-title">Everything You Need to<br><span>Travel Smart</span></h2>
-        <p class="section-sub">From trip planning to hotel booking and local discovery — built specifically for Pakistan's wanderers.</p>
-    </div>
-    <div class="features-grid">
-        <div class="f-card">
-            <div class="f-icon">🗺️</div>
-            <h3 class="f-title">Smart Trip Planning</h3>
-            <p class="f-desc">Build multi-destination itineraries with ease. Set budgets, pick stops, and organize your entire journey in one place.</p>
-        </div>
-        <div class="f-card">
-            <div class="f-icon">🏨</div>
-            <h3 class="f-title">Hotel Bookings</h3>
-            <p class="f-desc">Browse and book verified hotels at every destination. Real reviews from real travelers before you commit.</p>
-        </div>
-        <div class="f-card">
-            <div class="f-icon">🧭</div>
-            <h3 class="f-title">Destination Guides</h3>
-            <p class="f-desc">Deep-dive guides covering weather, culture, visa tips, seasonal data, and souvenirs for every region.</p>
-        </div>
-        <div class="f-card">
-            <div class="f-icon">🛡️</div>
-            <h3 class="f-title">Travel Safety</h3>
-            <p class="f-desc">Up-to-date emergency contacts, travel guidelines, and safety advisories for every region of Pakistan.</p>
-        </div>
-    </div>
-</section>
-
-<!-- ══════════════════════════════════════
-     DESTINATIONS
-══════════════════════════════════════ -->
-<section class="section dest-section" id="destinations">
-    <div class="dest-head">
-        <span class="section-tag">Top Destinations</span>
-        <h2 class="section-title">Explore <span>Pakistan's</span> Finest</h2>
-        <p class="section-sub">Five iconic destinations, each with its own story, culture, and scenery that will take your breath away.</p>
-    </div>
-    <div class="dest-grid">
-        <div class="d-card">
-            <img class="d-img" src="public/assets/images/hunza-valley.jpg" alt="Hunza Valley" loading="lazy">
-            <div class="d-overlay"></div>
-            <span class="d-badge">⭐ Most Popular</span>
-            <div class="d-info">
-                <div class="d-name">Hunza Valley</div>
-                <div class="d-region">Gilgit-Baltistan</div>
+    <div class="modal-bg" id="modalBg" onclick="handleBgClick(event)">
+        <div class="modal-box">
+            <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">✕</button>
+            <h2 class="modal-heading">Join Tripify As…</h2>
+            <p class="modal-subtext">Pick your account type to get started</p>
+            <div class="role-grid">
+                <a href="src/html/pages/auth/register.html" class="role-option"><span class="role-emoji">🧳</span>
+                    <div class="role-name">Tourist</div>
+                    <div class="role-hint">Plan trips, book hotels &amp; explore Pakistan's destinations</div>
+                </a>
+                <a href="src/html/pages/auth/hm-register.html" class="role-option"><span class="role-emoji">🏨</span>
+                    <div class="role-name">Hotel Manager</div>
+                    <div class="role-hint">List and manage your hotel property on Tripify</div>
+                </a>
             </div>
-        </div>
-        <div class="d-card">
-            <img class="d-img" src="public/assets/images/murree.jpeg" alt="Murree" loading="lazy">
-            <div class="d-overlay"></div>
-            <div class="d-info">
-                <div class="d-name">Murree</div>
-                <div class="d-region">Punjab</div>
-            </div>
-        </div>
-        <div class="d-card">
-            <img class="d-img" src="public/assets/images/swat.jpg" alt="Swat Valley" loading="lazy">
-            <div class="d-overlay"></div>
-            <span class="d-badge">🌿 Scenic</span>
-            <div class="d-info">
-                <div class="d-name">Swat Valley</div>
-                <div class="d-region">Khyber Pakhtunkhwa</div>
-            </div>
-        </div>
-        <div class="d-card">
-            <img class="d-img" src="public/assets/images/skardu.jpeg" alt="Skardu" loading="lazy">
-            <div class="d-overlay"></div>
-            <span class="d-badge">🏔️ K2 Gateway</span>
-            <div class="d-info">
-                <div class="d-name">Skardu</div>
-                <div class="d-region">Gilgit-Baltistan</div>
-            </div>
-        </div>
-        <div class="d-card">
-            <img class="d-img" src="public/assets/images/naran kaghan.jpg" alt="Naran Kaghan" loading="lazy">
-            <div class="d-overlay"></div>
-            <div class="d-info">
-                <div class="d-name">Naran Kaghan</div>
-                <div class="d-region">Khyber Pakhtunkhwa</div>
-            </div>
+            <p class="modal-admin-note">Already have an account? <a href="src/html/pages/auth/login.html">Log in
+                    here</a> &nbsp;·&nbsp; Admin? <a href="src/html/pages/auth/admin-login.html">Admin Panel →</a></p>
         </div>
     </div>
-</section>
 
-<!-- ══════════════════════════════════════
-     HOW IT WORKS
-══════════════════════════════════════ -->
-<section class="section hiw-section" id="how-it-works">
-    <div class="hiw-head">
-        <span class="section-tag">Get Started</span>
-        <h2 class="section-title">Up &amp; Running in <span>3 Steps</span></h2>
-    </div>
-    <div class="steps-row">
-        <div class="step-item">
-            <div class="step-num">1</div>
-            <h3 class="step-title">Create Your Account</h3>
-            <p class="step-desc">Sign up as a Tourist or Hotel Manager in under two minutes — completely free.</p>
-        </div>
-        <div class="step-item">
-            <div class="step-num">2</div>
-            <h3 class="step-title">Explore &amp; Plan</h3>
-            <p class="step-desc">Browse destinations, compare hotels, and build your personalized trip itinerary.</p>
-        </div>
-        <div class="step-item">
-            <div class="step-num">3</div>
-            <h3 class="step-title">Book &amp; Travel</h3>
-            <p class="step-desc">Confirm your bookings, pack your bags, and discover the real Pakistan!</p>
-        </div>
-    </div>
-</section>
+    <script>
+        (function () {
+            'use strict';
 
-<!-- ══════════════════════════════════════
-     CTA
-══════════════════════════════════════ -->
-<section class="cta-section" id="cta">
-    <h2 class="cta-title">Ready to Explore Pakistan?</h2>
-    <p class="cta-sub">Join Tripify today — it's free and takes less than a minute.</p>
-    <div class="cta-btns">
-        <button class="btn-hero-primary" onclick="openModal()">Create Free Account</button>
-        <a href="src/html/pages/auth/login.html" class="btn-hero-ghost">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-                <polyline points="10 17 15 12 10 7"/>
-                <line x1="15" y1="12" x2="3" y2="12"/>
-            </svg>
-            Already have an account?
-        </a>
-    </div>
-</section>
+            /* NAVBAR */
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 50), { passive: true });
 
-<!-- ══════════════════════════════════════
-     FOOTER
-══════════════════════════════════════ -->
-<footer>
-    <div class="footer-brand">
-        <div class="nav-logo-icon" style="width:32px;height:32px;font-size:15px;">✈</div>
-        <span>Tripify</span>
-    </div>
-    <p>&copy; 2026 Tripify — Built for Pakistan's wanderers.</p>
-</footer>
+            /* PARTICLES */
+            const canvas = document.getElementById('hero-canvas');
+            const ctx = canvas.getContext('2d');
+            function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas, { passive: true });
+            function mkP() { return { x: Math.random() * canvas.width, y: Math.random() * canvas.height, r: Math.random() * 1.2 + 0.2, vx: (Math.random() - 0.5) * 0.20, vy: -Math.random() * 0.30 - 0.06, alpha: Math.random() * 0.35 + 0.06, life: 1, decay: Math.random() * 0.0022 + 0.0007 }; }
+            const particles = []; for (let i = 0; i < 160; i++)particles.push(mkP());
+            function drawParticles() { ctx.clearRect(0, 0, canvas.width, canvas.height); for (let i = 0; i < particles.length; i++) { const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= p.decay; if (p.life <= 0 || p.y < -10) { particles[i] = mkP(); particles[i].y = canvas.height + 4; } ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = `rgba(255,255,255,${(p.alpha * p.life).toFixed(3)})`; ctx.fill(); } requestAnimationFrame(drawParticles); }
+            drawParticles();
 
-<!-- ══════════════════════════════════════
-     REGISTER MODAL
-══════════════════════════════════════ -->
-<div class="modal-bg" id="modalBg" onclick="handleBgClick(event)">
-    <div class="modal-box">
-        <button class="modal-close-btn" onclick="closeModal()" aria-label="Close">✕</button>
-        <h2 class="modal-heading">Join Tripify As…</h2>
-        <p class="modal-subtext">Pick your account type to get started</p>
-        <div class="role-grid">
-            <a href="src/html/pages/auth/register.html" class="role-option">
-                <span class="role-emoji">🧳</span>
-                <div class="role-name">Tourist</div>
-                <div class="role-hint">Plan trips, book hotels &amp; explore Pakistan's destinations</div>
-            </a>
-            <a href="src/html/pages/auth/hm-register.html" class="role-option">
-                <span class="role-emoji">🏨</span>
-                <div class="role-name">Hotel Manager</div>
-                <div class="role-hint">List and manage your hotel property on Tripify</div>
-            </a>
-        </div>
-        <p class="modal-admin-note">
-            Already have an account?
-            <a href="src/html/pages/auth/login.html">Log in here</a>
-            &nbsp;·&nbsp;
-            Admin? <a href="src/html/pages/auth/admin-login.html">Admin Panel →</a>
-        </p>
-    </div>
-</div>
+            /* THREE.JS GLOBE + AIRPLANES (Preserved) */
+            (function () {
+                const gc = document.getElementById('globe-canvas');
+                if (!gc || typeof THREE === 'undefined') return;
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+                camera.position.z = 2.7;
+                const renderer = new THREE.WebGLRenderer({ canvas: gc, alpha: true, antialias: true });
+                renderer.setSize(640, 640);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                const N = 3200, pos = new Float32Array(N * 3), phi = Math.PI * (3 - Math.sqrt(5));
+                for (let i = 0; i < N; i++) { const y = 1 - (i / (N - 1)) * 2, rad = Math.sqrt(Math.max(0, 1 - y * y)), ang = phi * i; pos[i * 3] = rad * Math.cos(ang); pos[i * 3 + 1] = y; pos[i * 3 + 2] = rad * Math.sin(ang); }
+                const dotGeo = new THREE.BufferGeometry();
+                dotGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+                const dots = new THREE.Points(dotGeo, new THREE.PointsMaterial({ color: 0x4FC3F7, size: 0.013, transparent: true, opacity: 0.72, sizeAttenuation: true }));
+                scene.add(dots);
+                const grp = new THREE.Group();
+                const lm = (o) => new THREE.LineBasicMaterial({ color: 0x1e6b8c, transparent: true, opacity: o });
+                for (let lat = -60; lat <= 60; lat += 30) { const cl = Math.cos(lat * Math.PI / 180), sl = Math.sin(lat * Math.PI / 180), p = []; for (let i = 0; i <= 80; i++) { const a = (i / 80) * Math.PI * 2; p.push(new THREE.Vector3(cl * Math.cos(a), sl, cl * Math.sin(a))); } grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), lm(.14))); }
+                for (let lon = 0; lon < 360; lon += 30) { const lr = lon * Math.PI / 180, p = []; for (let i = 0; i <= 80; i++) { const la = (i / 80) * Math.PI * 2 - Math.PI; p.push(new THREE.Vector3(Math.cos(la) * Math.cos(lr), Math.sin(la), Math.cos(la) * Math.sin(lr))); } grp.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), lm(.09))); }
+                scene.add(grp);
+                scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.08, 32, 32), new THREE.MeshBasicMaterial({ color: 0x1e6b8c, transparent: true, opacity: 0.04, side: THREE.BackSide })));
+                function ll2v(lon, lat) { const ph = lat * Math.PI / 180, lm = lon * Math.PI / 180; return new THREE.Vector3(Math.cos(ph) * Math.cos(lm), Math.sin(ph), Math.cos(ph) * Math.sin(lm)); }
+                function makeArc(vA, vB, seg = 120, lift = 0.16) { const pts = []; for (let i = 0; i <= seg; i++) { const t = i / seg; const v = new THREE.Vector3().lerpVectors(vA, vB, t).normalize(); pts.push(v.clone().multiplyScalar(1.0 + lift * Math.sin(t * Math.PI))); } return pts; }
+                function makeAirplane(col) { const g = new THREE.Group(); const fuse = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.001, 0.07, 4), new THREE.MeshBasicMaterial({ color: 0xffffff })); fuse.rotation.z = Math.PI / 2; g.add(fuse); const wGeo = new THREE.BufferGeometry(); wGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0.014, 0, 0, -0.014, 0, 0.036, -0.014, 0, -0.036]), 3)); wGeo.setIndex([0, 1, 2]); wGeo.computeVertexNormals(); g.add(new THREE.Mesh(wGeo, new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide, transparent: true, opacity: 1.0 }))); const tGeo = new THREE.BufferGeometry(); tGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([-0.018, 0, 0, -0.030, 0.014, 0, -0.030, 0, 0]), 3)); tGeo.setIndex([0, 1, 2]); tGeo.computeVertexNormals(); g.add(new THREE.Mesh(tGeo, new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide }))); const nose = new THREE.Mesh(new THREE.SphereGeometry(0.007, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff })); nose.position.x = 0.036; g.add(nose); const glow = new THREE.Mesh(new THREE.SphereGeometry(0.013, 8, 8), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.45 })); glow.position.x = 0.036; g.add(glow); g.scale.setScalar(1.0); return g; }
+                const ROUTES = [
+                    { from: [74, 33], to: [-74, 40], col: 0xffb830, speed: 0.0014, offset: 0.0 },
+                    { from: [151, -33], to: [-0.1, 51], col: 0x4FC3F7, speed: 0.0013, offset: 0.38 },
+                    { from: [-58, -34], to: [139, 35], col: 0x7ecef4, speed: 0.0015, offset: 0.70 },
+                ];
+                const flights = ROUTES.map(r => { const arcFwd = makeArc(ll2v(...r.from), ll2v(...r.to), 140, 0.18); const arcBck = makeArc(ll2v(...r.to), ll2v(...r.from), 140, 0.18); const plane = makeAirplane(r.col); scene.add(plane); const TAIL = 28; const tailPos = new Float32Array(TAIL * 3); const tailGeo = new THREE.BufferGeometry(); tailGeo.setAttribute('position', new THREE.BufferAttribute(tailPos, 3)); const trail = new THREE.Points(tailGeo, new THREE.PointsMaterial({ color: r.col, size: 0.009, transparent: true, opacity: 0.65, sizeAttenuation: true })); scene.add(trail); const TLINE = 40; const tlinePts = new Array(TLINE).fill(null).map(() => new THREE.Vector3()); const tlineGeo = new THREE.BufferGeometry().setFromPoints(tlinePts); const tline = new THREE.Line(tlineGeo, new THREE.LineBasicMaterial({ color: r.col, transparent: true, opacity: 0.45 })); scene.add(tline); return { arcFwd, arcBck, plane, trail, tailPos, TAIL, tline, tlinePts, TLINE, progress: r.offset, speed: r.speed, forward: true }; });
+                let mx = 0, my = 0;
+                document.addEventListener('mousemove', e => { mx = (e.clientX / window.innerWidth - 0.5) * 0.5; my = (e.clientY / window.innerHeight - 0.5) * 0.25; }, { passive: true });
+                let raf = true;
+                (function tick() { if (!raf) return; requestAnimationFrame(tick); dots.rotation.y += 0.0025; grp.rotation.y += 0.0025; flights.forEach(f => { f.progress += f.speed; if (f.progress >= 1.0) { f.progress = 0; f.forward = !f.forward; } const arc = f.forward ? f.arcFwd : f.arcBck; const idx = Math.min(Math.floor(f.progress * (arc.length - 1)), arc.length - 2); const pos = arc[idx]; const posNext = arc[Math.min(idx + 1, arc.length - 1)]; f.plane.position.copy(pos); const dir = new THREE.Vector3().subVectors(posNext, pos).normalize(); const up = pos.clone().normalize(); const right = new THREE.Vector3().crossVectors(dir, up).normalize(); const fwd = new THREE.Vector3().crossVectors(up, right).normalize(); f.plane.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(fwd, up, right)); for (let i = 0; i < f.TAIL; i++) { const ti = Math.max(0, idx - i * 2); const tp = arc[ti]; f.tailPos[i * 3] = tp.x; f.tailPos[i * 3 + 1] = tp.y; f.tailPos[i * 3 + 2] = tp.z; } f.trail.geometry.attributes.position.needsUpdate = true; for (let i = 0; i < f.TLINE; i++) { const ti = Math.max(0, idx - i); f.tlinePts[i].copy(arc[ti]); } f.tline.geometry.setFromPoints(f.tlinePts); f.tline.geometry.attributes.position.needsUpdate = true; }); camera.position.x += (mx * 0.28 - camera.position.x) * 0.04; camera.position.y += (-my * 0.28 - camera.position.y) * 0.04; camera.lookAt(scene.position); renderer.render(scene, camera); })();
+                window.addEventListener('resize', () => { const w = window.innerWidth, s = w <= 480 ? 0 : w <= 768 ? 320 : w <= 1024 ? 420 : w <= 1200 ? 520 : 640; if (!s) { gc.style.display = 'none'; raf = false; return; } gc.style.display = ''; raf = true; renderer.setSize(s, s); }, { passive: true });
+            })();
 
-<!-- ══════════════════════════════════════
-     SCRIPTS
-══════════════════════════════════════ -->
-<script>
-(function () {
-'use strict';
+            /* 3D CAROUSEL LOGIC */
+            const destinationsData = [
+                { name: 'Hunza Valley', region: 'Gilgit-Baltistan', tagline: 'Adventure is never far away', tag: '⭐ Most Popular', img: 'public/assets/images/hunza-valley.jpg' },
+                { name: 'Murree', region: 'Punjab', tagline: 'Where the hills speak in mist', tag: '🌲 Hill Station', img: 'public/assets/images/murree.jpeg' },
+                { name: 'Swat Valley', region: 'Khyber Pakhtunkhwa', tagline: 'A piece of heaven on earth', tag: '🌿 Scenic', img: 'public/assets/images/swat.jpg' },
+                { name: 'Skardu', region: 'Gilgit-Baltistan', tagline: 'Gateway to the mighty K2', tag: '🏔️ K2 Gateway', img: 'public/assets/images/skardu.jpeg' },
+                { name: 'Naran Kaghan', region: 'Khyber Pakhtunkhwa', tagline: 'Emerald lakes & glacier trails', tag: '💎 Hidden Gem', img: 'public/assets/images/naran kaghan.jpg' }
+            ];
+            let currentCarousel = 0;
+            let isAnimating = false;
+            const track = document.getElementById('carouselTrack');
+            const dotsContainer = document.getElementById('carouselDots');
+            const stageEl = document.getElementById('carouselStage');
+            function getSlideConfig(offset, total) { const stageW = stageEl.offsetWidth; const spacing = Math.min(stageW * 0.14, 180); const tx = offset * spacing; const tz = -Math.abs(offset) * 120; const rotY = offset * -22; const scale = Math.abs(offset) === 0 ? 1 : Math.abs(offset) === 1 ? 0.82 : Math.abs(offset) === 2 ? 0.66 : 0.52; const opacity = Math.abs(offset) === 0 ? 1 : Math.abs(offset) === 1 ? 0.78 : Math.abs(offset) === 2 ? 0.52 : 0.28; const zIndex = 10 - Math.abs(offset) * 2; const rotX = Math.abs(offset) > 0 ? 4 : 0; return { tx, tz, rotY, rotX, scale, opacity, zIndex }; }
+            function positionSlides(animate = true) { const n = slides.length; slides.forEach((slide, i) => { let offset = i - currentCarousel; if (offset > Math.floor(n / 2)) offset -= n; if (offset < -Math.floor(n / 2)) offset += n; const cfg = getSlideConfig(offset, n); if (animate) { slide.style.transition = 'transform 0.72s cubic-bezier(0.25,0.46,0.45,0.94), opacity 0.72s ease, box-shadow 0.4s'; } else { slide.style.transition = 'none'; } slide.style.transform = `translate(-50%, -50%) translateX(${cfg.tx}px) translateZ(${cfg.tz}px) rotateY(${cfg.rotY}deg) rotateX(${cfg.rotX}deg) scale(${cfg.scale})`; slide.style.opacity = Math.abs(offset) > 2 ? '0' : cfg.opacity; slide.style.zIndex = cfg.zIndex; slide.style.pointerEvents = Math.abs(offset) > 2 ? 'none' : 'auto'; slide.classList.toggle('is-active', i === currentCarousel); }); document.querySelectorAll('.carousel-dot').forEach((dot, i) => { dot.classList.toggle('active', i === currentCarousel); }); }
+            function goTo(index) { if (isAnimating) return; const n = destinationsData.length; const nextIndex = ((index % n) + n) % n; if (nextIndex === currentCarousel) return; isAnimating = true; currentCarousel = nextIndex; positionSlides(true); setTimeout(() => { isAnimating = false; }, 750); }
+            const slides = destinationsData.map((d, i) => { const el = document.createElement('div'); el.className = 'dest-slide'; el.dataset.index = i; el.innerHTML = `<img src="${d.img}" alt="${d.name}" loading="${i < 3 ? 'eager' : 'lazy'}"><div class="slide-overlay"></div><div class="slide-info"><div class="slide-tag">${d.tag}</div><div class="slide-name">${d.name}</div><div class="slide-region">${d.region}</div><div class="slide-tagline">${d.tagline}</div></div>`; el.addEventListener('click', () => { const idx = parseInt(el.dataset.index); if (idx !== currentCarousel) goTo(idx); }); track.appendChild(el); return el; });
+            destinationsData.forEach((_, i) => { const dot = document.createElement('div'); dot.className = 'carousel-dot' + (i === 0 ? ' active' : ''); dot.addEventListener('click', () => goTo(i)); dotsContainer.appendChild(dot); });
+            positionSlides(false);
+            window.addEventListener('resize', () => positionSlides(false), { passive: true });
+            document.getElementById('prevBtn').addEventListener('click', () => goTo(currentCarousel - 1));
+            document.getElementById('nextBtn').addEventListener('click', () => goTo(currentCarousel + 1));
+            document.addEventListener('keydown', e => { if (e.key === 'ArrowLeft') goTo(currentCarousel - 1); if (e.key === 'ArrowRight') goTo(currentCarousel + 1); });
+            let touchStartX = 0; stageEl.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+            stageEl.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - touchStartX; if (Math.abs(dx) > 40) { dx < 0 ? goTo(currentCarousel + 1) : goTo(currentCarousel - 1); } }, { passive: true });
+            let autoTimer = setInterval(() => { goTo(currentCarousel + 1); }, 4500);
+            stageEl.addEventListener('mouseenter', () => clearInterval(autoTimer));
+            stageEl.addEventListener('mouseleave', () => { autoTimer = setInterval(() => goTo(currentCarousel + 1), 4500); });
 
-/* ──────────────────────────────────────
-   NAVBAR SCROLL
-────────────────────────────────────── */
-const navbar = document.getElementById('navbar');
-window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 50);
-}, { passive: true });
+            /* ROTATING TEXT - UPDATED WORDS: fun, joy, enjoyment, adventure, wonder */
+            let currentIndex = 0;
+            const wordElements = document.querySelectorAll('.rotate-word');
+            function rotateWord() { wordElements.forEach((word, idx) => { word.classList.remove('active', 'exit'); if (idx === currentIndex) word.classList.add('active'); else if (idx === (currentIndex === 0 ? wordElements.length - 1 : currentIndex - 1)) word.classList.add('exit'); }); currentIndex = (currentIndex + 1) % wordElements.length; }
+            setInterval(rotateWord, 1200);
 
-/* ──────────────────────────────────────
-   PARTICLE CANVAS (background stars)
-────────────────────────────────────── */
-const canvas = document.getElementById('hero-canvas');
-const ctx    = canvas.getContext('2d');
+            /* GSAP */
+            gsap.registerPlugin(ScrollTrigger);
+            gsap.from('.navbar', { y: -30, opacity: 0, duration: 0.9, ease: 'power3.out', delay: 0.1 });
+            const heroTl = gsap.timeline({ delay: 0.25 });
+            heroTl.to('#heroContent', { opacity: 1, duration: 0 }).from('#heroBadge', { y: -22, opacity: 0, duration: 0.7, ease: 'power3.out' }).from('#heroTitle', { y: 38, opacity: 0, duration: 0.75, ease: 'power3.out' }, '-=0.3').from('.feature-wrapper', { y: 25, opacity: 0, duration: 0.6, ease: 'power3.out' }, '-=0.5').from('#heroSub', { y: 24, opacity: 0, duration: 0.7, ease: 'power3.out' }, '-=0.4').from('#heroCta', { y: 20, opacity: 0, duration: 0.65, ease: 'power3.out' }, '-=0.35').to('#scrollHint', { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.1');
+            gsap.from('#globe-canvas', { opacity: 0, scale: 0.85, duration: 1.6, ease: 'power3.out', delay: 0.5 });
+            gsap.fromTo('.f-card', { y: 52, opacity: 0 }, { scrollTrigger: { trigger: '.features-grid', start: 'top 80%', once: true }, y: 0, opacity: 1, duration: 0.75, stagger: 0.12 });
+            gsap.fromTo('.dest-carousel-section', { y: 40, opacity: 0 }, { scrollTrigger: { trigger: '.dest-carousel-section', start: 'top 78%', once: true }, y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' });
+            gsap.fromTo('.step-item', { y: 36, opacity: 0 }, { scrollTrigger: { trigger: '.steps-row', start: 'top 82%', once: true }, y: 0, opacity: 1, duration: 0.7, stagger: 0.15 });
+            gsap.to('.hero-mountains', { scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true }, y: 60, ease: 'none' });
 
-function resizeCanvas() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas, { passive: true });
+            /* MODAL */
+            const modalBg = document.getElementById('modalBg');
+            window.openModal = function () { modalBg.classList.add('open'); document.body.style.overflow = 'hidden'; };
+            window.closeModal = function () { modalBg.classList.remove('open'); document.body.style.overflow = ''; };
+            window.handleBgClick = function (e) { if (e.target === modalBg) window.closeModal(); };
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeModal(); });
 
-function mkParticle() {
-    return {
-        x:     Math.random() * canvas.width,
-        y:     Math.random() * canvas.height,
-        r:     Math.random() * 1.2 + 0.2,
-        vx:    (Math.random() - 0.5) * 0.20,
-        vy:    -Math.random() * 0.30 - 0.06,
-        alpha: Math.random() * 0.35 + 0.06,
-        life:  1,
-        decay: Math.random() * 0.0022 + 0.0007,
-    };
-}
-const particles = [];
-for (let i = 0; i < 160; i++) particles.push(mkParticle());
-
-function drawParticles() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        p.x += p.vx; p.y += p.vy;
-        p.life -= p.decay;
-        if (p.life <= 0 || p.y < -10) {
-            particles[i]   = mkParticle();
-            particles[i].y = canvas.height + 4;
-        }
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${(p.alpha * p.life).toFixed(3)})`;
-        ctx.fill();
-    }
-    requestAnimationFrame(drawParticles);
-}
-drawParticles();
-
-/* ──────────────────────────────────────
-   THREE.JS GLOBE
-────────────────────────────────────── */
-(function initGlobe() {
-    const gc = document.getElementById('globe-canvas');
-    if (!gc || typeof THREE === 'undefined') return;
-
-    const SIZE = 640;
-    const scene    = new THREE.Scene();
-    const camera   = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    camera.position.z = 2.7;
-
-    const renderer = new THREE.WebGLRenderer({ canvas: gc, alpha: true, antialias: true });
-    renderer.setSize(SIZE, SIZE);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    /* — dot sphere via Fibonacci lattice — */
-    const N = 3200;
-    const pos = new Float32Array(N * 3);
-    const phi = Math.PI * (3 - Math.sqrt(5));
-    for (let i = 0; i < N; i++) {
-        const y   = 1 - (i / (N - 1)) * 2;
-        const rad = Math.sqrt(Math.max(0, 1 - y * y));
-        const ang = phi * i;
-        pos[i*3]   = rad * Math.cos(ang);
-        pos[i*3+1] = y;
-        pos[i*3+2] = rad * Math.sin(ang);
-    }
-    const dotGeo = new THREE.BufferGeometry();
-    dotGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const dotMat = new THREE.PointsMaterial({
-        color: 0x4FC3F7, size: 0.013,
-        transparent: true, opacity: 0.72,
-        sizeAttenuation: true
-    });
-    const dots = new THREE.Points(dotGeo, dotMat);
-    scene.add(dots);
-
-    /* — latitude grid lines — */
-    const gridGroup = new THREE.Group();
-    const lineMat = (op) => new THREE.LineBasicMaterial({
-        color: 0x1e6b8c, transparent: true, opacity: op
-    });
-    for (let lat = -60; lat <= 60; lat += 30) {
-        const cosLat = Math.cos(lat * Math.PI / 180);
-        const sinLat = Math.sin(lat * Math.PI / 180);
-        const pts = [];
-        for (let i = 0; i <= 80; i++) {
-            const a = (i / 80) * Math.PI * 2;
-            pts.push(new THREE.Vector3(cosLat * Math.cos(a), sinLat, cosLat * Math.sin(a)));
-        }
-        gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(0.14)));
-    }
-    /* longitude lines */
-    for (let lon = 0; lon < 360; lon += 30) {
-        const lonRad = lon * Math.PI / 180;
-        const pts = [];
-        for (let i = 0; i <= 80; i++) {
-            const lat = (i / 80) * Math.PI * 2 - Math.PI;
-            pts.push(new THREE.Vector3(
-                Math.cos(lat) * Math.cos(lonRad),
-                Math.sin(lat),
-                Math.cos(lat) * Math.sin(lonRad)
-            ));
-        }
-        gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), lineMat(0.09)));
-    }
-    scene.add(gridGroup);
-
-    /* — outer glow ring — */
-    const glowGeo  = new THREE.SphereGeometry(1.08, 32, 32);
-    const glowMat  = new THREE.MeshBasicMaterial({
-        color: 0x1e6b8c, transparent: true, opacity: 0.04,
-        side: THREE.BackSide
-    });
-    scene.add(new THREE.Mesh(glowGeo, glowMat));
-
-    /* — mouse parallax — */
-    let mx = 0, my = 0;
-    document.addEventListener('mousemove', e => {
-        mx = (e.clientX / window.innerWidth  - 0.5) * 0.5;
-        my = (e.clientY / window.innerHeight - 0.5) * 0.25;
-    }, { passive: true });
-
-    let raf = true;
-    (function tick() {
-        if (!raf) return;
-        requestAnimationFrame(tick);
-        const speed = 0.0025;
-        dots.rotation.y       += speed;
-        gridGroup.rotation.y  += speed;
-        camera.position.x += (mx * 0.28 - camera.position.x) * 0.04;
-        camera.position.y += (-my * 0.28 - camera.position.y) * 0.04;
-        camera.lookAt(scene.position);
-        renderer.render(scene, camera);
-    })();
-
-    /* resize globe canvas */
-    function onResize() {
-        const w = window.innerWidth;
-        const s = w <= 480 ? 0 : w <= 768 ? 320 : w <= 1024 ? 420 : w <= 1200 ? 520 : 640;
-        if (s === 0) { gc.style.display = 'none'; raf = false; return; }
-        gc.style.display = '';
-        raf = true;
-        renderer.setSize(s, s);
-    }
-    window.addEventListener('resize', onResize, { passive: true });
-})();
-
-/* ──────────────────────────────────────
-   GSAP ANIMATIONS
-────────────────────────────────────── */
-gsap.registerPlugin(ScrollTrigger);
-
-/* Navbar slide in */
-gsap.from('.navbar', {
-    y: -30, opacity: 0, duration: 0.9,
-    ease: 'power3.out', delay: 0.1
-});
-
-/* Hero — staggered entrance */
-const heroTl = gsap.timeline({ delay: 0.25 });
-heroTl
-    .to('#heroContent', { opacity: 1, duration: 0 })
-    .from('#heroBadge', { y: -22, opacity: 0, duration: 0.7, ease: 'power3.out' })
-    .from('#h1',  { y: 38, opacity: 0, duration: 0.75, ease: 'power3.out' }, '-=0.3')
-    .from('#h2',  { y: 38, opacity: 0, duration: 0.75, ease: 'power3.out' }, '-=0.55')
-    .from('#h3',  { y: 38, opacity: 0, duration: 0.75, ease: 'power3.out' }, '-=0.55')
-    .from('#heroSub',  { y: 24, opacity: 0, duration: 0.7,  ease: 'power3.out' }, '-=0.45')
-    .from('#heroCta',  { y: 20, opacity: 0, duration: 0.65, ease: 'power3.out' }, '-=0.4')
-    .to('#scrollHint', { opacity: 1, duration: 0.8, ease: 'power2.out' }, '-=0.1');
-
-/* Globe fade in */
-gsap.from('#globe-canvas', {
-    opacity: 0, scale: 0.85, duration: 1.6,
-    ease: 'power3.out', delay: 0.5
-});
-
-/* ── Feature cards ── */
-gsap.fromTo('.features-head',
-    { y: 36, opacity: 0 },
-    { scrollTrigger: { trigger: '.features-section', start: 'top 78%', once: true },
-      y: 0, opacity: 1, duration: 0.8, ease: 'power3.out' }
-);
-gsap.fromTo('.f-card',
-    { y: 52, opacity: 0 },
-    { scrollTrigger: { trigger: '.features-grid', start: 'top 80%', once: true },
-      y: 0, opacity: 1, duration: 0.75, stagger: 0.12, ease: 'power3.out' }
-);
-
-/* ── Destination cards ── */
-gsap.fromTo('.dest-head',
-    { y: 32, opacity: 0 },
-    { scrollTrigger: { trigger: '.dest-section', start: 'top 78%', once: true },
-      y: 0, opacity: 1, duration: 0.75, ease: 'power3.out' }
-);
-gsap.fromTo('.d-card',
-    { scale: 0.88, y: 32, opacity: 0 },
-    { scrollTrigger: { trigger: '.dest-grid', start: 'top 82%', once: true },
-      scale: 1, y: 0, opacity: 1, duration: 0.7, stagger: 0.10, ease: 'power3.out' }
-);
-
-/* ── Steps ── */
-gsap.fromTo('.hiw-head',
-    { y: 32, opacity: 0 },
-    { scrollTrigger: { trigger: '.hiw-section', start: 'top 78%', once: true },
-      y: 0, opacity: 1, duration: 0.75, ease: 'power3.out' }
-);
-gsap.fromTo('.step-item',
-    { y: 36, opacity: 0 },
-    { scrollTrigger: { trigger: '.steps-row', start: 'top 82%', once: true },
-      y: 0, opacity: 1, duration: 0.7, stagger: 0.15, ease: 'power3.out' }
-);
-
-/* ── CTA ── */
-gsap.fromTo('.cta-title, .cta-sub, .cta-btns',
-    { y: 32, opacity: 0 },
-    { scrollTrigger: { trigger: '.cta-section', start: 'top 80%', once: true },
-      y: 0, opacity: 1, duration: 0.75, stagger: 0.12, ease: 'power3.out' }
-);
-
-/* ── Parallax on hero mountains ── */
-gsap.to('.hero-mountains', {
-    scrollTrigger: {
-        trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true
-    },
-    y: 60, ease: 'none'
-});
-
-/* ──────────────────────────────────────
-   3D TILT ON DESTINATION CARDS
-────────────────────────────────────── */
-document.querySelectorAll('.d-card').forEach(card => {
-    card.addEventListener('mousemove', e => {
-        const r   = card.getBoundingClientRect();
-        const x   = (e.clientX - r.left) / r.width  - 0.5;
-        const y   = (e.clientY - r.top)  / r.height - 0.5;
-        card.style.transform =
-            `perspective(700px) rotateY(${x * 14}deg) rotateX(${-y * 14}deg) translateZ(10px) scale(1.02)`;
-    }, { passive: true });
-    card.addEventListener('mouseleave', () => {
-        card.style.transform = '';
-        card.style.transition = 'transform 0.5s cubic-bezier(.4,0,.2,1), box-shadow 0.4s, border-color 0.4s';
-        setTimeout(() => { card.style.transition = ''; }, 500);
-    });
-    card.addEventListener('mouseenter', () => {
-        card.style.transition = 'box-shadow 0.4s, border-color 0.4s';
-    });
-});
-
-/* ──────────────────────────────────────
-   MODAL
-────────────────────────────────────── */
-const modalBg = document.getElementById('modalBg');
-
-window.openModal = function () {
-    modalBg.classList.add('open');
-    document.body.style.overflow = 'hidden';
-};
-window.closeModal = function () {
-    modalBg.classList.remove('open');
-    document.body.style.overflow = '';
-};
-window.handleBgClick = function (e) {
-    if (e.target === modalBg) window.closeModal();
-};
-document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') window.closeModal();
-});
-
-})();
-</script>
+        })();
+    </script>
 </body>
+
 </html>

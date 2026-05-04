@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Simple in-memory rate limiter for login endpoints.
  * Allows a maximum of MAX_ATTEMPTS per WINDOW_MS per IP address.
- * After exceeding the limit the IP is blocked for BLOCK_MS.
+ * After exceeding the limit the IP is blocked for BLOCK_MS.(15  minutes).
  */
 @Component
 public class RateLimitFilter extends OncePerRequestFilter {
@@ -41,7 +41,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private final ConcurrentHashMap<String, Window> ipMap = new ConcurrentHashMap<>();
 
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
+    protected boolean shouldNotFilter(HttpServletRequest request) 
+    {
         String path = request.getServletPath();
         return !path.equals("/api/auth/login") && !path.equals("/api/auth/admin/login");
     }

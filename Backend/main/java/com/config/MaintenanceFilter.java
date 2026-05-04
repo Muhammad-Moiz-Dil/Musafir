@@ -36,6 +36,7 @@ public class MaintenanceFilter extends OncePerRequestFilter {
 
         long now = System.currentTimeMillis();
         if (now >= cacheExpiresAt) {
+            // Cache expired, fetch the latest value from the database
             cachedMaintenance = settingsRepo.findBySettingKey("FEATURE_MAINTENANCE_MODE")
                     .map(s -> "true".equalsIgnoreCase(s.getSettingValue()))
                     .orElse(false);
@@ -44,6 +45,7 @@ public class MaintenanceFilter extends OncePerRequestFilter {
         boolean maintenance = cachedMaintenance;
 
         if (maintenance) {
+            // If maintenance mode is on, block all non-admin endpoints
             String path = request.getRequestURI();
             // Let admin login and all /api/admin/** through so the admin can still manage the site
             if (!path.startsWith("/api/auth/admin") && !path.startsWith("/api/admin")) {

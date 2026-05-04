@@ -1,5 +1,6 @@
-package com.config;
+package com.config; // This class is responsible for intercepting incoming HTTP requests and checking for a valid JWT token in the Authorization header. If a valid token is found, it sets the authentication in the Spring Security context, allowing the request to proceed with the appropriate user permissions. If no token is found or if the token is invalid, the request proceeds without authentication, and Spring Security will handle it accordingly (e.g., returning 401 Unauthorized for protected endpoints).
 
+// This filter runs once per request, ensuring that every incoming request is checked for a JWT token. It uses the JwtUtil class to validate the token and extract the user's email, and the UserDetailsServiceImpl to load the user's details from the database. If the token is valid and the user exists, it sets up the authentication context for the request.
 import com.utility.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -16,8 +17,11 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+
+
 @Component
-public class JwtFilter extends OncePerRequestFilter {
+public class JwtFilter extends OncePerRequestFilter   //OncePerRequestFilter is a builti class.
+{
 
     private final JwtUtil jwtUtil;
     private final UserDetailsServiceImpl userDetailsService;
@@ -29,8 +33,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain chain)
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain chain)
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
@@ -40,7 +44,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = header.substring(7);
+        String token = header.substring(7);       //extractinng the token from the header by removing the "Bearer " prefix.
 
         if (!jwtUtil.isTokenValid(token)) {
             chain.doFilter(request, response);
@@ -52,8 +56,8 @@ public class JwtFilter extends OncePerRequestFilter {
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             try {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(email);
-                UsernamePasswordAuthenticationToken auth =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null,
+                        userDetails.getAuthorities());
                 auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(auth);
             } catch (UsernameNotFoundException e) {

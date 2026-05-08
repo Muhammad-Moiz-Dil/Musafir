@@ -145,7 +145,7 @@ async function openSeasonalModal(destId, destName) {
 
   try {
     const res = await fetch(`${API_CONFIG.BASE_URL}/seasonal-data/admin/${destId}`, { headers: getHeaders() });
-    if (res.status === 401) { doLogout(); return; }
+    if (res.status === 401) { /* session expired — leave fields blank, user will see error on save */ return; }
     if (res.ok) {
       const data = await res.json();
       (data.months || []).forEach(row => {
@@ -215,7 +215,7 @@ async function saveSeasonalData() {
       body: JSON.stringify(months)
     });
     const data = await res.json().catch(() => ({}));
-    if (res.status === 401) { doLogout(); return; }
+    if (res.status === 401) { errEl.textContent = 'Session expired — please refresh the page.'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Save All Months'; return; }
     if (!res.ok) { errEl.textContent = data.message || 'Save failed.'; errEl.style.display = 'block'; return; }
     closeModal('seasonalModal');
     showToast('Seasonal data saved!');
@@ -254,6 +254,8 @@ async function saveSeasonalData() {
   let currentSouvenirsDestId = null;
   let editingGuidelineId    = null;
   let editingSouvenirId     = null;
+  let pendingImageFile          = null;
+  let pendingSouvenirImageFile  = null;
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function esc(s) {
@@ -380,10 +382,13 @@ async function saveSeasonalData() {
       .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     document.getElementById('f-country').value = 'Pakistan';
     document.getElementById('f-budget').value  = '';
-    document.getElementById('f-img').value     = '';
-    document.getElementById('imgPreview').style.display  = 'none';
-    document.getElementById('imgFileName').textContent   = 'No image selected';
+    document.getElementById('f-img').value      = '';
+    document.getElementById('f-img-file').value = '';
+    document.getElementById('imgPreview').style.display   = 'none';
+    document.getElementById('imgFileName').textContent    = 'No image selected';
     document.getElementById('imgUploadErr').style.display = 'none';
+    document.getElementById('destSaveBtn').disabled       = false;
+    pendingImageFile = null;
     document.getElementById('e-name').style.display      = 'none';
     document.getElementById('destFormErr').style.display = 'none';
     document.getElementById('latDir').textContent = '';
@@ -428,29 +433,30 @@ async function saveSeasonalData() {
     document.getElementById('destModal').classList.add('open');
   };
 
-  window.handleImageSelect = async function (input) {
+  window.handleImageSelect = function (input) {
     const file = input.files[0];
     if (!file) return;
-    const errEl = document.getElementById('imgUploadErr');
+    const errEl  = document.getElementById('imgUploadErr');
+    const nameEl = document.getElementById('imgFileName');
     errEl.style.display = 'none';
-    document.getElementById('imgFileName').textContent = file.name;
 
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const res = await fetch(`${API_CONFIG.BASE_URL}/admin/destinations/upload-image`, {
-        method: 'POST', headers: getHeaders(), body: formData
-      });
-      if (res.status === 401) { doLogout(); return; }
-      const data = await res.json();
-      if (!res.ok) { errEl.textContent = data.message || 'Upload failed'; errEl.style.display = 'block'; return; }
-      document.getElementById('f-img').value = data.imageUrl;
-      const prev = document.getElementById('imgPreview');
-      prev.src = API_CONFIG.BASE_URL.replace('/api', '') + data.imageUrl;
-      prev.style.display = 'block';
-    } catch (e) {
-      errEl.textContent = 'Upload failed. Is the backend running?'; errEl.style.display = 'block';
+    if (file.size > 5 * 1024 * 1024) {
+      errEl.textContent = 'Image is too large (max 5 MB). Try compressing it or saving as JPG.';
+      errEl.style.display = 'block';
+      input.value = '';
+      return;
     }
+
+    pendingImageFile = file;
+    nameEl.textContent = file.name;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const prev = document.getElementById('imgPreview');
+      prev.src = e.target.result;
+      prev.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
   };
 
   window.saveDestination = async function () {
@@ -526,8 +532,37 @@ async function saveSeasonalData() {
     }
 
     const btn = document.getElementById('destSaveBtn');
-    btn.disabled = true; btn.textContent = 'Saving…';
+    btn.disabled = true;
 
+    // ── Step 1: upload pending image first (if user selected one) ────────────
+    let imageUrl = document.getElementById('f-img').value || null;
+    if (pendingImageFile) {
+      btn.textContent = 'Uploading image…';
+      const fd = new FormData();
+      fd.append('file', pendingImageFile);
+      try {
+        const upRes  = await fetch(`${API_CONFIG.BASE_URL}/admin/destinations/upload-image`, {
+          method: 'POST', headers: getHeaders(), body: fd
+        });
+        const upData = await upRes.json().catch(() => ({}));
+        if (upRes.status === 401) {
+          errEl.textContent = 'Session expired — please refresh the page.';
+          errEl.style.display = 'block'; btn.disabled = false; btn.textContent = editingId ? 'Update Destination' : 'Save Destination'; return;
+        }
+        if (!upRes.ok) {
+          errEl.textContent = upData.message || 'Image upload failed — is the backend running?';
+          errEl.style.display = 'block'; btn.disabled = false; btn.textContent = editingId ? 'Update Destination' : 'Save Destination'; return;
+        }
+        imageUrl = upData.imageUrl;
+        pendingImageFile = null;
+      } catch (e) {
+        errEl.textContent = 'Image upload failed — make sure the backend is running.';
+        errEl.style.display = 'block'; btn.disabled = false; btn.textContent = editingId ? 'Update Destination' : 'Save Destination'; return;
+      }
+    }
+
+    // ── Step 2: save destination with confirmed imageUrl ─────────────────────
+    btn.textContent = 'Saving…';
     const payload = {
       name,
       country:        document.getElementById('f-country').value.trim() || 'Pakistan',
@@ -535,7 +570,7 @@ async function saveSeasonalData() {
       description:    document.getElementById('f-desc').value.trim(),
       latitude,
       longitude,
-      imageUrl:       document.getElementById('f-img').value             || null,
+      imageUrl,
       altitude:       altitude !== null ? String(altitude) : '',
       bestTime:       bestTimeRaw,
       budgetLevel:    document.getElementById('f-budget').value,
@@ -554,7 +589,7 @@ async function saveSeasonalData() {
         body: JSON.stringify(payload)
       });
       const data = await res.json().catch(() => ({}));
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { errEl.textContent = 'Session expired — please refresh the page and log in again.'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = editingId ? 'Update Destination' : 'Save Destination'; return; }
       if (!res.ok) { errEl.textContent = data.message || 'Save failed.'; errEl.style.display = 'block'; return; }
 
       if (editingId) {
@@ -581,7 +616,7 @@ async function saveSeasonalData() {
       const res = await fetch(`${API_CONFIG.BASE_URL}/admin/destinations/${id}/toggle`, {
         method: 'PUT', headers: getHeaders()
       });
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { showToast('Session expired — please refresh the page.', 'error'); return; }
       if (!res.ok) { showToast('Toggle failed', 'error'); return; }
       const data = await res.json();
       const idx = allDests.findIndex(d => d.id === id);
@@ -715,7 +750,7 @@ async function saveSeasonalData() {
     list.innerHTML = '<div style="color:var(--text-3);font-size:13px;padding:8px 0">Loading…</div>';
     try {
       const res  = await fetch(`${API_CONFIG.BASE_URL}/admin/guidelines?destId=${currentGuidelineDestId}`, { headers: getHeaders() });
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { list.innerHTML = '<div style="color:var(--danger);font-size:13px;padding:8px">Session expired — please refresh the page.</div>'; return; }
       const data = await res.json();
       if (!res.ok || !Array.isArray(data) || !data.length) {
         list.innerHTML = '<div style="color:var(--text-2);font-size:13px;padding:12px 14px;background:var(--bg);border:1px dashed var(--border);border-radius:var(--r-sm);text-align:center">No guidelines yet for this destination. Use the form below to add the first one.</div>';
@@ -787,7 +822,7 @@ async function saveSeasonalData() {
           body: JSON.stringify({ destId: currentGuidelineDestId, title, content, category })
         });
       }
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { errEl.textContent = 'Session expired — please refresh the page.'; errEl.style.display = 'block'; btn.disabled = false; return; }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { errEl.textContent = data.message || 'Save failed'; errEl.style.display = 'block'; return; }
       resetGuidelineForm();
@@ -806,7 +841,7 @@ async function saveSeasonalData() {
       const res = await fetch(`${API_CONFIG.BASE_URL}/admin/guidelines/${id}`, {
         method: 'DELETE', headers: getHeaders()
       });
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { showToast('Session expired — please refresh the page.', 'error'); return; }
       if (!res.ok) { showToast('Delete failed', 'error'); return; }
       await loadGuidelines();
       showToast('Guideline deleted');
@@ -828,7 +863,7 @@ async function saveSeasonalData() {
 
     try {
       const res = await fetch(`${API_CONFIG.BASE_URL}/admin/emergency/${destId}`, { headers: getHeaders() });
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { /* session expired — leave fields blank */ return; }
       if (!res.ok) return;
       const d = await res.json();
       document.getElementById('em-police').value    = d.policeNumber      || '';
@@ -1006,7 +1041,7 @@ async function saveSeasonalData() {
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { errEl.textContent = 'Session expired — please refresh the page.'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'Save Contacts'; return; }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { errEl.textContent = data.message || 'Save failed.'; errEl.style.display = 'block'; return; }
       closeModal('emergencyModal');
@@ -1033,7 +1068,7 @@ async function saveSeasonalData() {
     list.innerHTML = '<div style="color:var(--text-3);font-size:13px;padding:4px 0">Loading…</div>';
     try {
       const res  = await fetch(`${API_CONFIG.BASE_URL}/admin/souvenirs?destId=${currentSouvenirsDestId}`, { headers: getHeaders() });
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { list.innerHTML = '<div style="color:var(--danger);font-size:13px;padding:8px">Session expired — please refresh the page.</div>'; return; }
       const data = await res.json();
       if (!res.ok || !Array.isArray(data) || !data.length) {
         list.innerHTML = '<div style="color:var(--text-3);font-size:13px;padding:4px 0">No souvenirs yet. Add the first one below.</div>';
@@ -1079,35 +1114,46 @@ async function saveSeasonalData() {
 
   window.resetSouvenirForm = function () {
     editingSouvenirId = null;
+    pendingSouvenirImageFile = null;
     document.getElementById('s-name').value   = '';
     document.getElementById('s-vendor').value = '';
     document.getElementById('s-desc').value   = '';
     document.getElementById('s-image').value  = '';
+    document.getElementById('s-img-file').value = '';
     document.getElementById('sFormLabel').textContent    = 'Add New Souvenir';
     document.getElementById('sSaveBtn').textContent      = 'Add Souvenir';
+    document.getElementById('sSaveBtn').disabled         = false;
     document.getElementById('sCancelBtn').style.display  = 'none';
     document.getElementById('sFormErr').style.display    = 'none';
     document.getElementById('sImgPreview').style.display = 'none';
     document.getElementById('sImgFileName').textContent  = 'No image selected';
   };
 
-  window.handleSouvenirImageSelect = async function (input) {
+  window.handleSouvenirImageSelect = function (input) {
     const file = input.files[0];
     if (!file) return;
-    document.getElementById('sImgFileName').textContent = file.name;
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const res = await fetch(`${API_CONFIG.BASE_URL}/admin/souvenirs/upload-image`, {
-        method: 'POST', headers: getHeaders(), body: formData
-      });
-      if (res.status === 401) { doLogout(); return; }
-      const data = await res.json();
-      if (!res.ok) { showToast(data.message || 'Upload failed', 'error'); return; }
-      document.getElementById('s-image').value = data.imageUrl;
+
+    const errEl  = document.getElementById('sFormErr');
+    const nameEl = document.getElementById('sImgFileName');
+    errEl.style.display = 'none';
+
+    if (file.size > 5 * 1024 * 1024) {
+      errEl.textContent = 'Image is too large (max 5 MB). Try compressing it or saving as JPG.';
+      errEl.style.display = 'block';
+      input.value = '';
+      return;
+    }
+
+    pendingSouvenirImageFile = file;
+    nameEl.textContent = file.name;
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
       const prev = document.getElementById('sImgPreview');
-      prev.src = API_CONFIG.BASE_URL.replace('/api', '') + data.imageUrl; prev.style.display = 'block';
-    } catch (e) { showToast('Upload failed', 'error'); }
+      prev.src = e.target.result;
+      prev.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
   };
 
   window.saveSouvenir = async function () {
@@ -1119,12 +1165,41 @@ async function saveSeasonalData() {
     const btn = document.getElementById('sSaveBtn');
     btn.disabled = true;
 
+    // Step 1: upload image if one was selected
+    let imageUrl = document.getElementById('s-image').value || null;
+    if (pendingSouvenirImageFile) {
+      btn.textContent = 'Uploading image…';
+      const fd = new FormData();
+      fd.append('file', pendingSouvenirImageFile);
+      try {
+        const upRes  = await fetch(`${API_CONFIG.BASE_URL}/admin/souvenirs/upload-image`, {
+          method: 'POST', headers: getHeaders(), body: fd
+        });
+        const upData = await upRes.json().catch(() => ({}));
+        if (upRes.status === 401) {
+          errEl.textContent = 'Session expired — please refresh the page.';
+          errEl.style.display = 'block'; btn.disabled = false; btn.textContent = editingSouvenirId ? 'Update Souvenir' : 'Add Souvenir'; return;
+        }
+        if (!upRes.ok) {
+          errEl.textContent = upData.message || 'Image upload failed — is the backend running?';
+          errEl.style.display = 'block'; btn.disabled = false; btn.textContent = editingSouvenirId ? 'Update Souvenir' : 'Add Souvenir'; return;
+        }
+        imageUrl = upData.imageUrl;
+        pendingSouvenirImageFile = null;
+      } catch (e) {
+        errEl.textContent = 'Image upload failed — make sure the backend is running.';
+        errEl.style.display = 'block'; btn.disabled = false; btn.textContent = editingSouvenirId ? 'Update Souvenir' : 'Add Souvenir'; return;
+      }
+    }
+
+    // Step 2: save souvenir with confirmed imageUrl
+    btn.textContent = 'Saving…';
     const payload = {
       destId:      currentSouvenirsDestId,
       name,
       vendorName:  document.getElementById('s-vendor').value.trim(),
       description: document.getElementById('s-desc').value.trim(),
-      imageUrl:    document.getElementById('s-image').value || null,
+      imageUrl,
     };
 
     try {
@@ -1137,9 +1212,9 @@ async function saveSeasonalData() {
         headers: { ...getHeaders(), 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { errEl.textContent = 'Session expired — please refresh the page.'; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = editingSouvenirId ? 'Update Souvenir' : 'Add Souvenir'; return; }
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) { errEl.textContent = data.message || 'Save failed'; errEl.style.display = 'block'; return; }
+      if (!res.ok) { errEl.textContent = data.message || 'Save failed'; errEl.style.display = 'block'; btn.textContent = editingSouvenirId ? 'Update Souvenir' : 'Add Souvenir'; return; }
       resetSouvenirForm();
       await loadSouvenirs();
       showToast(editingSouvenirId ? 'Souvenir updated!' : 'Souvenir added!');
@@ -1147,6 +1222,7 @@ async function saveSeasonalData() {
       errEl.textContent = 'Network error.'; errEl.style.display = 'block';
     } finally {
       btn.disabled = false;
+      btn.textContent = editingSouvenirId ? 'Update Souvenir' : 'Add Souvenir';
     }
   };
 
@@ -1156,7 +1232,7 @@ async function saveSeasonalData() {
       const res = await fetch(`${API_CONFIG.BASE_URL}/admin/souvenirs/${id}`, {
         method: 'DELETE', headers: getHeaders()
       });
-      if (res.status === 401) { doLogout(); return; }
+      if (res.status === 401) { showToast('Session expired — please refresh the page.', 'error'); return; }
       if (!res.ok) { showToast('Delete failed', 'error'); return; }
       await loadSouvenirs();
       showToast('Souvenir deleted');

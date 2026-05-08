@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,6 +31,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(Map.of(
                 "message", "Validation failed.",
                 "errors",  errors
+        ));
+    }
+
+    /**
+     * Handles file uploads that exceed the configured multipart size limit (5 MB).
+     * Without this, Spring returns a non-JSON error page that breaks res.json() on the frontend.
+     */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<?> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(Map.of(
+                "message", "File is too large. Maximum allowed size is 5 MB. PNG files can be large — try compressing the image or converting it to JPG."
         ));
     }
 

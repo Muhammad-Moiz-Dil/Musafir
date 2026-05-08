@@ -7,7 +7,6 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.io.File;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -18,9 +17,12 @@ public class WebConfig implements WebMvcConfigurer {
      */
     @Override
     public void addResourceHandlers(@NonNull ResourceHandlerRegistry registry) {
-        String uploadsPath = UploadUtils.UPLOADS_BASE.toString() + File.separator;
+        // Path.toUri() produces a proper file:/// URI (forward slashes, encoded spaces)
+        // that Spring's resource handler resolves correctly on both Windows and Linux.
+        String uploadsUri = UploadUtils.UPLOADS_BASE.toUri().toString();
+        if (!uploadsUri.endsWith("/")) uploadsUri += "/";
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadsPath);
+                .addResourceLocations(uploadsUri);
     }
 
     @Bean

@@ -718,6 +718,9 @@ public class AdminController {
         return ResponseEntity.ok(destToMap(destRepo.save(d)));
     }
 
+    private static final Set<String> ALLOWED_IMAGE_EXTS =
+            new java.util.HashSet<>(List.of("jpg", "jpeg", "png", "webp", "gif"));
+
     /** POST /api/admin/destinations/upload-image — upload destination image */
     @PostMapping("/destinations/upload-image")
     public ResponseEntity<?> uploadDestinationImage(@RequestParam("file") MultipartFile file,
@@ -726,16 +729,23 @@ public class AdminController {
         if (file.isEmpty()) return ResponseEntity.status(400).body(Map.of("message", "No file provided"));
 
         String original = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "image");
-        String ext      = original.contains(".") ? original.substring(original.lastIndexOf(".")) : ".jpg";
-        String filename = "dest_" + System.currentTimeMillis() + ext;
+        String ext      = (original.contains(".") ? original.substring(original.lastIndexOf(".") + 1) : "").toLowerCase();
+        if (!ALLOWED_IMAGE_EXTS.contains(ext)) {
+            return ResponseEntity.status(400).body(Map.of(
+                "message", "Invalid file type. Only JPG, PNG, WebP and GIF images are allowed."
+            ));
+        }
+        String filename = "dest_" + System.currentTimeMillis() + "." + ext;
 
         try {
             Path dir = UploadUtils.resolve("destinations");
             Files.createDirectories(dir);
-            file.transferTo(dir.resolve(filename).toFile());
+            try (var in = file.getInputStream()) {
+                Files.copy(in, dir.resolve(filename), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
             return ResponseEntity.ok(Map.of("imageUrl", "/uploads/destinations/" + filename));
         } catch (IOException e) {
-            return ResponseEntity.status(500).body(Map.of("message", "Failed to save image"));
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to save image: " + e.getMessage()));
         }
     }
 
@@ -1019,16 +1029,23 @@ public class AdminController {
         if (file.isEmpty()) return ResponseEntity.status(400).body(Map.of("message", "No file provided"));
 
         String original = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "image");
-        String ext      = original.contains(".") ? original.substring(original.lastIndexOf(".")) : ".jpg";
-        String filename = "souv_" + System.currentTimeMillis() + ext;
+        String ext      = (original.contains(".") ? original.substring(original.lastIndexOf(".") + 1) : "").toLowerCase();
+        if (!ALLOWED_IMAGE_EXTS.contains(ext)) {
+            return ResponseEntity.status(400).body(Map.of(
+                "message", "Invalid file type. Only JPG, PNG, WebP and GIF images are allowed."
+            ));
+        }
+        String filename = "souv_" + System.currentTimeMillis() + "." + ext;
 
         try {
             Path dir = UploadUtils.resolve("souvenirs");
             Files.createDirectories(dir);
-            file.transferTo(dir.resolve(filename).toFile());
+            try (var in = file.getInputStream()) {
+                Files.copy(in, dir.resolve(filename), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
             return ResponseEntity.ok(Map.of("imageUrl", "/uploads/souvenirs/" + filename));
         } catch (IOException e) {
-            return ResponseEntity.status(500).body(Map.of("message", "Failed to save image"));
+            return ResponseEntity.status(500).body(Map.of("message", "Failed to save image: " + e.getMessage()));
         }
     }
 

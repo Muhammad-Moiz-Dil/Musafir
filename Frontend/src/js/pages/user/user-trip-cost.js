@@ -9,37 +9,87 @@ let selectedRoomType    = null;
 let selectedDestination = null;
 let selectedSource      = null;
 
-// ── Major Pakistani cities with coordinates
+// ── Pakistani cities & tourist destinations with coordinates
 const PAKISTAN_CITIES = [
-    { name: 'Islamabad',   lat: 33.6844, lng: 73.0479 },
-    { name: 'Rawalpindi',  lat: 33.5651, lng: 73.0169 },
-    { name: 'Lahore',      lat: 31.5204, lng: 74.3587 },
-    { name: 'Karachi',     lat: 24.8607, lng: 67.0011 },
-    { name: 'Peshawar',    lat: 34.0150, lng: 71.5249 },
-    { name: 'Quetta',      lat: 30.1798, lng: 66.9750 },
-    { name: 'Multan',      lat: 30.1575, lng: 71.5249 },
-    { name: 'Faisalabad',  lat: 31.4504, lng: 73.1350 },
-    { name: 'Hyderabad',   lat: 25.3960, lng: 68.3578 },
-    { name: 'Sialkot',     lat: 32.4927, lng: 74.5317 },
-    { name: 'Gujranwala',  lat: 32.1877, lng: 74.1945 },
-    { name: 'Abbottabad',  lat: 34.1466, lng: 73.2117 },
-    { name: 'Sukkur',      lat: 27.7052, lng: 68.8574 },
-    { name: 'Bahawalpur',  lat: 29.3956, lng: 71.6836 },
-    { name: 'Gilgit',      lat: 35.9208, lng: 74.3082 },
+    // Major cities
+    { name: 'Islamabad',        lat: 33.6844, lng: 73.0479 },
+    { name: 'Rawalpindi',       lat: 33.5651, lng: 73.0169 },
+    { name: 'Lahore',           lat: 31.5204, lng: 74.3587 },
+    { name: 'Karachi',          lat: 24.8607, lng: 67.0011 },
+    { name: 'Peshawar',         lat: 34.0150, lng: 71.5249 },
+    { name: 'Quetta',           lat: 30.1798, lng: 66.9750 },
+    { name: 'Multan',           lat: 30.1575, lng: 71.5249 },
+    { name: 'Faisalabad',       lat: 31.4504, lng: 73.1350 },
+    { name: 'Hyderabad',        lat: 25.3960, lng: 68.3578 },
+    { name: 'Sialkot',          lat: 32.4927, lng: 74.5317 },
+    { name: 'Gujranwala',       lat: 32.1877, lng: 74.1945 },
+    { name: 'Abbottabad',       lat: 34.1466, lng: 73.2117 },
+    { name: 'Sukkur',           lat: 27.7052, lng: 68.8574 },
+    { name: 'Bahawalpur',       lat: 29.3956, lng: 71.6836 },
+    { name: 'Gilgit',           lat: 35.9208, lng: 74.3082 },
+    { name: 'Larkana',          lat: 27.5570, lng: 68.2248 },
+    { name: 'Sahiwal',          lat: 30.6706, lng: 73.1064 },
+    { name: 'Sargodha',         lat: 32.0836, lng: 72.6711 },
+    { name: 'Gujrat',           lat: 32.5736, lng: 74.0789 },
+    { name: 'Sheikhupura',      lat: 31.7167, lng: 73.9850 },
+    { name: 'Mardan',           lat: 34.1986, lng: 72.0404 },
+    { name: 'Nowshera',         lat: 34.0153, lng: 71.9747 },
+    { name: 'Attock',           lat: 33.7667, lng: 72.3667 },
+    { name: 'Jhelum',           lat: 32.9425, lng: 73.7257 },
+    { name: 'Chakwal',          lat: 32.9328, lng: 72.8563 },
+    { name: 'Taxila',           lat: 33.7467, lng: 72.8408 },
+    { name: 'Haripur',          lat: 33.9980, lng: 72.9333 },
+    { name: 'Bannu',            lat: 32.9889, lng: 70.6044 },
+    { name: 'Kohat',            lat: 33.5869, lng: 71.4414 },
+    { name: 'Dera Ismail Khan', lat: 31.8300, lng: 70.9010 },
+    { name: 'Dera Ghazi Khan',  lat: 30.0500, lng: 70.6333 },
+    { name: 'Muzaffarabad',     lat: 34.3700, lng: 73.4710 },
+    { name: 'Mirpur',           lat: 33.1450, lng: 73.7502 },
+    { name: 'Jacobabad',        lat: 28.2769, lng: 68.4514 },
+    { name: 'Nawabshah',        lat: 26.2442, lng: 68.4100 },
+    { name: 'Turbat',           lat: 26.0025, lng: 63.0444 },
+    { name: 'Khuzdar',          lat: 27.8000, lng: 66.6167 },
+    // Tourist destinations
+    { name: 'Skardu',           lat: 35.2971, lng: 75.6346 },
+    { name: 'Hunza',            lat: 36.3167, lng: 74.6500 },
+    { name: 'Hunza Valley',     lat: 36.3167, lng: 74.6500 },
+    { name: 'Murree',           lat: 33.9042, lng: 73.3939 },
+    { name: 'Swat',             lat: 35.2227, lng: 72.4258 },
+    { name: 'Mingora',          lat: 34.7717, lng: 72.3600 },
+    { name: 'Naran',            lat: 34.9063, lng: 73.6507 },
+    { name: 'Kaghan',           lat: 34.7683, lng: 73.5943 },
+    { name: 'Naran Kaghan',     lat: 34.9063, lng: 73.6507 },
+    { name: 'Chitral',          lat: 35.8518, lng: 71.7861 },
+    { name: 'Gwadar',           lat: 25.1264, lng: 62.3225 },
+    { name: 'Kalam',            lat: 35.4897, lng: 72.5792 },
+    { name: 'Fairy Meadows',    lat: 35.3731, lng: 74.5856 },
+    { name: 'Naltar',           lat: 36.1667, lng: 74.1833 },
+    { name: 'Khunjerab',        lat: 36.8417, lng: 75.4281 },
+    { name: 'Shigar',           lat: 35.5000, lng: 75.7333 },
+    { name: 'Astore',           lat: 35.3667, lng: 74.8667 },
+    { name: 'Mansehra',         lat: 34.3330, lng: 73.1960 },
+    { name: 'Swabi',            lat: 34.1203, lng: 72.4698 },
+    { name: 'Mohenjo-daro',     lat: 27.3244, lng: 68.1375 },
+    { name: 'Mohenjodaro',      lat: 27.3244, lng: 68.1375 },
+    { name: 'Kashmir',          lat: 34.0837, lng: 74.7973 },
+    { name: 'Azad Kashmir',     lat: 34.3700, lng: 73.4710 },
+    { name: 'Neelum Valley',    lat: 34.7000, lng: 73.9000 },
+    { name: 'Shogran',          lat: 34.6025, lng: 73.4661 },
+    { name: 'Besham',           lat: 34.9117, lng: 72.8700 },
+    { name: 'Chilas',           lat: 35.4244, lng: 74.0994 },
+    { name: 'Ghizer',           lat: 36.1500, lng: 73.8333 },
+    { name: 'Kalash',           lat: 35.7000, lng: 71.7167 },
+    { name: 'Ratti Gali',       lat: 34.8667, lng: 73.9167 },
+    { name: 'Deosai',           lat: 34.9833, lng: 75.4000 },
+    { name: 'Khaplu',           lat: 35.1667, lng: 76.3333 },
 ];
 
-// Source cities that have domestic airports
-const AIRPORT_CITIES = new Set([
-    'islamabad', 'rawalpindi', 'lahore', 'karachi', 'peshawar',
-    'quetta', 'multan', 'faisalabad', 'sialkot', 'hyderabad',
-    'sukkur', 'bahawalpur', 'gilgit'
-]);
+// ── Determines if a place name is within Pakistan using the curated list
+// Synchronous check — no network call, no race condition.
+function isPakistaniPlace(name) {
+    return findCity(name) !== null;
+}
 
-// Tripify destinations reachable by domestic flight
-const FLIGHT_ACCESSIBLE_DESTINATIONS = new Set([
-    'skardu', 'lahore', 'karachi', 'peshawar', 'quetta',
-    'gwadar', 'islamabad', 'gilgit'
-]);
 
 // ── Fast lookup from known-cities list (exact → starts-with → contains)
 function findCity(input) {
@@ -55,6 +105,7 @@ function findCity(input) {
 }
 
 // ── Geocode any city via Nominatim — Pakistan-biased, with importance filter
+// Returns { lat, lng, fromPakistan } so callers know if the result is within Pakistan.
 async function geocodeCity(name) {
     const search = async (q) => {
         const url = 'https://nominatim.openstreetmap.org/search?q=' +
@@ -67,8 +118,10 @@ async function geocodeCity(name) {
     };
     // Try Pakistan-biased first to avoid global-code ambiguity (e.g. LHR → Lahore not London)
     const pkResult = await search(name + ', Pakistan');
-    if (pkResult) return pkResult;
-    return search(name);
+    if (pkResult) return { ...pkResult, fromPakistan: true };
+    const globalResult = await search(name);
+    if (globalResult) return { ...globalResult, fromPakistan: false };
+    return null;
 }
 
 // ── Haversine distance (km) × 1.3 road factor
@@ -90,41 +143,6 @@ function tryAutoCalcDist() {
         document.getElementById('dist').value = km;
         document.getElementById('distAutoNote').textContent = '— auto-calculated';
         clearError('dist');
-    }
-}
-
-// ── Show / hide Domestic Flight option based on route
-function updateTransportOptions() {
-    const transportSel = document.getElementById('transport');
-    let flightPossible = false;
-
-    if (selectedSource && selectedDestination) {
-        flightPossible = AIRPORT_CITIES.has(selectedSource.name.toLowerCase()) &&
-                         FLIGHT_ACCESSIBLE_DESTINATIONS.has(selectedDestination.name.toLowerCase());
-    }
-
-    const existingFlight = transportSel.querySelector('option[value="flight"]');
-    if (flightPossible && !existingFlight) {
-        const opt      = document.createElement('option');
-        opt.value      = 'flight';
-        opt.textContent = 'Domestic Flight';
-        transportSel.appendChild(opt);
-    } else if (!flightPossible && existingFlight) {
-        if (transportSel.value === 'flight') {
-            transportSel.value = 'car';
-            showToast('✈️', 'Domestic flight not available for this route. Switched to Private Car.');
-        }
-        existingFlight.remove();
-    }
-
-    const note = document.getElementById('transportNote');
-    if (note) {
-        if (selectedSource && selectedDestination && !flightPossible) {
-            note.textContent     = 'Domestic flight is not available for this route.';
-            note.style.display   = 'block';
-        } else {
-            note.style.display = 'none';
-        }
     }
 }
 
@@ -152,7 +170,6 @@ function onSrcInput() {
     srcErr.textContent = '';
     input.classList.remove('invalid');
     selectedSource = null; // will be confirmed on blur after geocoding
-    updateTransportOptions();
 }
 
 // ── Source city: geocode on blur (fast list first, then Nominatim for any city)
@@ -179,23 +196,23 @@ async function onSrcBlur() {
         return;
     }
 
-    // Always accept the name — coordinates are best-effort for auto-distance
-    selectedSource = { name: val, lat: null, lng: null };
+    // Determine Pakistan membership immediately from the curated list (synchronous, no race condition)
+    const inPk = isPakistaniPlace(val);
+    selectedSource = { name: val, lat: null, lng: null, inPakistan: inPk };
     input.classList.remove('invalid');
 
     // 1. Try fast lookup from known cities list
     const fast = findCity(val);
     if (fast) {
-        selectedSource = { name: fast.name, lat: fast.lat, lng: fast.lng };
+        selectedSource = { name: fast.name, lat: fast.lat, lng: fast.lng, inPakistan: true };
         input.value    = fast.name;
         srcErr.textContent = '';
         checkSameSourceDest();
         tryAutoCalcDist();
-        updateTransportOptions();
         return;
     }
 
-    // 2. Geocode via Nominatim for any other city
+    // 2. Geocode via Nominatim for coordinates only (inPakistan already determined above)
     srcErr.style.color = 'var(--t2)';
     srcErr.textContent = '⏳ Locating city…';
 
@@ -207,7 +224,6 @@ async function onSrcBlur() {
             srcErr.textContent = '';
             checkSameSourceDest();
             tryAutoCalcDist();
-            updateTransportOptions();
         } else {
             srcErr.style.color = 'var(--t2)';
             srcErr.textContent = `"${val}" not found — distance will need to be entered manually.`;
@@ -232,7 +248,6 @@ function onDestInput() {
     destErr.textContent = '';
     input.classList.remove('invalid');
     selectedDestination = null;
-    updateTransportOptions();
 }
 
 // ── Destination: geocode on blur (Nominatim, same approach as source)
@@ -245,7 +260,6 @@ async function onDestBlur() {
         selectedDestination = null;
         destErr.textContent = '';
         input.classList.remove('invalid');
-        updateTransportOptions();
         return;
     }
 
@@ -265,9 +279,26 @@ async function onDestBlur() {
         return;
     }
 
-    // Accept any name — coordinates are best-effort
-    selectedDestination = { name: val, lat: null, lng: null, id: null };
+    // Determine Pakistan membership immediately from the curated list (synchronous, no race condition)
+    const destInPk = isPakistaniPlace(val);
+    selectedDestination = { name: val, lat: null, lng: null, id: null, inPakistan: destInPk };
     input.classList.remove('invalid');
+
+    // Fast lookup: if it's a known Pakistani city we're done
+    const fastCity = findCity(val);
+    if (fastCity) {
+        selectedDestination.name       = fastCity.name;
+        selectedDestination.lat        = fastCity.lat;
+        selectedDestination.lng        = fastCity.lng;
+        selectedDestination.inPakistan = true;
+        input.value         = fastCity.name;
+        destErr.textContent = '';
+        checkSameSourceDest();
+        tryAutoCalcDist();
+        const hotelInput = document.getElementById('hotelSearchInput');
+        if (hotelInput) hotelInput.placeholder = `Search hotels in ${fastCity.name}…`;
+        return;
+    }
 
     // Show locating indicator
     destErr.style.color = 'var(--t2)';
@@ -278,6 +309,7 @@ async function onDestBlur() {
         if (coords) {
             selectedDestination.lat = coords.lat;
             selectedDestination.lng = coords.lng;
+            // inPakistan already set from curated list; do not override with Nominatim
             destErr.textContent     = '';
             tryAutoCalcDist();
         } else {
@@ -290,7 +322,6 @@ async function onDestBlur() {
     }
 
     checkSameSourceDest();
-    updateTransportOptions();
 
     // Update hotel search placeholder
     const hotelInput = document.getElementById('hotelSearchInput');
@@ -510,9 +541,9 @@ function validate() {
     }
 
     // Distance
-    if (!document.getElementById('dist').value.trim() || isNaN(dist) || dist < 1 || dist > 5000) {
+    if (!document.getElementById('dist').value.trim() || isNaN(dist) || dist < 1 || dist > 40075) {
         document.getElementById('distErr').textContent =
-            dist > 5000 ? 'Maximum distance is 5,000 km.' : 'Please enter a valid distance (1–5,000 km).';
+            dist > 40075 ? 'Maximum distance is 40,075 km.' : 'Please enter a valid distance (1–40,075 km).';
         document.getElementById('dist').classList.add('invalid');
         ok = false;
     }
@@ -592,7 +623,6 @@ async function applyPreset(src, dest, distFallback, travelers, nights) {
         clearError('dist');
     }
 
-    updateTransportOptions();
     calculate();
 }
 
@@ -615,10 +645,9 @@ function calculate() {
         const destLabel = (selectedDestination && selectedDestination.name) ? selectedDestination.name : document.getElementById('destSearchInput').value.trim() || 'Destination';
 
         let fuelCost = 0;
-        if      (transport === 'car')    fuelCost = Math.round((dist * 2 / 12) * petrolPrice);
-        else if (transport === 'suv')    fuelCost = Math.round((dist * 2 / 8)  * petrolPrice);
-        else if (transport === 'bus')    fuelCost = Math.round(dist * 2 * 7 * travelers);
-        else if (transport === 'flight') fuelCost = Math.round(travelers * 18000);
+        if      (transport === 'car') fuelCost = Math.round((dist * 2 / 12) * petrolPrice);
+        else if (transport === 'suv') fuelCost = Math.round((dist * 2 / 8)  * petrolPrice);
+        else if (transport === 'bus') fuelCost = Math.round(dist * 2 * 7 * travelers);
 
         // Hotel is optional — cost = 0 if not selected
         let hotelCost = 0;
@@ -735,8 +764,17 @@ function showToast(icon, msg, dur = 2800) {
     let timer;
 
     async function search(q) {
-        // If destination has a DB id, filter by it for more relevant results
-        // Otherwise search all hotels by name (backend handles this when destinationId is omitted)
+        // Block hotel search only when BOTH source AND destination are confirmed outside Pakistan.
+        // inPakistan is set synchronously from the curated city list the moment the user tabs out
+        // of each field — no async race condition possible.
+        const srcOutside  = selectedSource      && selectedSource.inPakistan      === false;
+        const destOutside = selectedDestination && selectedDestination.inPakistan === false;
+        if (srcOutside && destOutside) {
+            dropdown.innerHTML = '<div class="dest-no-result">🌍 Hotel booking is only available for trips involving Pakistan. Neither your source nor destination is within Pakistan.</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
+
         const hasDestId = selectedDestination && selectedDestination.id;
         if (!hasDestId && q.trim().length < 2) {
             dropdown.innerHTML = '<div class="dest-no-result">✏️ Type at least 2 letters to search hotels</div>';

@@ -37,6 +37,81 @@ function swapLocations() {
     [a.value, b.value] = [b.value, a.value];
 }
 
+// ── Curated Pakistani city coordinates for instant, consistent resolution ──
+const PK_CITIES = [
+    { name: 'Islamabad',        lat: 33.6844, lng: 73.0479 },
+    { name: 'Rawalpindi',       lat: 33.5651, lng: 73.0169 },
+    { name: 'Lahore',           lat: 31.5204, lng: 74.3587 },
+    { name: 'Karachi',          lat: 24.8607, lng: 67.0011 },
+    { name: 'Peshawar',         lat: 34.0150, lng: 71.5249 },
+    { name: 'Quetta',           lat: 30.1798, lng: 66.9750 },
+    { name: 'Multan',           lat: 30.1575, lng: 71.5249 },
+    { name: 'Faisalabad',       lat: 31.4504, lng: 73.1350 },
+    { name: 'Hyderabad',        lat: 25.3960, lng: 68.3578 },
+    { name: 'Sialkot',          lat: 32.4927, lng: 74.5317 },
+    { name: 'Gujranwala',       lat: 32.1877, lng: 74.1945 },
+    { name: 'Abbottabad',       lat: 34.1466, lng: 73.2117 },
+    { name: 'Sukkur',           lat: 27.7052, lng: 68.8574 },
+    { name: 'Bahawalpur',       lat: 29.3956, lng: 71.6836 },
+    { name: 'Gilgit',           lat: 35.9208, lng: 74.3082 },
+    { name: 'Skardu',           lat: 35.2971, lng: 75.6346 },
+    { name: 'Hunza',            lat: 36.3167, lng: 74.6500 },
+    { name: 'Hunza Valley',     lat: 36.3167, lng: 74.6500 },
+    { name: 'Murree',           lat: 33.9042, lng: 73.3939 },
+    { name: 'Swat',             lat: 35.2227, lng: 72.4258 },
+    { name: 'Mingora',          lat: 34.7717, lng: 72.3600 },
+    { name: 'Naran',            lat: 34.9063, lng: 73.6507 },
+    { name: 'Kaghan',           lat: 34.7683, lng: 73.5943 },
+    { name: 'Chitral',          lat: 35.8518, lng: 71.7861 },
+    { name: 'Gwadar',           lat: 25.1264, lng: 62.3225 },
+    { name: 'Larkana',          lat: 27.5570, lng: 68.2248 },
+    { name: 'Muzaffarabad',     lat: 34.3700, lng: 73.4710 },
+    { name: 'Mirpur',           lat: 33.1450, lng: 73.7502 },
+    { name: 'Mansehra',         lat: 34.3330, lng: 73.1960 },
+    { name: 'Dera Ismail Khan', lat: 31.8300, lng: 70.9010 },
+    { name: 'Turbat',           lat: 26.0025, lng: 63.0444 },
+    { name: 'Khuzdar',          lat: 27.8000, lng: 66.6167 },
+    { name: 'Dera Ghazi Khan',  lat: 30.0500, lng: 70.6333 },
+    { name: 'Jacobabad',        lat: 28.2769, lng: 68.4514 },
+    { name: 'Nawabshah',        lat: 26.2442, lng: 68.4100 },
+    { name: 'Sahiwal',          lat: 30.6706, lng: 73.1064 },
+    { name: 'Sargodha',         lat: 32.0836, lng: 72.6711 },
+    { name: 'Sheikhupura',      lat: 31.7167, lng: 73.9850 },
+    { name: 'Gujrat',           lat: 32.5736, lng: 74.0789 },
+    { name: 'Mardan',           lat: 34.1986, lng: 72.0404 },
+    { name: 'Swabi',            lat: 34.1203, lng: 72.4698 },
+    { name: 'Nowshera',         lat: 34.0153, lng: 71.9747 },
+    { name: 'Attock',           lat: 33.7667, lng: 72.3667 },
+    { name: 'Jhelum',           lat: 32.9425, lng: 73.7257 },
+    { name: 'Chakwal',          lat: 32.9328, lng: 72.8563 },
+    { name: 'Kharian',          lat: 32.8167, lng: 73.8667 },
+    { name: 'Wah Cantonment',   lat: 33.7722, lng: 72.7083 },
+    { name: 'Taxila',           lat: 33.7467, lng: 72.8408 },
+    { name: 'Haripur',          lat: 33.9980, lng: 72.9333 },
+    { name: 'Bannu',            lat: 32.9889, lng: 70.6044 },
+    { name: 'Kohat',            lat: 33.5869, lng: 71.4414 },
+    { name: 'Kalam',            lat: 35.4897, lng: 72.5792 },
+    { name: 'Fairy Meadows',    lat: 35.3731, lng: 74.5856 },
+    { name: 'Naltar',           lat: 36.1667, lng: 74.1833 },
+    { name: 'Khunjerab',        lat: 36.8417, lng: 75.4281 },
+    { name: 'Shigar',           lat: 35.5000, lng: 75.7333 },
+    { name: 'Astore',           lat: 35.3667, lng: 74.8667 },
+    { name: 'Ghizer',           lat: 36.1500, lng: 73.8333 },
+    { name: 'Kalash',           lat: 35.7000, lng: 71.7167 },
+    { name: 'Mohenjo-daro',     lat: 27.3244, lng: 68.1375 },
+];
+
+function findPkCity(input) {
+    if (!input) return null;
+    const q = input.trim().toLowerCase();
+    return (
+        PK_CITIES.find(c => c.name.toLowerCase() === q) ||
+        PK_CITIES.find(c => c.name.toLowerCase().startsWith(q)) ||
+        PK_CITIES.find(c => c.name.toLowerCase().includes(q)) ||
+        null
+    );
+}
+
 // ── Google Maps globals ──
 let map, allRoutes = [], activePolylines = [], activeMarkers = [];
 
@@ -71,9 +146,12 @@ function initMap() {
     window._mapsReady = true;
 }
 
-// ── Geocode with Nominatim ──
-// Searches Pakistan first; if no confident result, falls back to global search.
+// ── Geocode with curated list + Nominatim fallback ──
 async function geocode(query) {
+    // Curated list first — guaranteed consistent coordinates for all major Pakistani cities/capitals
+    const fast = findPkCity(query);
+    if (fast) return { lat: fast.lat, lng: fast.lng };
+
     const search = async (q) => {
         const url = 'https://nominatim.openstreetmap.org/search?q=' +
             encodeURIComponent(q) + '&format=json&limit=1&accept-language=en';
@@ -89,7 +167,6 @@ async function geocode(query) {
     const pkResult = await search(query + ', Pakistan');
     if (pkResult) return pkResult;
 
-    // Fall back to global search for non-Pakistani locations
     return search(query);
 }
 

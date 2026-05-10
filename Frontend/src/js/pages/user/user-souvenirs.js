@@ -49,7 +49,7 @@ const SOUVENIR_IMG = {
 };
 function getSouvenirImg(s) {
     if (s.imageUrl) {
-        if (s.imageUrl.startsWith('/uploads/')) return API_CONFIG.BASE_URL.replace('/api', '') + s.imageUrl;
+        if (s.imageUrl.startsWith('/uploads')) return API_CONFIG.BASE_URL.replace('/api', '') + s.imageUrl;
         if (s.imageUrl.startsWith('http') || s.imageUrl.startsWith('/') || s.imageUrl.startsWith('../')) return s.imageUrl;
         return '../../../../public/assets/images/' + s.imageUrl;
     }

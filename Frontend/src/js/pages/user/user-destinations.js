@@ -54,7 +54,7 @@ const IMG_FALLBACK = IMG_BASE + 'lahore.jpg';
 
 function resolveImage(url) {
     if (!url) return IMG_FALLBACK;
-    if (url.startsWith('/uploads/')) return 'http://localhost:8080' + url;
+    if (url.startsWith('/uploads')) return API_CONFIG.BASE_URL.replace('/api', '') + url;
     if (url.startsWith('http')) return url;
     if (IMG_MAP[url]) return IMG_MAP[url];
     if (url.startsWith('/') || url.startsWith('../')) return url;

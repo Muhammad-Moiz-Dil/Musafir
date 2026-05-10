@@ -1,184 +1,275 @@
 // ── Auth guard ──
-const tripToken = sessionStorage.getItem('tripify_token');
-if (!tripToken) { window.location.href = '../auth/login.html'; }
-const user = JSON.parse(sessionStorage.getItem('tripify_user') || '{}');
+const tripToken = sessionStorage.getItem("tripify_token");
+if (!tripToken) {
+  window.location.href = "../auth/login.html";
+}
+const user = JSON.parse(sessionStorage.getItem("tripify_user") || "{}");
 (function applyUserProfile(u) {
-    const ini = (u.fullName || 'T').split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
-    document.getElementById('sidebarName').textContent = u.fullName || 'Tourist';
-    const sa = document.getElementById('sidebarInitials'), ta = document.getElementById('topbarInitials');
-    if (u.profilePicture && u.profilePicture !== '') {
-        const url = 'http://localhost:8080' + u.profilePicture + '?t=' + Date.now();
-        const imgTag = '<img src="' + url + '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent=\'' + ini + '\'">';
-        sa.innerHTML = imgTag; ta.innerHTML = imgTag;
-    } else { sa.textContent = ini; ta.textContent = ini; }
+  const ini = (u.fullName || "T")
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  document.getElementById("sidebarName").textContent = u.fullName || "Tourist";
+  const sa = document.getElementById("sidebarInitials"),
+    ta = document.getElementById("topbarInitials");
+  if (u.profilePicture && u.profilePicture !== "") {
+    const url = "http://localhost:8080" + u.profilePicture + "?t=" + Date.now();
+    const imgTag =
+      '<img src="' +
+      url +
+      '" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent=\'' +
+      ini +
+      "'\">";
+    sa.innerHTML = imgTag;
+    ta.innerHTML = imgTag;
+  } else {
+    sa.textContent = ini;
+    ta.textContent = ini;
+  }
 })(user);
-const sidebar = document.getElementById('sidebar'), overlay = document.getElementById('overlay');
-document.getElementById('menuToggle').addEventListener('click', () => { sidebar.classList.toggle('open'); overlay.classList.toggle('show'); });
-overlay.addEventListener('click', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+const sidebar = document.getElementById("sidebar"),
+  overlay = document.getElementById("overlay");
+document.getElementById("menuToggle").addEventListener("click", () => {
+  sidebar.classList.toggle("open");
+  overlay.classList.toggle("show");
+});
+overlay.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  overlay.classList.remove("show");
+});
 
 function showToast(icon, msg, dur = 2800) {
-    const c = document.getElementById('toastContainer');
-    const t = document.createElement('div'); t.className = 'toast';
-    t.innerHTML = '<span class="toast-icon">' + icon + '</span><span>' + msg + '</span>';
-    c.appendChild(t);
-    setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 300); }, dur);
+  const c = document.getElementById("toastContainer");
+  const t = document.createElement("div");
+  t.className = "toast";
+  t.innerHTML =
+    '<span class="toast-icon">' + icon + "</span><span>" + msg + "</span>";
+  c.appendChild(t);
+  setTimeout(() => {
+    t.classList.add("out");
+    setTimeout(() => t.remove(), 300);
+  }, dur);
 }
 
 // ── Travel mode ──
-let travelMode = 'DRIVING';
+let travelMode = "DRIVING";
 function setMode(m) {
-    travelMode = m;
-    document.querySelectorAll('.mode-tab').forEach(el => el.classList.remove('active'));
-    document.querySelector('[data-mode="' + m + '"]').classList.add('active');
+  travelMode = m;
+  document
+    .querySelectorAll(".mode-tab")
+    .forEach((el) => el.classList.remove("active"));
+  document.querySelector('[data-mode="' + m + '"]').classList.add("active");
 }
 
 function swapLocations() {
-    const a = document.getElementById('originInput'), b = document.getElementById('destInput');
-    [a.value, b.value] = [b.value, a.value];
+  const a = document.getElementById("originInput"),
+    b = document.getElementById("destInput");
+  [a.value, b.value] = [b.value, a.value];
 }
 
 // ── Curated Pakistani city coordinates for instant, consistent resolution ──
 const PK_CITIES = [
-    { name: 'Islamabad',        lat: 33.6844, lng: 73.0479 },
-    { name: 'Rawalpindi',       lat: 33.5651, lng: 73.0169 },
-    { name: 'Lahore',           lat: 31.5204, lng: 74.3587 },
-    { name: 'Karachi',          lat: 24.8607, lng: 67.0011 },
-    { name: 'Peshawar',         lat: 34.0150, lng: 71.5249 },
-    { name: 'Quetta',           lat: 30.1798, lng: 66.9750 },
-    { name: 'Multan',           lat: 30.1575, lng: 71.5249 },
-    { name: 'Faisalabad',       lat: 31.4504, lng: 73.1350 },
-    { name: 'Hyderabad',        lat: 25.3960, lng: 68.3578 },
-    { name: 'Sialkot',          lat: 32.4927, lng: 74.5317 },
-    { name: 'Gujranwala',       lat: 32.1877, lng: 74.1945 },
-    { name: 'Abbottabad',       lat: 34.1466, lng: 73.2117 },
-    { name: 'Sukkur',           lat: 27.7052, lng: 68.8574 },
-    { name: 'Bahawalpur',       lat: 29.3956, lng: 71.6836 },
-    { name: 'Gilgit',           lat: 35.9208, lng: 74.3082 },
-    { name: 'Skardu',           lat: 35.2971, lng: 75.6346 },
-    { name: 'Hunza',            lat: 36.3167, lng: 74.6500 },
-    { name: 'Hunza Valley',     lat: 36.3167, lng: 74.6500 },
-    { name: 'Murree',           lat: 33.9042, lng: 73.3939 },
-    { name: 'Swat',             lat: 35.2227, lng: 72.4258 },
-    { name: 'Mingora',          lat: 34.7717, lng: 72.3600 },
-    { name: 'Naran',            lat: 34.9063, lng: 73.6507 },
-    { name: 'Kaghan',           lat: 34.7683, lng: 73.5943 },
-    { name: 'Chitral',          lat: 35.8518, lng: 71.7861 },
-    { name: 'Gwadar',           lat: 25.1264, lng: 62.3225 },
-    { name: 'Larkana',          lat: 27.5570, lng: 68.2248 },
-    { name: 'Muzaffarabad',     lat: 34.3700, lng: 73.4710 },
-    { name: 'Mirpur',           lat: 33.1450, lng: 73.7502 },
-    { name: 'Mansehra',         lat: 34.3330, lng: 73.1960 },
-    { name: 'Dera Ismail Khan', lat: 31.8300, lng: 70.9010 },
-    { name: 'Turbat',           lat: 26.0025, lng: 63.0444 },
-    { name: 'Khuzdar',          lat: 27.8000, lng: 66.6167 },
-    { name: 'Dera Ghazi Khan',  lat: 30.0500, lng: 70.6333 },
-    { name: 'Jacobabad',        lat: 28.2769, lng: 68.4514 },
-    { name: 'Nawabshah',        lat: 26.2442, lng: 68.4100 },
-    { name: 'Sahiwal',          lat: 30.6706, lng: 73.1064 },
-    { name: 'Sargodha',         lat: 32.0836, lng: 72.6711 },
-    { name: 'Sheikhupura',      lat: 31.7167, lng: 73.9850 },
-    { name: 'Gujrat',           lat: 32.5736, lng: 74.0789 },
-    { name: 'Mardan',           lat: 34.1986, lng: 72.0404 },
-    { name: 'Swabi',            lat: 34.1203, lng: 72.4698 },
-    { name: 'Nowshera',         lat: 34.0153, lng: 71.9747 },
-    { name: 'Attock',           lat: 33.7667, lng: 72.3667 },
-    { name: 'Jhelum',           lat: 32.9425, lng: 73.7257 },
-    { name: 'Chakwal',          lat: 32.9328, lng: 72.8563 },
-    { name: 'Kharian',          lat: 32.8167, lng: 73.8667 },
-    { name: 'Wah Cantonment',   lat: 33.7722, lng: 72.7083 },
-    { name: 'Taxila',           lat: 33.7467, lng: 72.8408 },
-    { name: 'Haripur',          lat: 33.9980, lng: 72.9333 },
-    { name: 'Bannu',            lat: 32.9889, lng: 70.6044 },
-    { name: 'Kohat',            lat: 33.5869, lng: 71.4414 },
-    { name: 'Kalam',            lat: 35.4897, lng: 72.5792 },
-    { name: 'Fairy Meadows',    lat: 35.3731, lng: 74.5856 },
-    { name: 'Naltar',           lat: 36.1667, lng: 74.1833 },
-    { name: 'Khunjerab',        lat: 36.8417, lng: 75.4281 },
-    { name: 'Shigar',           lat: 35.5000, lng: 75.7333 },
-    { name: 'Astore',           lat: 35.3667, lng: 74.8667 },
-    { name: 'Ghizer',           lat: 36.1500, lng: 73.8333 },
-    { name: 'Kalash',           lat: 35.7000, lng: 71.7167 },
-    { name: 'Mohenjo-daro',     lat: 27.3244, lng: 68.1375 },
+  { name: "Islamabad", lat: 33.6844, lng: 73.0479 },
+  { name: "Rawalpindi", lat: 33.5651, lng: 73.0169 },
+  { name: "Lahore", lat: 31.5204, lng: 74.3587 },
+  { name: "Karachi", lat: 24.8607, lng: 67.0011 },
+  { name: "Peshawar", lat: 34.015, lng: 71.5249 },
+  { name: "Quetta", lat: 30.1798, lng: 66.975 },
+  { name: "Multan", lat: 30.1575, lng: 71.5249 },
+  { name: "Faisalabad", lat: 31.4504, lng: 73.135 },
+  { name: "Hyderabad", lat: 25.396, lng: 68.3578 },
+  { name: "Sialkot", lat: 32.4927, lng: 74.5317 },
+  { name: "Gujranwala", lat: 32.1877, lng: 74.1945 },
+  { name: "Abbottabad", lat: 34.1466, lng: 73.2117 },
+  { name: "Sukkur", lat: 27.7052, lng: 68.8574 },
+  { name: "Bahawalpur", lat: 29.3956, lng: 71.6836 },
+  { name: "Gilgit", lat: 35.9208, lng: 74.3082 },
+  { name: "Skardu", lat: 35.2971, lng: 75.6346 },
+  { name: "Hunza", lat: 36.3167, lng: 74.65 },
+  { name: "Hunza Valley", lat: 36.3167, lng: 74.65 },
+  { name: "Murree", lat: 33.9042, lng: 73.3939 },
+  { name: "Swat", lat: 35.2227, lng: 72.4258 },
+  { name: "Mingora", lat: 34.7717, lng: 72.36 },
+  { name: "Naran", lat: 34.9063, lng: 73.6507 },
+  { name: "Kaghan", lat: 34.7683, lng: 73.5943 },
+  { name: "Chitral", lat: 35.8518, lng: 71.7861 },
+  { name: "Gwadar", lat: 25.1264, lng: 62.3225 },
+  { name: "Larkana", lat: 27.557, lng: 68.2248 },
+  { name: "Muzaffarabad", lat: 34.37, lng: 73.471 },
+  { name: "Mirpur", lat: 33.145, lng: 73.7502 },
+  { name: "Mansehra", lat: 34.333, lng: 73.196 },
+  { name: "Dera Ismail Khan", lat: 31.83, lng: 70.901 },
+  { name: "Turbat", lat: 26.0025, lng: 63.0444 },
+  { name: "Khuzdar", lat: 27.8, lng: 66.6167 },
+  { name: "Dera Ghazi Khan", lat: 30.05, lng: 70.6333 },
+  { name: "Jacobabad", lat: 28.2769, lng: 68.4514 },
+  { name: "Nawabshah", lat: 26.2442, lng: 68.41 },
+  { name: "Sahiwal", lat: 30.6706, lng: 73.1064 },
+  { name: "Sargodha", lat: 32.0836, lng: 72.6711 },
+  { name: "Sheikhupura", lat: 31.7167, lng: 73.985 },
+  { name: "Gujrat", lat: 32.5736, lng: 74.0789 },
+  { name: "Mardan", lat: 34.1986, lng: 72.0404 },
+  { name: "Swabi", lat: 34.1203, lng: 72.4698 },
+  { name: "Nowshera", lat: 34.0153, lng: 71.9747 },
+  { name: "Attock", lat: 33.7667, lng: 72.3667 },
+  { name: "Jhelum", lat: 32.9425, lng: 73.7257 },
+  { name: "Chakwal", lat: 32.9328, lng: 72.8563 },
+  { name: "Kharian", lat: 32.8167, lng: 73.8667 },
+  { name: "Wah Cantonment", lat: 33.7722, lng: 72.7083 },
+  { name: "Taxila", lat: 33.7467, lng: 72.8408 },
+  { name: "Haripur", lat: 33.998, lng: 72.9333 },
+  { name: "Bannu", lat: 32.9889, lng: 70.6044 },
+  { name: "Kohat", lat: 33.5869, lng: 71.4414 },
+  { name: "Kalam", lat: 35.4897, lng: 72.5792 },
+  { name: "Fairy Meadows", lat: 35.3731, lng: 74.5856 },
+  { name: "Naltar", lat: 36.1667, lng: 74.1833 },
+  { name: "Khunjerab", lat: 36.8417, lng: 75.4281 },
+  { name: "Shigar", lat: 35.5, lng: 75.7333 },
+  { name: "Astore", lat: 35.3667, lng: 74.8667 },
+  { name: "Ghizer", lat: 36.15, lng: 73.8333 },
+  { name: "Kalash", lat: 35.7, lng: 71.7167 },
+  { name: "Mohenjo-daro", lat: 27.3244, lng: 68.1375 },
 ];
 
 function findPkCity(input) {
-    if (!input) return null;
-    const q = input.trim().toLowerCase();
-    return (
-        PK_CITIES.find(c => c.name.toLowerCase() === q) ||
-        PK_CITIES.find(c => c.name.toLowerCase().startsWith(q)) ||
-        PK_CITIES.find(c => c.name.toLowerCase().includes(q)) ||
-        null
-    );
+  if (!input) return null;
+  const q = input.trim().toLowerCase();
+  return (
+    PK_CITIES.find((c) => c.name.toLowerCase() === q) ||
+    PK_CITIES.find((c) => c.name.toLowerCase().startsWith(q)) ||
+    PK_CITIES.find((c) => c.name.toLowerCase().includes(q)) ||
+    null
+  );
 }
 
 // ── Google Maps globals ──
-let map, allRoutes = [], activePolylines = [], activeMarkers = [];
+let map,
+  allRoutes = [],
+  activePolylines = [],
+  activeMarkers = [];
+let mapReadyResolve;
+const mapReadyPromise = new Promise((resolve) => {
+  mapReadyResolve = resolve;
+});
 
 // Called by Google Maps script after it loads
 function initMap() {
-    const darkStyle = [
-        { elementType:'geometry', stylers:[{ color:'#0d1b2a' }] },
-        { elementType:'labels.text.fill', stylers:[{ color:'#8a9bb0' }] },
-        { elementType:'labels.text.stroke', stylers:[{ color:'#0d1b2a' }] },
-        { featureType:'road', elementType:'geometry', stylers:[{ color:'#1c3048' }] },
-        { featureType:'road', elementType:'geometry.stroke', stylers:[{ color:'#0f2236' }] },
-        { featureType:'road.highway', elementType:'geometry', stylers:[{ color:'#1e4a6e' }] },
-        { featureType:'road.highway', elementType:'labels.text.fill', stylers:[{ color:'#f5a623' }] },
-        { featureType:'water', elementType:'geometry', stylers:[{ color:'#06111e' }] },
-        { featureType:'water', elementType:'labels.text.fill', stylers:[{ color:'#4a6480' }] },
-        { featureType:'poi', stylers:[{ visibility:'off' }] },
-        { featureType:'administrative.country', elementType:'geometry.stroke', stylers:[{ color:'#2a4a6a' }] },
-        { featureType:'landscape', elementType:'geometry', stylers:[{ color:'#0d1f30' }] },
-    ];
-    map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 30.3753, lng: 69.3451 },
-        zoom: 6,
-        styles: darkStyle,
-        mapTypeControl: false,
-        streetViewControl: false,
-        fullscreenControl: true,
-        zoomControl: true,
-    });
-    const ov = document.getElementById('mapOverlay');
-    ov.classList.add('hidden');
-    setTimeout(() => { ov.style.display = 'none'; }, 400);
+  const darkStyle = [
+    { elementType: "geometry", stylers: [{ color: "#0d1b2a" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#8a9bb0" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#0d1b2a" }] },
+    {
+      featureType: "road",
+      elementType: "geometry",
+      stylers: [{ color: "#1c3048" }],
+    },
+    {
+      featureType: "road",
+      elementType: "geometry.stroke",
+      stylers: [{ color: "#0f2236" }],
+    },
+    {
+      featureType: "road.highway",
+      elementType: "geometry",
+      stylers: [{ color: "#1e4a6e" }],
+    },
+    {
+      featureType: "road.highway",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#f5a623" }],
+    },
+    {
+      featureType: "water",
+      elementType: "geometry",
+      stylers: [{ color: "#06111e" }],
+    },
+    {
+      featureType: "water",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#4a6480" }],
+    },
+    { featureType: "poi", stylers: [{ visibility: "off" }] },
+    {
+      featureType: "administrative.country",
+      elementType: "geometry.stroke",
+      stylers: [{ color: "#2a4a6a" }],
+    },
+    {
+      featureType: "landscape",
+      elementType: "geometry",
+      stylers: [{ color: "#0d1f30" }],
+    },
+  ];
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: { lat: 30.3753, lng: 69.3451 },
+    zoom: 6,
+    styles: darkStyle,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: true,
+    zoomControl: true,
+  });
+  const ov = document.getElementById("mapOverlay");
+  ov.classList.add("hidden");
+  setTimeout(() => {
+    ov.style.display = "none";
+  }, 400);
+  google.maps.event.addListenerOnce(map, "idle", () => {
     window._mapsReady = true;
+    if (mapReadyResolve) mapReadyResolve();
+  });
 }
 
 // ── Geocode with curated list + Nominatim fallback ──
 async function geocode(query) {
-    // Curated list first — guaranteed consistent coordinates for all major Pakistani cities/capitals
-    const fast = findPkCity(query);
-    if (fast) return { lat: fast.lat, lng: fast.lng };
+  // Curated list first — guaranteed consistent coordinates for all major Pakistani cities/capitals
+  const fast = findPkCity(query);
+  if (fast) return { lat: fast.lat, lng: fast.lng };
 
-    const search = async (q) => {
-        const url = 'https://nominatim.openstreetmap.org/search?q=' +
-            encodeURIComponent(q) + '&format=json&limit=1&accept-language=en';
-        const res = await fetch(url, { headers: { 'User-Agent': 'Tripify/1.0' } });
-        if (!res.ok) throw new Error('geocode-failed');
-        const data = await res.json();
-        if (!data.length) return null;
-        if ((parseFloat(data[0].importance) || 0) < 0.20) return null;
-        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-    };
+  const search = async (q) => {
+    const url =
+      "https://nominatim.openstreetmap.org/search?q=" +
+      encodeURIComponent(q) +
+      "&format=json&limit=1&accept-language=en";
+    const res = await fetch(url, { headers: { "User-Agent": "Tripify/1.0" } });
+    if (!res.ok) throw new Error("geocode-failed");
+    const data = await res.json();
+    if (!data.length) return null;
+    if ((parseFloat(data[0].importance) || 0) < 0.2) return null;
+    return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  };
 
-    // Try with Pakistan bias first to avoid IATA / global-code ambiguity (e.g. LHR → Lahore not London)
-    const pkResult = await search(query + ', Pakistan');
-    if (pkResult) return pkResult;
+  // Try with Pakistan bias first to avoid IATA / global-code ambiguity (e.g. LHR → Lahore not London)
+  const pkResult = await search(query + ", Pakistan");
+  if (pkResult) return pkResult;
 
-    return search(query);
+  return search(query);
 }
 
 // ── Route with OSRM ──
 async function getOsrmRoute(orig, dest, profile) {
-    const url = 'https://router.project-osrm.org/route/v1/' + profile + '/' +
-        orig.lng + ',' + orig.lat + ';' +
-        dest.lng + ',' + dest.lat +
-        '?overview=full&geometries=geojson&alternatives=true';
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('osrm-failed');
-    return res.json();
+  const url =
+    "https://router.project-osrm.org/route/v1/" +
+    profile +
+    "/" +
+    orig.lng +
+    "," +
+    orig.lat +
+    ";" +
+    dest.lng +
+    "," +
+    dest.lat +
+    "?overview=full&geometries=geojson&alternatives=3&continue_straight=false";
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("osrm-failed");
+  return res.json();
+}
+
+async function waitForMapReady() {
+  if (window._mapsReady && map) return;
+  await mapReadyPromise;
 }
 
 // ── Duration display ──
@@ -188,180 +279,273 @@ async function getOsrmRoute(orig, dest, profile) {
 const TRANSIT_FACTOR = 1.45;
 
 function formatDuration(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.round((seconds % 3600) / 60);
-    if (h === 0) return m + ' min';
-    return h + ' hr ' + (m > 0 ? m + ' min' : '');
+  const h = Math.floor(seconds / 3600);
+  const m = Math.round((seconds % 3600) / 60);
+  if (h === 0) return m + " min";
+  return h + " hr " + (m > 0 ? m + " min" : "");
 }
 
 function displayDuration(rawSeconds) {
-    const secs = travelMode === 'TRANSIT' ? rawSeconds * TRANSIT_FACTOR : rawSeconds;
-    return formatDuration(secs);
+  const secs =
+    travelMode === "TRANSIT" ? rawSeconds * TRANSIT_FACTOR : rawSeconds;
+  return formatDuration(secs);
 }
 
 // ── Clear previous route drawings ──
 function clearMap() {
-    activePolylines.forEach(p => p.setMap(null));
-    activeMarkers.forEach(m => m.setMap(null));
-    activePolylines = [];
-    activeMarkers   = [];
+  activePolylines.forEach((p) => p.setMap(null));
+  activeMarkers.forEach((m) => m.setMap(null));
+  activePolylines = [];
+  activeMarkers = [];
 }
 
 function drawPolyline(coords, color, weight, opacity) {
-    const path = coords.map(c => ({ lat: c[1], lng: c[0] }));
-    const poly = new google.maps.Polyline({ path, map, strokeColor: color, strokeWeight: weight, strokeOpacity: opacity });
-    activePolylines.push(poly);
-    return path;
+  const path = coords.map((c) => ({ lat: c[1], lng: c[0] }));
+  const poly = new google.maps.Polyline({
+    path,
+    map,
+    strokeColor: color,
+    strokeWeight: weight,
+    strokeOpacity: opacity,
+  });
+  activePolylines.push(poly);
+  return path;
 }
 
 function placeMarker(latlng, title, color) {
-    const m = new google.maps.Marker({
-        position: latlng, map, title,
-        icon: 'http://maps.google.com/mapfiles/ms/icons/' + color + '-dot.png'
-    });
-    activeMarkers.push(m);
+  const m = new google.maps.Marker({
+    position: latlng,
+    map,
+    title,
+    icon: "http://maps.google.com/mapfiles/ms/icons/" + color + "-dot.png",
+  });
+  activeMarkers.push(m);
 }
 
 // ── Find Route ──
 async function findRoute() {
-    const originText = document.getElementById('originInput').value.trim();
-    const destText   = document.getElementById('destInput').value.trim();
+  const originText = document.getElementById("originInput").value.trim();
+  const destText = document.getElementById("destInput").value.trim();
 
-    if (!originText && !destText) { showToast('⚠️', 'Please enter both a starting point and a destination.'); return; }
-    if (!originText) { showToast('⚠️', 'Please enter a starting location (From).'); return; }
-    if (!destText)   { showToast('⚠️', 'Please enter a destination (To).'); return; }
+  if (!originText && !destText) {
+    showToast("⚠️", "Please enter both a starting point and a destination.");
+    return;
+  }
+  if (!originText) {
+    showToast("⚠️", "Please enter a starting location (From).");
+    return;
+  }
+  if (!destText) {
+    showToast("⚠️", "Please enter a destination (To).");
+    return;
+  }
 
-    // Must contain at least 2 letters — blocks pure numbers ("1111") and gibberish
-    const hasLetters = s => (s.match(/[a-zA-Z]/g) || []).length >= 2;
-    if (!hasLetters(originText)) { showToast('❌', 'Please enter a valid starting location.', 4500); return; }
-    if (!hasLetters(destText))   { showToast('❌', 'Please enter a valid destination.', 4500); return; }
-    if (originText.toLowerCase() === destText.toLowerCase()) {
-        showToast('⚠️', 'Starting point and destination cannot be the same. Please enter different locations.', 4000);
-        return;
+  // Must contain at least 2 letters — blocks pure numbers ("1111") and gibberish
+  const hasLetters = (s) => (s.match(/[a-zA-Z]/g) || []).length >= 2;
+  if (!hasLetters(originText)) {
+    showToast("❌", "Please enter a valid starting location.", 4500);
+    return;
+  }
+  if (!hasLetters(destText)) {
+    showToast("❌", "Please enter a valid destination.", 4500);
+    return;
+  }
+  if (originText.toLowerCase() === destText.toLowerCase()) {
+    showToast(
+      "⚠️",
+      "Starting point and destination cannot be the same. Please enter different locations.",
+      4000,
+    );
+    return;
+  }
+  const btn = document.getElementById("findBtn");
+  btn.disabled = true;
+  btn.textContent = "Calculating…";
+  document.getElementById("alternativesWrap").style.display = "none";
+  document.getElementById("alternativesList").innerHTML = "";
+  document.getElementById("routeSummary").style.display = "none";
+  showToast("🗺️", "Finding route…", 2500);
+
+  try {
+    await waitForMapReady();
+    const [orig, dest] = await Promise.all([
+      geocode(originText),
+      geocode(destText),
+    ]);
+    if (!orig) {
+      showToast("❌", "Please enter a valid starting location.", 4500);
+      return;
     }
-    if (!window._mapsReady) { showToast('❌', 'Map is not ready yet. Please wait a moment.', 3000); return; }
-
-    const btn = document.getElementById('findBtn');
-    btn.disabled = true;
-    btn.textContent = 'Calculating…';
-    showToast('🗺️', 'Finding route…', 2500);
-
-    try {
-        const [orig, dest] = await Promise.all([geocode(originText), geocode(destText)]);
-        if (!orig) { showToast('❌', 'Please enter a valid starting location.', 4500); return; }
-        if (!dest) { showToast('❌', 'Please enter a valid destination.', 4500); return; }
-
-        // TRANSIT uses the driving road network on the map (buses follow roads)
-        const profile = 'driving';
-        const data    = await getOsrmRoute(orig, dest, profile);
-
-        if (data.code !== 'Ok' || !data.routes || !data.routes.length) {
-            showToast('❌', 'No route found between these locations.', 4000);
-            return;
-        }
-
-        allRoutes = data.routes;
-        window._routeOrig = orig;
-        window._routeDest = dest;
-        clearMap();
-        applyRoute(0, orig, dest);
-        renderAlternatives();
-        showToast('✅', 'Route found! ' + allRoutes.length + ' option' + (allRoutes.length > 1 ? 's' : '') + ' available');
-
-    } catch (e) {
-        showToast('❌', 'Unable to connect to routing service. Please try again later.', 5000);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Find Route';
+    if (!dest) {
+      showToast("❌", "Please enter a valid destination.", 4500);
+      return;
     }
+
+    // TRANSIT uses the driving road network on the map (buses follow roads)
+    const profile = "driving";
+    const data = await getOsrmRoute(orig, dest, profile);
+
+    if (data.code !== "Ok" || !data.routes || !data.routes.length) {
+      showToast("❌", "No route found between these locations.", 4000);
+      return;
+    }
+
+    allRoutes = data.routes;
+    window._routeOrig = orig;
+    window._routeDest = dest;
+    clearMap();
+    renderAlternatives();
+    applyRoute(0, orig, dest);
+    showToast(
+      "✅",
+      "Route found! " +
+        allRoutes.length +
+        " option" +
+        (allRoutes.length > 1 ? "s" : "") +
+        " available",
+    );
+  } catch (e) {
+    showToast(
+      "❌",
+      "Unable to connect to routing service. Please try again later.",
+      5000,
+    );
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML =
+      '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>Find Route';
+  }
 }
 
 function applyRoute(idx, orig, dest) {
-    orig = orig || window._routeOrig;
-    dest = dest || window._routeDest;
-    clearMap();
-    const route = allRoutes[idx];
+  orig = orig || window._routeOrig;
+  dest = dest || window._routeDest;
+  clearMap();
+  const route = allRoutes[idx];
 
-    allRoutes.forEach((r, i) => {
-        if (i !== idx) drawPolyline(r.geometry.coordinates, '#4a6480', 4, 0.35);
-    });
-    const path = drawPolyline(route.geometry.coordinates, '#f5a623', 5, 0.9);
+  allRoutes.forEach((r, i) => {
+    if (i !== idx) drawPolyline(r.geometry.coordinates, "#4a6480", 4, 0.35);
+  });
+  const path = drawPolyline(route.geometry.coordinates, "#f5a623", 5, 0.9);
 
-    placeMarker({ lat: orig.lat, lng: orig.lng }, 'Start', 'green');
-    placeMarker({ lat: dest.lat, lng: dest.lng }, 'End',   'red');
+  placeMarker({ lat: orig.lat, lng: orig.lng }, "Start", "green");
+  placeMarker({ lat: dest.lat, lng: dest.lng }, "End", "red");
 
-    const bounds = new google.maps.LatLngBounds();
-    path.forEach(p => bounds.extend(p));
-    map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+  const bounds = new google.maps.LatLngBounds();
+  path.forEach((p) => bounds.extend(p));
+  map.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
 
-    const distKm = (route.distance / 1000).toFixed(1);
-    document.getElementById('statDist').textContent = distKm + ' km';
-    document.getElementById('statTime').textContent = displayDuration(route.duration);
-    document.getElementById('statMode').textContent = { DRIVING:'🚗 Driving', TRANSIT:'🚌 Transit' }[travelMode];
-    document.getElementById('routeSummary').style.display = 'block';
+  const distKm = (route.distance / 1000).toFixed(1);
+  document.getElementById("statDist").textContent = distKm + " km";
+  document.getElementById("statTime").textContent = displayDuration(
+    route.duration,
+  );
+  document.getElementById("statMode").textContent = {
+    DRIVING: "🚗 Driving",
+    TRANSIT: "🚌 Transit",
+  }[travelMode];
+  document.getElementById("routeSummary").style.display = "block";
 
-    document.querySelectorAll('.alt-route').forEach((el, i) => el.classList.toggle('active', i === idx));
+  document
+    .querySelectorAll(".alt-route")
+    .forEach((el, i) => el.classList.toggle("active", i === idx));
 }
 
 function renderAlternatives() {
-    const wrap = document.getElementById('alternativesWrap');
-    if (allRoutes.length <= 1) { wrap.style.display = 'none'; return; }
-    wrap.style.display = 'block';
-    document.getElementById('alternativesList').innerHTML = allRoutes.map((r, i) => {
-        const distKm = (r.distance / 1000).toFixed(1);
-        return '<div class="alt-route '+(i===0?'active':'')+'" id="alt-'+i+'" onclick="switchRoute('+i+')">' +
-            '<div><div class="alt-label">Route '+(i+1)+(i===0?' (Fastest)':'')+'</div>' +
-            '<div class="alt-detail">'+distKm+' km · '+displayDuration(r.duration)+'</div></div>' +
-            '<span class="alt-badge '+(i===0?'best':'alt')+'">'+(i===0?'Best':'Alt')+'</span>' +
-            '</div>';
-    }).join('');
+  const wrap = document.getElementById("alternativesWrap");
+  if (!allRoutes.length) {
+    wrap.style.display = "none";
+    return;
+  }
+  wrap.style.display = "block";
+  document.getElementById("alternativesList").innerHTML = allRoutes
+    .map((r, i) => {
+      const distKm = (r.distance / 1000).toFixed(1);
+      return (
+        '<div class="alt-route ' +
+        (i === 0 ? "active" : "") +
+        '" id="alt-' +
+        i +
+        '" onclick="switchRoute(' +
+        i +
+        ')">' +
+        '<div><div class="alt-label">Route ' +
+        (i + 1) +
+        (i === 0 ? " (Fastest)" : "") +
+        "</div>" +
+        '<div class="alt-detail">' +
+        distKm +
+        " km · " +
+        displayDuration(r.duration) +
+        "</div></div>" +
+        '<span class="alt-badge ' +
+        (i === 0 ? "best" : "alt") +
+        '">' +
+        (i === 0 ? "Best" : "Alt") +
+        "</span>" +
+        "</div>"
+      );
+    })
+    .join("");
 }
 
 function switchRoute(idx) {
-    applyRoute(idx);
-    showToast('🗺️', 'Switched to Route ' + (idx + 1));
+  applyRoute(idx);
+  showToast("🗺️", "Switched to Route " + (idx + 1));
 }
 
 // ── Google Maps error handler (called by Maps when key is invalid/rejected) ──
-window.gm_authFailure = function () { showMapsConnectError(); };
+window.gm_authFailure = function () {
+  showMapsConnectError();
+};
 
 function showMapsConnectError() {
-    document.getElementById('mapsErrorOverlay').style.display = 'flex';
-    document.getElementById('mapOverlay').style.display = 'none';
-    showToast('❌', 'Unable to connect to Google Maps. Please try again later.', 5000);
+  document.getElementById("mapsErrorOverlay").style.display = "flex";
+  document.getElementById("mapOverlay").style.display = "none";
+  showToast(
+    "❌",
+    "Unable to connect to Google Maps. Please try again later.",
+    5000,
+  );
 }
 
 // ── Fetch API key from backend, then inject Maps script ──
 async function loadGoogleMaps() {
-    let key;
-    try {
-        const res = await fetch('http://localhost:8080/api/config/maps-key', {
-            headers: { 'Authorization': 'Bearer ' + tripToken }
-        });
-        if (!res.ok) throw new Error('key-fetch-failed');
-        const data = await res.json();
-        key = data.key;
-    } catch (e) {
-        showMapsConnectError();
-        return;
+  let key;
+  try {
+    const res = await fetch("http://localhost:8080/api/config/maps-key", {
+      headers: { Authorization: "Bearer " + tripToken },
+    });
+    if (!res.ok) throw new Error("key-fetch-failed");
+    const data = await res.json();
+    key = data.key;
+  } catch (e) {
+    showMapsConnectError();
+    return;
+  }
+
+  const loadTimeout = setTimeout(() => {
+    if (!window._mapsReady) {
+      showMapsConnectError();
     }
+  }, 12000);
 
-    const loadTimeout = setTimeout(() => {
-        if (!window._mapsReady) { showMapsConnectError(); }
-    }, 12000);
+  const _origInit = window.initMap;
+  window.initMap = function () {
+    clearTimeout(loadTimeout);
+    _origInit();
+  };
 
-    const _origInit = window.initMap;
-    window.initMap = function () {
-        clearTimeout(loadTimeout);
-        _origInit();
-    };
-
-    const script = document.createElement('script');
-    script.src   = 'https://maps.googleapis.com/maps/api/js?key=' + key + '&callback=initMap';
-    script.async = true;
-    script.defer = true;
-    script.onerror = function () { clearTimeout(loadTimeout); showMapsConnectError(); };
-    document.head.appendChild(script);
+  const script = document.createElement("script");
+  script.src =
+    "https://maps.googleapis.com/maps/api/js?key=" + key + "&callback=initMap";
+  script.async = true;
+  script.defer = true;
+  script.onerror = function () {
+    clearTimeout(loadTimeout);
+    showMapsConnectError();
+  };
+  document.head.appendChild(script);
 }
 
 loadGoogleMaps();

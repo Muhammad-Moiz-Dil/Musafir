@@ -207,7 +207,12 @@ public class ReviewController {
     // Verified reviews have full weight (1.0), unverified have half weight (0.5)
     private void updateDestinationRating(Destination dest) {
         List<Review> allReviews = reviewRepo.findByDestinationId(dest.getDestinationId());
-        if (allReviews.isEmpty()) return;
+        if (allReviews.isEmpty()) {
+            dest.setAverageRating(BigDecimal.ZERO);
+            dest.setTotalReviews(0);
+            destRepo.save(dest);
+            return;
+        }
 
         double weightedSum  = 0.0;
         double totalWeight  = 0.0;

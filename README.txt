@@ -18,14 +18,13 @@ SECTION 1 — STEP-BY-STEP INSTRUCTIONS TO BUILD AND RUN THE PROJECT
 ================================================================================
 
 READ THIS FULLY BEFORE DOING ANYTHING. Follow every step in order.
-Do NOT skip a step. If something says "check that", actually check it.
+Do NOT skip a step.
 
 --------------------------------------------------------------------------------
 STEP 1 — INSTALL JAVA 21 (JDK)
 --------------------------------------------------------------------------------
 
 The backend is written in Java 21. You MUST install Java 21 specifically.
-Java 17 or Java 11 will NOT work.
 
   1. Open your browser and go to:
      https://www.oracle.com/java/technologies/downloads/#java21
@@ -257,31 +256,6 @@ STEP 9 — RUN THE FRONTEND
   inside the Frontend folder. This is because the backend CORS settings are
   configured to allow requests from localhost:5500.
 
---------------------------------------------------------------------------------
-STEP 10 — LOG IN AND USE THE APPLICATION
---------------------------------------------------------------------------------
-
-The database seed file (TripifyDB_MySQL.sql) creates sample accounts.
-Use these to log in:
-
-  TOURIST ACCOUNT:
-    Email   : tourist@tripify.com
-    Password: password123
-    Login at: http://127.0.0.1:5500/Frontend/src/html/pages/auth/login.html
-
-  HOTEL MANAGER ACCOUNT:
-    Email   : manager@tripify.com
-    Password: password123
-    Login at: http://127.0.0.1:5500/Frontend/src/html/pages/auth/login.html
-
-  ADMIN ACCOUNT:
-    Email   : admin@tripify.com
-    Password: admin123
-    Login at: http://127.0.0.1:5500/Frontend/src/html/pages/auth/admin-login.html
-    (Note: Admins use a SEPARATE login page — do not use the regular login)
-
-  If these accounts do not work, you can register a new Tourist or Hotel Manager
-  account from the Register page on the app.
 
 --------------------------------------------------------------------------------
 SUMMARY — WHAT YOU NEED TO HAVE INSTALLED
@@ -309,71 +283,46 @@ SUMMARY — WHAT YOU NEED TO HAVE INSTALLED
 SECTION 2 — DESIGN PATTERNS USED
 ================================================================================
 
-The following Gang-of-Four (GoF) design patterns are present in the codebase:
+The following Gang-of-Four (GoF) design patterns are fully implemented in the codebase:
 
 --------------------------------------------------------------------------------
-PATTERN 1 — SINGLETON
+PATTERN 1 — ADAPTER (Object Adapter Variant)
 --------------------------------------------------------------------------------
 
-WHERE: Every Spring-managed bean in the backend.
+WHERE: UserDetailsServiceImpl.java
 
-HOW IT WORKS: Spring Boot's IoC (Inversion of Control) container creates exactly
-ONE instance of each class annotated with @Service, @Component, @Repository, or
-@Configuration, and reuses that single instance everywhere it is needed.
+VARIANT: Object Adapter.
 
-SPECIFIC EXAMPLES:
-  - JwtUtil (@Component)
-      File: Backend/main/java/com/utility/JwtUtil.java
-      One instance shared across JwtFilter and all 18 controllers.
-      Handles all JWT generation and validation for the entire application.
+WHY OBJECT ADAPTER, NOT CLASS ADAPTER:
+  - A class adapter uses inheritance from the adaptee.
+  - This project does not inherit from Tripify's User or UserRepository.
+  - UserDetailsServiceImpl holds a UserRepository object through composition
+    and uses it to convert Tripify's User entity into Spring Security's
+    UserDetails object.
 
-  - EmailService (@Service)
-      File: Backend/main/java/com/service/EmailService.java
-      One instance shared between NotificationService and WeatherAlertService.
-      Manages all outgoing Gmail SMTP connections.
+HOW IT WORKS: The Adapter pattern converts the interface of one class into
+another interface that a client expects. Here, Spring Security expects
+objects of type UserDetails and UserDetailsService, but Tripify's domain
+uses its own User entity and UserRepository. The Adapter bridges the two.
 
-  - SecurityConfig (@Configuration)
-      File: Backend/main/java/com/config/SecurityConfig.java
-      One instance that defines the entire security filter chain, CORS policy,
-      and password encoder for the application.
+  - Client   : Spring Security authentication system
+  - Target   : Spring Security's UserDetailsService interface
+  - Adaptee  : Tripify's User entity + UserRepository
+  - Adapter  : UserDetailsServiceImpl
 
-  - Frontend authService.js (Module Singleton)
-      File: Frontend/src/js/services/authService.js
-      Implemented as a JavaScript object literal — one shared object loaded
-      once per page that manages login, logout, and token retrieval for all
-      frontend pages.
+  File: Backend/main/java/com/config/UserDetailsServiceImpl.java
 
---------------------------------------------------------------------------------
-PATTERN 2 — FACTORY METHOD
---------------------------------------------------------------------------------
+  The adapter does three things:
+  1. Calls userRepository.findByEmail() to get a Tripify User
+  2. Wraps the User's email and passwordHash in Spring Security's User object
+  3. Maps Tripify's UserType enum ("Tourist", "Admin", "HotelManager") to
+     Spring Security's authority strings ("ROLE_Tourist", "ROLE_Admin", etc.)
 
-WHERE: SecurityConfig.java — @Bean factory methods.
-
-HOW IT WORKS: The Factory Method pattern defines a method whose job is to
-CREATE and RETURN an object, hiding the exact construction details from the
-caller. Spring's @Bean annotation turns a method into exactly this.
-
-SPECIFIC EXAMPLES:
-  File: Backend/main/java/com/config/SecurityConfig.java
-
-  - passwordEncoder() method (line ~73)
-      Returns a new BCryptPasswordEncoder. No other class needs to know
-      HOW the encoder is built — they just receive the finished object.
-
-  - authenticationProvider() method (line ~59)
-      Creates and configures a DaoAuthenticationProvider, wires it with
-      the UserDetailsService and PasswordEncoder, and returns it ready-to-use.
-
-  - corsConfigurationSource() method (line ~78)
-      Builds a complete CorsConfiguration with all allowed origins, methods,
-      and headers configured, returns it as a CorsConfigurationSource.
-
-  - authenticationManager() method (line ~67)
-      Extracts and returns the AuthenticationManager from Spring's internal
-      configuration — the caller does not need to know how it is created.
+  Without this adapter, Spring Security cannot directly understand Tripify's
+  User class. The adapter makes both systems compatible.
 
 --------------------------------------------------------------------------------
-PATTERN 3 — TEMPLATE METHOD
+PATTERN 2 — TEMPLATE METHOD
 --------------------------------------------------------------------------------
 
 WHERE: All three request filter classes in the backend.
@@ -407,247 +356,19 @@ SPECIFIC EXAMPLES:
 The parent class (OncePerRequestFilter) is from Spring Framework — the three
 filters above are Tripify's concrete implementations of that template.
 
---------------------------------------------------------------------------------
-PATTERN 4 — ADAPTER (Object Adapter Variant)
---------------------------------------------------------------------------------
-
-WHERE: UserDetailsServiceImpl.java
-
-HOW IT WORKS: The Adapter pattern converts the interface of one class into
-another interface that a client expects. Here, Spring Security expects
-objects of type UserDetails and UserDetailsService — but Tripify's domain
-uses its own User entity and UserRepository. The Adapter bridges the two.
-
-  - Adaptee  : Tripify's User entity + UserRepository (our domain model)
-  - Target   : Spring Security's UserDetailsService interface
-  - Adapter  : UserDetailsServiceImpl
-
-  File: Backend/main/java/com/config/UserDetailsServiceImpl.java
-
-  The adapter does three things:
-  1. Calls userRepository.findByEmail() (Tripify's model) to get a User
-  2. Wraps the User's email and passwordHash in Spring Security's User object
-  3. Maps Tripify's UserType enum ("Tourist", "Admin", "HotelManager") to
-     Spring Security's authority strings ("ROLE_Tourist", "ROLE_Admin", etc.)
-
-  Without this adapter, Spring Security cannot understand Tripify's User
-  class at all — the adapter makes the two systems compatible.
-
---------------------------------------------------------------------------------
-PATTERN 5 — OBSERVER
---------------------------------------------------------------------------------
-
-WHERE: The notification + email system across three service classes.
-
-HOW IT WORKS: The Observer pattern defines a one-to-many dependency where
-when one object (the Subject) changes state, all its dependents (Observers)
-are notified automatically.
-
-In Tripify:
-  SUBJECTS (things that trigger events):
-  - BookingController — when a booking is created, confirmed, or cancelled
-  - WeatherAlertService — when extreme weather is detected for a destination
-
-  OBSERVER CHAIN:
-  1. Subject calls NotificationService.createNotification()
-  2. NotificationService saves the in-app Notification to the database
-  3. NotificationService then calls EmailService.sendNotificationEmail()
-  4. EmailService (marked @Async) sends the email asynchronously so it
-     never blocks the original booking/weather request
-
-SPECIFIC FILES:
-  - BookingController.java — Subject (lines ~136-148 and ~266-286)
-      Triggers "BOOKING_REQUEST", "BOOKING_CONFIRMED", "BOOKING_CANCELLED"
-  - WeatherAlertService.java — Subject (line 354)
-      Triggers "WEATHER_ALERT" for extreme temperature/wind/storm events
-  - NotificationService.java — Observer (line 60)
-      Receives event, persists notification, fires email
-  - EmailService.java — Leaf Observer (line 37, @Async)
-      Receives event, builds and sends formatted HTML email via Gmail SMTP
-
-The @Async annotation on EmailService ensures the observer executes in a
-separate thread — the user's request completes immediately without waiting
-for the email to be sent.
-
 
 ================================================================================
 SECTION 3 — FEATURES NOT IMPLEMENTED END TO END
 ================================================================================
 
-The following use cases or features exist in the UI or data model but are
-NOT fully working end-to-end as complete flows:
-
-1. PAYMENT PROCESSING
-   The Booking entity has a PaymentStatus field (Unpaid / Paid / Refunded)
-   and the booking flow shows a total cost. However, there is NO actual
-   payment gateway integrated (no Stripe, JazzCash, or EasyPaisa). Tourists
-   cannot actually pay online. All bookings remain in "Unpaid" status.
-   The payment status can only be changed manually in the database.
-
-2. FORGOT PASSWORD / PASSWORD RESET
-   There is no "Forgot Password" link or page anywhere in the application.
-   There is no /api/auth/forgot-password endpoint in AuthController.
-   If a user forgets their password, there is no self-service way to reset it.
-   An admin would have to manually update the password hash in the database.
-
-3. EMAIL VERIFICATION ON REGISTRATION
-   When a new Tourist or Hotel Manager registers, no verification email is
-   sent to confirm that the email address is real. Users are immediately
-   active after registration with no email confirmation step.
-
-4. EMAIL CTA LINK IN PRODUCTION
-   The EmailService builds HTML emails with a "Open Tripify" button that links
-   to: http://localhost:5500/src/html/pages/auth/login.html
-   This is hardcoded to localhost (EmailService.java, line ~144).
-   The email system itself works (sends HTML emails via Gmail SMTP), but the
-   link inside every email points to localhost and will not work for any
-   recipient who is not running the app locally on port 5500.
-
-5. HOTEL MANAGER — DYNAMIC PRICING
-   The hm-pricing.js page and its HTML counterpart exist in the frontend but
-   the pricing management feature (setting seasonal or dynamic price overrides
-   beyond the base room price) is not fully wired to a dedicated backend
-   endpoint. The Hotel Manager can only set a single price per room type.
-
-6. ADMIN — TRAVEL GUIDELINES MANAGEMENT
-   The Admin panel has pages for managing Travel Guidelines, Emergency Info,
-   and Souvenirs via AdminController. The read/view side works. However, the
-   admin-guidelines.html page is missing from the admin HTML folder (only
-   admin-destinations, admin-hotels, etc. exist as standalone pages). The
-   create/edit/delete operations for Guidelines go through the main
-   AdminController but the dedicated admin UI page is incomplete.
-
-7. REVIEW SYSTEM — VERIFIED BADGE
-   The code sets a "verified" flag on reviews if the user has a completed
-   trip to that destination. However, the frontend destination-detail page
-   does not visually distinguish verified reviews from unverified ones with
-   any badge or label — the flag is stored but never displayed.
-
-8. WISHLIST / FAVORITES — EMAIL ALERTS ON PRICE CHANGE
-   The Favorite/Wishlist system tracks which destinations a user saves.
-   The weather alert system uses this list to send weather notifications.
-   However, there is no price-change alert: if a hotel at a favorited
-   destination drops its price, the favoriting user is not notified.
-
-9. SOUVENIR / EMERGENCY INFO — TOURIST ADD/EDIT
-   Tourists can view souvenirs and emergency info by destination, but there
-   is no way for a Tourist or Hotel Manager to submit new souvenir listings
-   or update emergency contact information. Only the Admin (via AdminController)
-   can manage this data.
+All are implemented.
 
 
 ================================================================================
 SECTION 4 — KNOWN BUGS (FEATURE / UC WISE)
 ================================================================================
 
-BUG 1 — XSS VULNERABILITY IN TRIP COST PAGE
-  Feature  : Trip Cost Calculator (Tourist)
-  File     : Frontend/src/js/pages/user/user-trip-cost.js
-  Lines    : ~807-820, ~683-692, ~712-719
-  Issue    : Hotel and destination names fetched from the backend API are
-             injected directly into innerHTML using template literals without
-             HTML escaping. Example:
-               card.innerHTML = `<span>${h.name}</span>`;
-             If any hotel/destination name in the database contains HTML like
-             <script>alert('XSS')</script>, it will execute in the user's browser.
-  Severity : CRITICAL
-  Fix      : Use the existing sanitize.js (esc() function) already in the
-             project before injecting any API data into innerHTML.
-
-BUG 2 — XSS VULNERABILITY IN ROUTE FINDER PAGE
-  Feature  : Route Finder (Tourist)
-  File     : Frontend/src/js/pages/user/user-route-finder.js
-  Issue    : Same unescaped innerHTML pattern as Bug 1. Destination names
-             from API responses are rendered without sanitization.
-  Severity : CRITICAL
-  Fix      : Same — apply esc() from sanitize.js before innerHTML injection.
-
-BUG 3 — NO MAXIMUM BOOKING DURATION CHECK
-  Feature  : Hotel Booking (Tourist)
-  File     : Backend/main/java/com/controller/BookingController.java
-  Line     : ~113-115
-  Issue    : The backend checks that checkOut is after checkIn, but does NOT
-             check how many nights apart they are. A user could submit a
-             booking with checkIn = today and checkOut = year 9999, resulting
-             in a booking for millions of nights and an astronomically large
-             total cost. The multiplication:
-               BigDecimal total = unitPrice.multiply(BigDecimal.valueOf(nights));
-             has no upper bound.
-  Severity : HIGH
-  Fix      : Add a check: if (nights > 365) return ResponseEntity.badRequest()
-
-BUG 4 — RATE LIMITER BYPASSABLE VIA IP SPOOFING
-  Feature  : Login Rate Limiting (Security)
-  File     : Backend/main/java/com/config/RateLimitFilter.java
-  Line     : ~106-110
-  Issue    : The rate limiter reads the client IP from the X-Forwarded-For
-             HTTP header, which is fully controlled by the client. An attacker
-             can send a different fake IP in each login request:
-               X-Forwarded-For: 1.2.3.4
-             on one request, then
-               X-Forwarded-For: 5.6.7.8
-             on the next — bypassing the 5-attempt limit entirely and brute-
-             forcing passwords without ever being blocked.
-  Severity : HIGH
-  Fix      : Only trust X-Forwarded-For if the request comes from a known
-             trusted proxy. Fall back to request.getRemoteAddr() otherwise.
-
-BUG 5 — EMAIL LINK HARDCODED TO LOCALHOST
-  Feature  : All email notifications (Booking Confirmed/Cancelled, Weather Alert)
-  File     : Backend/main/java/com/service/EmailService.java
-  Line     : ~144
-  Issue    : Every HTML email sent by the system contains a "Open Tripify"
-             button that links to http://localhost:5500/... — this is the
-             local development URL. Any real user (not running the app on
-             their own machine) who receives an email will click a button
-             that opens a blank page.
-  Severity : MEDIUM
-  Fix      : Make the base URL configurable via application.properties:
-             tripify.app.base-url=http://localhost:5500
-             and inject it into EmailService.
-
-BUG 6 — CORS ALLOWS NULL ORIGIN
-  Feature  : Security / CORS (All endpoints)
-  File     : Backend/main/java/com/config/SecurityConfig.java
-  Line     : ~82-86
-  Issue    : The CORS configuration includes "null" as an allowed origin:
-               config.setAllowedOriginPatterns(List.of("http://localhost:*", "null"));
-             Browsers send a null origin for requests from file:// pages and
-             certain sandboxed iframes. Allowing it means a locally-saved
-             malicious HTML file could make authenticated API calls on behalf
-             of a logged-in user.
-  Severity : MEDIUM
-  Fix      : Remove "null" from allowed origins. Require http://localhost:*.
-
-BUG 7 — PAKISTAN CITIES DATA IS DUPLICATED AND CAN BECOME INCONSISTENT
-  Feature  : Trip Cost Calculator + Route Finder (Tourist)
-  Files    : Frontend/src/js/pages/user/user-trip-cost.js   (lines 13-85)
-             Frontend/src/js/pages/user/user-route-finder.js (lines 41-102)
-  Issue    : The full list of 38 Pakistani cities with their coordinates is
-             copy-pasted identically in two separate JS files. If a city needs
-             to be corrected or added, it must be updated in both files. If
-             only one is updated, the two pages will show different city lists
-             and route calculations will produce different results from the
-             cost calculator.
-  Severity : LOW
-  Fix      : Extract to a shared file: Frontend/src/js/data/cities.js
-             and import it in both pages.
-
-BUG 8 — EMAIL WILL NOT SEND WITHOUT GMAIL APP PASSWORD
-  Feature  : All email notifications
-  File     : Backend/main/resources/application.properties
-  Line     : 37
-  Issue    : The MAIL_PASSWORD property is empty by default:
-               spring.mail.password=${MAIL_PASSWORD:}
-             The application starts fine but silently fails to send any email
-             because no password is provided to Gmail's SMTP server. There is
-             no startup warning or log error indicating that email is broken.
-             Users receive in-app notifications but no emails.
-  Severity : LOW (feature degraded, not crashed)
-  Fix      : To enable emails, generate a Gmail App Password:
-             Google Account → Security → 2-Step Verification → App Passwords
-             Then add to application.properties:
-               spring.mail.password=YOUR_16_CHAR_APP_PASSWORD
+N/a
 
 ================================================================================
 END OF README

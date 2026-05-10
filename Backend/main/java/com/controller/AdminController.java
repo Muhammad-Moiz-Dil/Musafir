@@ -5,6 +5,7 @@ import com.model.*;
 import com.repository.NotificationRepository;
 import com.repository.*;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -601,9 +602,12 @@ public class AdminController {
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> deleteReview(@PathVariable Integer id, Authentication auth) {
         if (!isAdmin(auth)) return forbidden();
-        if (reviewRepo.findById(id).isEmpty())
+        Optional<Review> reviewOpt = reviewRepo.findById(id);
+        if (reviewOpt.isEmpty())
             return ResponseEntity.status(404).body(Map.of("message", "Review not found"));
+        Integer destinationId = reviewOpt.get().getDestinationId();
         reviewRepo.deleteById(id);
+        destRepo.findById(destinationId).ifPresent(this::updateDestinationRating);
         flagRepo.findByContentTypeAndContentId("REVIEW", id).stream()
                 .filter(f -> f.getStatus() == FlaggedContent.FlagStatus.Pending)
                 .forEach(f -> {
@@ -622,9 +626,12 @@ public class AdminController {
     @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> deleteHotelReview(@PathVariable Integer id, Authentication auth) {
         if (!isAdmin(auth)) return forbidden();
-        if (hotelReviewRepo.findById(id).isEmpty())
+        Optional<HotelReview> reviewOpt = hotelReviewRepo.findById(id);
+        if (reviewOpt.isEmpty())
             return ResponseEntity.status(404).body(Map.of("message", "Hotel review not found"));
+        Integer hotelId = reviewOpt.get().getHotelId();
         hotelReviewRepo.deleteById(id);
+        hotelRepo.findById(hotelId).ifPresent(this::updateHotelRating);
         flagRepo.findByContentTypeAndContentId("HOTEL_REVIEW", id).stream()
                 .filter(f -> f.getStatus() == FlaggedContent.FlagStatus.Pending)
                 .forEach(f -> {
@@ -633,6 +640,43 @@ public class AdminController {
                     flagRepo.save(f);
                 });
         return ResponseEntity.ok(Map.of("message", "Hotel review deleted"));
+    }
+
+    private void updateDestinationRating(Destination dest) {
+        List<Review> allReviews = reviewRepo.findByDestinationId(dest.getDestinationId());
+        if (allReviews.isEmpty()) {
+            dest.setAverageRating(BigDecimal.ZERO);
+            dest.setTotalReviews(0);
+            destRepo.save(dest);
+            return;
+        }
+
+        double weightedSum = 0.0;
+        double totalWeight = 0.0;
+        for (Review r : allReviews) {
+            double weight = Boolean.TRUE.equals(r.getVerified()) ? 1.0 : 0.5;
+            weightedSum += r.getRating() * weight;
+            totalWeight += weight;
+        }
+        double avg = totalWeight > 0 ? weightedSum / totalWeight : 0.0;
+        dest.setAverageRating(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
+        dest.setTotalReviews(allReviews.size());
+        destRepo.save(dest);
+    }
+
+    private void updateHotelRating(Hotel hotel) {
+        List<HotelReview> allReviews = hotelReviewRepo.findByHotelIdOrderByCreatedAtDesc(hotel.getHotelId());
+        if (allReviews.isEmpty()) {
+            hotel.setAverageRating(null);
+            hotel.setTotalReviews(0);
+            hotelRepo.save(hotel);
+            return;
+        }
+
+        double avg = allReviews.stream().mapToInt(HotelReview::getRating).average().orElse(0);
+        hotel.setAverageRating(BigDecimal.valueOf(avg).setScale(2, RoundingMode.HALF_UP));
+        hotel.setTotalReviews(allReviews.size());
+        hotelRepo.save(hotel);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

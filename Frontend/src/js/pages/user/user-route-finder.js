@@ -513,7 +513,7 @@ function showMapsConnectError() {
 async function loadGoogleMaps() {
   let key;
   try {
-    const res = await fetch("http://localhost:8080/api/config/maps-key", {
+    const res = await fetch("http://localhost:8080/api/config/maps-key", {   //Getting the api key from the backend.
       headers: { Authorization: "Bearer " + tripToken },
     });
     if (!res.ok) throw new Error("key-fetch-failed");

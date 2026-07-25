@@ -1,0 +1,26 @@
+plugins = []
+headers = []
+redirects = []
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "C:\\Users\\Rafay Dil\\Desktop\\UNI\\4th semester\\SDA\\Tripify\\Frontend"
+publishOrigin = "default"
+base = "C:\\Users\\Rafay Dil\\Desktop\\UNI\\4th semester\\SDA\\Tripify\\Frontend"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
